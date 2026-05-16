@@ -1,11 +1,14 @@
 const mongoose = require('mongoose');
 
 const companySchema = new mongoose.Schema({
-    name: {
+    companyName: {
         type: String, required: true, trim: true, unique: true
     },
     email: {
         type: String, required: true, unique: true, lowercase: true
+    },
+    isVerified: {
+        type: Boolean, default: false
     },
     owner: {
         type: mongoose.Schema.Types.ObjectId, ref: 'User'
