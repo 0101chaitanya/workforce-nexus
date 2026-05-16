@@ -7,14 +7,20 @@ const authRoutes = require("./routes/authRoutes");
 const attendanceRoutes = require("./routes/attendanceRoutes");
 const payrollRoutes = require("./routes/payrollRoutes");
 const userRoutes = require("./routes/userRoutes");
+const companyRoutes = require("./routes/companyRoutes");
 const connectDB = require("./config/db");
 const cookieParser = require('cookie-parser');
+const morgan = require('morgan');
+const logger = require('./utils/logger');
 dotenv.config();
 
 // Connect to database
 connectDB();
 
 // Middleware
+app.use(morgan('dev', {
+    stream: { write: (message) => logger.http(message.trim()) }
+}));
 app.use(cors({
     origin: process.env.FRONTEND_URL,
     credentials: true,
@@ -31,6 +37,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/payroll", payrollRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/company", companyRoutes);
 
 
 app.listen(process.env.PORT, () => {
