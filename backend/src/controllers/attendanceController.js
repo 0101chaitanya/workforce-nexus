@@ -1,5 +1,6 @@
 const Attendance = require("../models/Attendance");
 const mongoose = require("mongoose");
+const logger = require("../utils/logger");
 
 exports.clockIn = async (req, res) => {
     try {
@@ -19,7 +20,8 @@ exports.clockIn = async (req, res) => {
         if (existingAttendance) {
             return res.status(400).json({
                 message: "Already clocked in for today",
-                success: false
+                success: false,
+                occurredAt: new Date().toISOString()
             });
         }
 
@@ -40,10 +42,11 @@ exports.clockIn = async (req, res) => {
         });
 
     } catch (err) {
-        console.error(`Error in clockIn: ${err}`);
+        logger.error(`Error in clockIn: ${err.message || err}`, { stack: err.stack });
         return res.status(500).json({
             message: "Internal server error",
-            success: false
+            success: false,
+            occurredAt: new Date().toISOString()
         });
     }
 };
@@ -65,14 +68,16 @@ exports.clockOut = async (req, res) => {
         if (!attendance) {
             return res.status(404).json({
                 message: "No clock-in record found for today",
-                success: false
+                success: false,
+                occurredAt: new Date().toISOString()
             });
         }
 
         if (attendance.checkOutTime) {
             return res.status(400).json({
                 message: "Already clocked out for today",
-                success: false
+                success: false,
+                occurredAt: new Date().toISOString()
             });
         }
 
@@ -91,10 +96,11 @@ exports.clockOut = async (req, res) => {
         });
 
     } catch (err) {
-        console.error(`Error in clockOut: ${err}`);
+        logger.error(`Error in clockOut: ${err.message || err}`, { stack: err.stack });
         return res.status(500).json({
             message: "Internal server error",
-            success: false
+            success: false,
+            occurredAt: new Date().toISOString()
         });
     }
 };
@@ -126,10 +132,11 @@ exports.getAttendanceHistory = async (req, res) => {
         });
 
     } catch (err) {
-        console.error(`Error in getAttendanceHistory: ${err}`);
+        logger.error(`Error in getAttendanceHistory: ${err.message || err}`, { stack: err.stack });
         return res.status(500).json({
             message: "Internal server error",
-            success: false
+            success: false,
+            occurredAt: new Date().toISOString()
         });
     }
 };

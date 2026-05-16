@@ -1,4 +1,5 @@
 const Payroll = require("../models/Payroll");
+const logger = require("../utils/logger");
 
 exports.getPayrollHistory = async (req, res) => {
     try {
@@ -27,10 +28,11 @@ exports.getPayrollHistory = async (req, res) => {
         });
 
     } catch (err) {
-        console.error(`Error in getPayrollHistory: ${err}`);
+        logger.error(`Error in getPayrollHistory: ${err.message || err}`, { stack: err.stack });
         return res.status(500).json({
             message: "Internal server error",
-            success: false
+            success: false,
+            occurredAt: new Date().toISOString()
         });
     }
 };

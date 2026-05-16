@@ -1,10 +1,10 @@
-const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const transporter = require("../utils/sendEmail.js");
 const Company = require("../models/Company");
 const User = require("../models/User");
 const { generateAccessToken, generateRefreshToken } = require('../utils/generateTokens');
 const { catchAsync } = require("../middleware/authMiddleware");
+const logger = require("../utils/logger");
 require("dotenv").config();
 // --- Utility Helpers ---
 const sanitizeUser = (user) => ({
@@ -52,10 +52,10 @@ exports.verifyOtp = catchAsync(async (req, res) => {
 
     // Direct lookup avoids redundantly searching Company collection first
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: "User did not request an OTP", success: false });
+    if (!user) return res.status(400).json({ message: "User did not request an OTP", success: false, occurredAt: new Date().toISOString() });
 
     if (user.otp !== otp || Date.now() > user.otpExpiry) {
-        return res.status(400).json({ message: "OTP invalid or expired", success: false });
+        return res.status(400).json({ message: "OTP invalid or expired", success: false, occurredAt: new Date().toISOString() });
     }
 
     const company = await Company.findById(user.company);
@@ -74,15 +74,15 @@ exports.register = catchAsync(async (req, res) => {
     const { fullName, email, password } = req.body;
 
     const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: "User not found", success: false });
-    if (!user.isVerified) return res.status(403).json({ message: "Email verification is required before registration", success: false });
-    if (user.password) return res.status(400).json({ message: "User is already registered", success: false });
+    if (!user) return res.status(404).json({ message: "User not found", success: false, occurredAt: new Date().toISOString() });
+    if (!user.isVerified) return res.status(403).json({ message: "Email verification is required before registration", success: false, occurredAt: new Date().toISOString() });
+    if (user.password) return res.status(400).json({ message: "User is already registered", success: false, occurredAt: new Date().toISOString() });
 
     const company = await Company.findById(user.company);
     if (company) company.owner = user._id;
 
     user.fullName = fullName;
-    user.password = await bcrypt.hash(password, 10);
+    user.password = password;
 
     await Promise.all([user.save(), company ? company.save() : Promise.resolve()]);
 
@@ -115,8 +115,8 @@ exports.login = catchAsync(async (req, res) => {
     });
 
     // Combine checks to obfuscate failure reason for security
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-        return res.status(401).json({ message: "Invalid email or password", success: false });
+    if (!user || !(await user.comparePassword(password))) {
+        return res.status(401).json({ message: "Invalid email or password", success: false, occurredAt: new Date().toISOString() });
     }
 
     const refreshToken = generateRefreshToken(user, user.company);
@@ -144,7 +144,7 @@ exports.login = catchAsync(async (req, res) => {
 
 exports.regenerateAccessToken = catchAsync(async (req, res) => {
     const { refreshToken } = req.cookies;
-    if (!refreshToken) return res.status(401).json({ message: "No refresh token provided", success: false });
+    if (!refreshToken) return res.status(401).json({ message: "No refresh token provided", success: false, occurredAt: new Date().toISOString() });
 
     // catchAsync wrapper will handle JWT verify errors and send 401
     const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN);
@@ -155,7 +155,7 @@ exports.regenerateAccessToken = catchAsync(async (req, res) => {
     });
 
     if (!user || user.refreshToken !== refreshToken) {
-        return res.status(401).json({ message: "Invalid or revoked refresh token", success: false });
+        return res.status(401).json({ message: "Invalid or revoked refresh token", success: false, occurredAt: new Date().toISOString() });
     }
 
     const accessToken = generateAccessToken(user, user.company);
@@ -169,7 +169,7 @@ exports.logout = catchAsync(async (req, res) => {
             const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN);
             await User.findByIdAndUpdate(decoded.user._id, { refreshToken: null });
         } catch (err) {
-            console.warn("Logout: Token expired or invalid, clearing cookie.");
+            logger.warn("Logout: Token expired or invalid, clearing cookie.");
         }
     }
 

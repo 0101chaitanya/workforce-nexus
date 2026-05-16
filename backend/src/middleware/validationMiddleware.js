@@ -13,11 +13,13 @@ const validate = (schema) => async (req, res, next) => {
                     message: e.message,
                 })),
                 success: false,
+                occurredAt: new Date().toISOString()
             });
         }
         return res.status(500).json({
             message: "Internal server error",
             success: false,
+            occurredAt: new Date().toISOString()
         });
     }
 };
@@ -36,11 +38,13 @@ const validateQuery = (schema) => async (req, res, next) => {
                     message: e.message,
                 })),
                 success: false,
+                occurredAt: new Date().toISOString()
             });
         }
         return res.status(500).json({
             message: "Internal server error",
             success: false,
+            occurredAt: new Date().toISOString()
         });
     }
 };

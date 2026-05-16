@@ -5,7 +5,6 @@ const ownerSchemas = {
   addUser: z.object({
     fullName: common.name,
     email: common.email,
-    password: common.newPassword,
     role: z.enum(["hr", "manager", "staff"]),
     salary: common.positiveAmount.optional(),
     branch: common.shortText.optional()
