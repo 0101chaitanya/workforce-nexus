@@ -5,7 +5,7 @@ const Company = require("../models/Company");
 const User = require("../models/User");
 const { generateAccessToken, generateRefreshToken } = require('../utils/generateTokens');
 const { catchAsync } = require("../middleware/authMiddleware");
-
+require("dotenv").config();
 // --- Utility Helpers ---
 const sanitizeUser = (user) => ({
     _id: user._id,
@@ -49,17 +49,17 @@ exports.sendOtp = catchAsync(async (req, res) => {
 
 exports.verifyOtp = catchAsync(async (req, res) => {
     const { email, otp } = req.body;
-    
+
     // Direct lookup avoids redundantly searching Company collection first
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: "User did not request an OTP", success: false });
 
-    if (user.otp !== Number(otp) || Date.now() > user.otpExpiry) {
+    if (user.otp !== otp || Date.now() > user.otpExpiry) {
         return res.status(400).json({ message: "OTP invalid or expired", success: false });
     }
 
     const company = await Company.findById(user.company);
-    
+
     user.isVerified = true;
     user.otp = undefined;
     user.otpExpiry = undefined;
@@ -72,7 +72,7 @@ exports.verifyOtp = catchAsync(async (req, res) => {
 
 exports.register = catchAsync(async (req, res) => {
     const { fullName, email, password } = req.body;
-    
+
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ message: "User not found", success: false });
     if (!user.isVerified) return res.status(403).json({ message: "Email verification is required before registration", success: false });
@@ -86,15 +86,29 @@ exports.register = catchAsync(async (req, res) => {
 
     await Promise.all([user.save(), company ? company.save() : Promise.resolve()]);
 
-    return res.status(201).json({ 
-        message: `${company ? company.companyName : 'User'} registered successfully!`, 
-        success: true 
+    await transporter.sendMail({
+        from: process.env.EMAIL,
+        to: email,
+        subject: "Registration Successful",
+        html: `<h2>Welcome, ${fullName}!</h2>
+               <p>Your registration ${company ? `for ${company.companyName}` : 'was'} successful.</p>
+               <p>Here are your login credentials:</p>
+               <ul>
+                   <li><strong>Email:</strong> ${email}</li>
+                   <li><strong>Password:</strong> ${password}</li>
+               </ul>
+               <p>Please keep these credentials safe.</p>`,
+    });
+
+    return res.status(201).json({
+        message: `${company ? company.companyName : 'User'} registered successfully!`,
+        success: true
     });
 });
 
 exports.login = catchAsync(async (req, res) => {
     const { email, password } = req.body;
-    
+
     const user = await User.findOne({ email }).populate({
         path: "company",
         populate: { path: "owner", select: "fullName email" }
@@ -134,7 +148,7 @@ exports.regenerateAccessToken = catchAsync(async (req, res) => {
 
     // catchAsync wrapper will handle JWT verify errors and send 401
     const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN);
-    
+
     const user = await User.findById(decoded.user._id).populate({
         path: "company",
         populate: { path: "owner", select: "fullName email" }
