@@ -2,31 +2,23 @@ const { z } = require("zod");
 const common = require("./common");
 
 const ownerSchemas = {
-  editCompanyInfo: z.object({
-    companyName: common.name.optional(),
-    email: common.email.optional(),
-    phone: common.phone.optional(),
-    address: common.address.optional(),
-  }),
-
-  updateProfile: z.object({
-    fullName: common.name,
-    phone: common.phone,
-    address: common.address,
-  }),
-
-  addAdmin: z.object({
+  addUser: z.object({
     fullName: common.name,
     email: common.email,
-    salary: common.adminSalary,
-    position: common.tinyText,
-    branch: common.shortText,
+    password: common.newPassword,
+    role: z.enum(["hr", "manager", "staff"]),
+    salary: common.positiveAmount.optional(),
+    branch: common.shortText.optional()
   }),
 
-  approvePayroll: z.object({
-    payrollId: common.objectId,
-    status: common.approvalStatus,
+  searchUsersQuery: z.object({
+    query: common.shortText.optional(),
+    role: z.enum(["hr", "manager", "staff", "owner"]).optional()
   }),
+
+  historyQuery: z.object({
+    targetUserId: common.objectId.optional()
+  })
 };
 
 module.exports = ownerSchemas;
