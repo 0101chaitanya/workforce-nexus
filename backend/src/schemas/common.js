@@ -44,12 +44,12 @@ const common = {
     .positive("Must be a positive number")
     .min(25000, "Admin salary should be at least ₹25,000/month")
     .max(200000, "Admin salary should not exceed ₹2,00,000/month"),
-    
+
   managerSalary: z.coerce.number()
     .positive("Must be a positive number")
     .min(20000, "Manager salary should be at least ₹20,000/month")
     .max(150000, "Manager salary should not exceed ₹1,50,000/month"),
-    
+
   staffSalary: z.coerce.number()
     .positive("Must be a positive number")
     .min(15000, "Staff salary should be at least ₹15,000/month")
@@ -58,8 +58,8 @@ const common = {
   // Non-negative amount (for allowances, deductions)
   amount: z.coerce.number().min(0, "Cannot be negative").max(10000000, "Amount too high").default(0),
 
-  // Month string (01-12)
-  month: z.string().regex(/^(0[1-9]|1[0-2])$/, "Month must be 01-12"),
+  // Month (1-12)
+  month: z.coerce.number().int().min(1).max(12, "Month must be between 1 and 12"),
 
   // Year (reasonable range)
   year: z.coerce.number().int().min(2020).max(2100, "Year out of range"),

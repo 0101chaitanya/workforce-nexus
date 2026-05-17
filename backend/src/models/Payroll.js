@@ -13,7 +13,9 @@ const payrollSchema = new mongoose.Schema({
     },
 
     month: {
-        type: String, // e.g., '01' for January, '12' for December
+        type: Number, // 1 for January, 12 for December
+        min: 1,
+        max: 12,
         required: true
     },
     year: {
