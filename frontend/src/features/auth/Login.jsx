@@ -1,17 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link,useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axiosInterceptors from '../../app/axiosInterceptors';
 import { setAuthSuccess, setAuthFailed, clearError } from './authSlice';
-import { Mail, Lock, UserCheck, Briefcase, KeyRound, Building } from 'lucide-react';
+import { Mail, Lock, Briefcase } from 'lucide-react';
 
 const Login = () => {
-  const navigate=useNavigate();
+  const navigate = useNavigate();
   const dispatch = useDispatch();
   const { error } = useSelector((state) => state.auth);
 
-  // Mode controllers
-  const [loginMode, setLoginMode] = useState('email'); // 'email' or 'empId'
   const [isForgotMode, setIsForgotMode] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -21,7 +19,7 @@ const Login = () => {
 
   useEffect(() => {
     dispatch(clearError());
-  }, [dispatch, loginMode, isForgotMode]);
+  }, [dispatch, isForgotMode]);
 
   const handleInputChange = (e) => {
     setLoginData({ ...loginData, [e.target.name]: e.target.value });
@@ -34,15 +32,15 @@ const Login = () => {
     dispatch(clearError());
 
     try {
-      // Direct integration payload using conditional identification targets
-      const payload = loginMode === 'email' 
-        ? { email: loginData.identifier, password: loginData.password }
-        : { employeeId: loginData.identifier, password: loginData.password };
+      const payload = {
+        email: loginData.identifier.trim().toLowerCase(),
+        password: loginData.password,
+      };
 
       const response = await axiosInterceptors.post('/auth/login', payload);
       dispatch(setAuthSuccess(response.data));
       alert("Authentication verified successfully! Access unlocked.");
-      navigate("/owner-dashboard")
+      navigate('/dashboard');         
     } catch (err) {
       dispatch(setAuthFailed(err.response?.data?.message || "Invalid credentials provided."));
     } finally {
@@ -99,25 +97,13 @@ const Login = () => {
       {/* Right Interactive Core Area */}
       <div className="w-full lg:w-7/12 bg-slate-50 flex items-center justify-center p-6 md:p-12">
         <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl shadow-slate-200/60 border border-slate-100 p-8 md:p-10 transition-all duration-300">
-          
+
           {!isForgotMode ? (
             <>
               {/* Login State Section Header */}
               <div className="mb-6">
                 <h2 className="text-3xl font-black text-slate-800 tracking-tight">Workspace Login</h2>
                 <p className="text-slate-400 mt-1.5 font-medium text-sm">Provide your user credentials to access your session</p>
-              </div>
-
-              {/* Toggle Input Control Bars */}
-              <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-2xl mb-6 border border-slate-200/30">
-                <button type="button" onClick={() => setLoginMode('email')}
-                  className={`py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-200 ${loginMode === 'email' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>
-                  Corporate Email
-                </button>
-                <button type="button" onClick={() => setLoginMode('empId')}
-                  className={`py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-200 ${loginMode === 'empId' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>
-                  Employee ID
-                </button>
               </div>
 
               {error && (
@@ -129,17 +115,13 @@ const Login = () => {
               <form onSubmit={handleAuthSubmit} className="space-y-4">
                 <div>
                   <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                    {loginMode === 'email' ? 'Corporate Email' : 'Internal Employee ID'}
+                    Corporate Email
                   </label>
                   <div className="relative mt-1.5">
-                    {loginMode === 'email' ? (
-                      <Mail className="absolute left-3.5 top-3.5 text-slate-400" size={18} />
-                    ) : (
-                      <UserCheck className="absolute left-3.5 top-3.5 text-slate-400" size={18} />
-                    )}
-                    <input type="text" name="identifier" value={loginData.identifier} onChange={handleInputChange} required
-                      className="w-full pl-11 pr-4 py-3 bg-slate-50/50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all duration-200 text-sm font-medium text-slate-700" 
-                      placeholder={loginMode === 'email' ? "name@company.com" : "EMP-2026-041"} />
+                    <Mail className="absolute left-3.5 top-3.5 text-slate-400" size={18} />
+                    <input type="email" name="identifier" value={loginData.identifier} onChange={handleInputChange} required
+                      className="w-full pl-11 pr-4 py-3 bg-slate-50/50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all duration-200 text-sm font-medium text-slate-700"
+                      placeholder="name@company.com" />
                   </div>
                 </div>
 
@@ -201,7 +183,7 @@ const Login = () => {
               </form>
             </>
           )}
-          
+
         </div>
       </div>
     </div>
