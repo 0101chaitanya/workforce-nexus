@@ -39,21 +39,10 @@ const common = {
   // Positive amount (for salaries, payroll items)
   positiveAmount: z.coerce.number().positive("Must be a positive number").max(100000000, "Amount exceeds maximum"),
 
-  // Role-specific salary ranges (industry standards for India)
-  adminSalary: z.coerce.number()
+  employeeSalary: z.coerce.number()
     .positive("Must be a positive number")
-    .min(25000, "Admin salary should be at least ₹25,000/month")
-    .max(200000, "Admin salary should not exceed ₹2,00,000/month"),
-
-  managerSalary: z.coerce.number()
-    .positive("Must be a positive number")
-    .min(20000, "Manager salary should be at least ₹20,000/month")
-    .max(150000, "Manager salary should not exceed ₹1,50,000/month"),
-
-  staffSalary: z.coerce.number()
-    .positive("Must be a positive number")
-    .min(15000, "Staff salary should be at least ₹15,000/month")
-    .max(80000, "Staff salary should not exceed ₹80,000/month"),
+    .min(15000, "Employee salary should be at least ₹15,000/month")
+    .max(80000, "Employee salary should not exceed ₹80,000/month"),
 
   // Non-negative amount (for allowances, deductions)
   amount: z.coerce.number().min(0, "Cannot be negative").max(10000000, "Amount too high").default(0),

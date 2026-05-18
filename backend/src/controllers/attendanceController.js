@@ -10,7 +10,7 @@ exports.clockIn = async (req, res) => {
         // Check if there's already an attendance record for today
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        
+
         const existingAttendance = await Attendance.findOne({
             user: userId,
             company: companyId,
@@ -82,7 +82,7 @@ exports.clockOut = async (req, res) => {
         }
 
         attendance.checkOutTime = new Date();
-        
+
         // Calculate total hours
         const diffMs = attendance.checkOutTime - attendance.checkInTime;
         attendance.totalHours = parseFloat((diffMs / (1000 * 60 * 60)).toFixed(2));
@@ -122,7 +122,7 @@ exports.getAttendanceHistory = async (req, res) => {
         }
 
         const attendanceHistory = await Attendance.find(query)
-            .populate('user', 'fullName email')
+            .populate('user', 'fullName email position')
             .sort({ date: -1 });
 
         return res.status(200).json({

@@ -5,7 +5,7 @@ const logger = require("../utils/logger");
 
 exports.addUser = async (req, res) => {
     try {
-        const { fullName, email, role, salary, branch } = req.body;
+        const { fullName, email, role, salary, branch, position } = req.body;
         const generatedPassword = generateSecurePassword();
         const companyId = req.company._id;
 
@@ -23,10 +23,11 @@ exports.addUser = async (req, res) => {
             fullName,
             email,
             password: generatedPassword,
-            role: role || "staff",
+            role: role || "employee",
             company: companyId,
             salary,
             branch,
+            position,
             isVerified: true // Assuming owner created users are verified
         });
 
@@ -47,8 +48,9 @@ exports.addUser = async (req, res) => {
                 </ul>
                 <p><strong>Other Details:</strong></p>
                 <ul>
-                    <li><strong>Role:</strong> ${role || "staff"}</li>
+                    <li><strong>Role:</strong> ${role || "employee"}</li>
                     <li><strong>Branch:</strong> ${branch || "N/A"}</li>
+                    <li><strong>Position:</strong> ${position || "N/A"}</li>
                 </ul>
                 <p>Please log in at your earliest convenience. We recommend changing your password after your first login.</p>
             `

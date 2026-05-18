@@ -5,14 +5,15 @@ const ownerSchemas = {
   addUser: z.object({
     fullName: common.name,
     email: common.email,
-    role: z.enum(["hr", "manager", "staff"]),
+    role: z.enum(["employee"]),
     salary: common.positiveAmount.optional(),
-    branch: common.shortText.optional()
+    branch: common.shortText.optional(),
+    position: common.shortText.optional()
   }),
 
   searchUsersQuery: z.object({
     query: common.shortText.optional(),
-    role: z.enum(["hr", "manager", "staff", "owner"]).optional()
+    role: z.enum(["employee", "owner"]).optional()
   }),
 
   historyQuery: z.object({
