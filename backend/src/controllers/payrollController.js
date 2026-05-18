@@ -1,5 +1,6 @@
 const Payroll = require("../models/Payroll");
 const User = require("../models/User");
+const Leave = require("../models/Leave");
 const logger = require("../utils/logger");
 
 exports.getPayrollHistory = async (req, res) => {
@@ -96,6 +97,44 @@ exports.generateCompanyPayroll = async (req, res) => {
             });
         }
 
+        // Calculate days in the target month for daily wage calculation
+        const daysInMonth = new Date(year, month, 0).getDate();
+
+        // Fetch all approved unpaid leaves that overlap with the target month
+        const monthStart = new Date(year, month - 1, 1);
+        const monthEnd = new Date(year, month, 0, 23, 59, 59, 999);
+
+        const unpaidLeaves = await Leave.find({
+            company: companyId,
+            status: 'approved',
+            type: 'unpaid',
+            $or: [
+                { startDate: { $lte: monthEnd }, endDate: { $gte: monthStart } }
+            ]
+        });
+
+        // Group unpaid leave days by user
+        const getDayStart = (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+        const startOfM = getDayStart(monthStart);
+        const endOfM = getDayStart(monthEnd);
+
+        const leaveDeductionsByUser = {};
+        for (const leave of unpaidLeaves) {
+            const userIdStr = leave.user.toString();
+            if (!leaveDeductionsByUser[userIdStr]) leaveDeductionsByUser[userIdStr] = 0;
+
+            const lStart = getDayStart(leave.startDate);
+            const lEnd = getDayStart(leave.endDate);
+
+            const actualStart = Math.max(lStart, startOfM);
+            const actualEnd = Math.min(lEnd, endOfM);
+
+            if (actualStart <= actualEnd) {
+                const days = Math.round((actualEnd - actualStart) / (1000 * 60 * 60 * 24)) + 1;
+                leaveDeductionsByUser[userIdStr] += days;
+            }
+        }
+
         const payrolls = [];
         for (const user of users) {
             // Check if payroll already exists for this user for the given month and year
@@ -110,9 +149,16 @@ exports.generateCompanyPayroll = async (req, res) => {
                 continue; // Skip if already generated for this user
             }
 
-            const basicPay = user.salary || 0;
-            // Simplified tax calculation (e.g. 10% tax for > 50,000 basic pay) - can be adjusted
-            const taxes = basicPay > 50000 ? basicPay * 0.1 : 0;
+            const grossSalary = user.salary || 0;
+            const dailyWage = grossSalary / daysInMonth;
+            const unpaidDays = leaveDeductionsByUser[user._id.toString()] || 0;
+            const deductions = Math.round(unpaidDays * dailyWage);
+
+            // Adjust basic pay based on unpaid leaves
+            const basicPay = Math.max(0, grossSalary - deductions);
+
+            // Simplified tax calculation based on adjusted pay
+            const taxes = basicPay > 50000 ? Math.round(basicPay * 0.1) : 0;
             const netPay = basicPay - taxes;
 
             payrolls.push({
