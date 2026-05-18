@@ -6,7 +6,7 @@ const catchAsync = (fn) => async (req, res, next) => {
         await fn(req, res, next);
     } catch (err) {
         logger.error(`Error in catchAsync: ${err.message || err}`, { stack: err.stack });
-        
+
         if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
             return res.status(401).json({ message: "Invalid or expired token", success: false, occurredAt: new Date().toISOString() });
         }
@@ -30,7 +30,7 @@ const protect = catchAsync(async (req, res, next) => {
 
 const isAuthorized = (...roles) => (req, res, next) => {
     const allowedRoles = roles.length > 0 ? roles : ['owner'];
-    
+
     if (allowedRoles.includes(req.user.role)) {
         next();
     } else {

@@ -33,14 +33,16 @@ const userSchema = new mongoose.Schema({
         type: String,
     }, photo: {
         type: mongoose.Schema.Types.ObjectId,
+    }, position: {
+        type: String,
     }, roleDescription: {
         type: String,
     }, refreshToken: {
         type: String,
     }, role: {
         type: String,
-        enum: ["hr", "manager", "staff", "owner"],
-        default: "staff"
+        enum: ["employee", "owner"],
+        default: "employee"
     }, salary: {
         type: Number,
     },

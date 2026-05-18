@@ -19,7 +19,7 @@ exports.getPayrollHistory = async (req, res) => {
         }
 
         const payrollHistory = await Payroll.find(query)
-            .populate('user', 'fullName email')
+            .populate('user', 'fullName email position')
             .sort({ year: -1, month: -1 });
 
         return res.status(200).json({
@@ -85,8 +85,8 @@ exports.generateCompanyPayroll = async (req, res) => {
             month = targetMonthIndex + 1;
         }
 
-        // Fetch all users for the company
-        const users = await User.find({ company: companyId });
+        // Fetch all employees for the company (excluding owners)
+        const users = await User.find({ company: companyId, role: 'employee' });
 
         if (!users || users.length === 0) {
             return res.status(404).json({
