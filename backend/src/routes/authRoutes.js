@@ -5,11 +5,13 @@ const authSchemas = require("../schemas/authSchemas");
 const {
   sendOtp,
   verifyOtp,
+  forgotPasswordOtp,
   register,
   login,
   logout,
   regenerateAccessToken,
-  testGet
+  testGet,
+  resetPassword,
 } = require("../controllers/authController");
 
 const router = express.Router();
@@ -24,9 +26,13 @@ router.post("/send-otp", validate(authSchemas.sendOtp), sendOtp);
 router.post("/verify-otp", validate(authSchemas.verifyOtp), verifyOtp);
 
 // --- Token Management ---
-router.post("/regenerate-refresh-token", regenerateAccessToken);
+router.post("/regenerate-access-token", regenerateAccessToken);
 
 // --- Profile / Protected Resources ---
 router.get("/me", protect, testGet);
+
+// Forgot Password Flow
+router.post("/forgot-password-otp", validate(authSchemas.forgotPasswordOtp), forgotPasswordOtp);
+router.post("/reset-password", validate(authSchemas.resetPassword), resetPassword);
 
 module.exports = router;

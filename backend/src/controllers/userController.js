@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const bcrypt = require("bcrypt");
 const { generateSecurePassword } = require("../utils/passwordGenerator");
 const transporter = require("../utils/sendEmail");
 const logger = require("../utils/logger");
@@ -38,165 +39,22 @@ exports.addUser = async (req, res) => {
             from: process.env.EMAIL,
             to: email,
             subject: "Welcome to the Company - Your Account Details",
-            html: `<div style="
-    margin: 0;
-    padding: 0;
-    background: #eef2ff;
-    font-family: Arial, Helvetica, sans-serif;
-  ">
-    <!-- MAIN WRAPPER -->
-    <div style="
-      max-width: 600px;
-      margin: 0 auto;
-      background: #ffffff;
-      border-radius: 18px;
-      overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-      width: 95%;
-    ">
-        <!-- BIG HEADER -->
-        <div style="
-        background: linear-gradient(135deg, #2563eb, #1d4ed8);
-        padding: 40px 20px;
-        text-align: center;
-        color: white;
-      ">
-            <div style="font-size: 26px; font-weight: bold; letter-spacing: 1px">
-                Employee Management System
-            </div>
-
-            <p style="margin-top: 10px; font-size: 14px; opacity: 0.9">
-                Account Notification
-            </p>
-        </div>
-
-        <!-- BODY -->
-        <div style="padding: 32px 24px">
-            <h2 style="margin: 0 0 10px 0; font-size: 22px; color: #111827">
-                Hello ${fullName},
-            </h2>
-
-            <p style="
-          font-size: 15px;
-          color: #4b5563;
-          line-height: 1.7;
-          margin-bottom: 20px;
-        ">
-                You have been successfully added to the company system by your
-                administrator. Your account is now active and ready to use.
-            </p>
-
-            <!-- CREDENTIAL BOX -->
-            <div style="
-          background: #f8fafc;
-          border: 1px solid #dbeafe;
-          border-radius: 14px;
-          padding: 18px;
-          margin-bottom: 20px;
-        ">
-                <h3 style="margin: 0 0 12px 0; color: #2563eb; font-size: 16px">
-                    Your Login Details
-                </h3>
-
-                <table style="
-            width: 100%;
-            font-size: 14px;
-            border-collapse: collapse;
-            word-break: break-word;
-          ">
-                    <tr>
-                        <td style="
-                padding: 8px 0;
-                color: #6b7280;
-                font-weight: bold;
-                width: 35%;
-              ">
-                            Email:
-                        </td>
-                        <td style="padding: 8px 0; color: #111827">${email}</td>
-                    </tr>
-
-                    <tr>
-                        <td style="padding: 8px 0; color: #6b7280; font-weight: bold">
-                            Password:
-                        </td>
-                        <td style="padding: 8px 0; color: #111827; font-weight: bold">
-                            ${generatedPassword}
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td style="padding: 8px 0; color: #6b7280; font-weight: bold">
-                            Role:
-                        </td>
-                        <td style="padding: 8px 0; color: #111827">
-                            ${role || "employee"}
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td style="padding: 8px 0; color: #6b7280; font-weight: bold">
-                            Branch:
-                        </td>
-                        <td style="padding: 8px 0; color: #111827">${branch || "N/A"}</td>
-                    </tr>
-
-                    <tr>
-                        <td style="padding: 8px 0; color: #6b7280; font-weight: bold">
-                            Position:
-                        </td>
-                        <td style="padding: 8px 0; color: #111827">${position || "N/A"}</td>
-                    </tr>
-
-                    <tr>
-                        <td style="padding: 8px 0; color: #6b7280; font-weight: bold">
-                            Salary:
-                        </td>
-                        <td style="padding: 8px 0; color: #111827">
-                            ${salary || "Not disclosed"}
-                        </td>
-                    </tr>
-                </table>
-            </div>
-
-            <!-- INFO NOTICE -->
-            <div style="
-          background: #eff6ff;
-          border-left: 4px solid #2563eb;
-          border-radius: 10px;
-          padding: 14px;
-          font-size: 13px;
-          color: #374151;
-          line-height: 1.6;
-        ">
-                This account is created by your organization. Please use these
-                credentials to log in and complete your profile setup after first login.
-            </div>
-
-            <p style="
-          margin-top: 20px;
-          font-size: 14px;
-          color: #6b7280;
-          line-height: 1.6;
-        ">
-                If you were not expecting this email, please contact your administrator
-                immediately.
-            </p>
-        </div>
-
-        <!-- FOOTER -->
-        <div style="
-        background: #f9fafb;
-        padding: 14px;
-        text-align: center;
-        font-size: 12px;
-        color: #9ca3af;
-        border-top: 1px solid #e5e7eb;
-      ">
-            © 2026 Employee Management System
-        </div>
-    </div>
-</div>`
+            html: `
+                <h2>Hello ${fullName},</h2>
+                <p>You have been added to the Employee Management System by your administrator.</p>
+                <p><strong>Your login credentials:</strong></p>
+                <ul>
+                    <li><strong>Email:</strong> ${email}</li>
+                    <li><strong>Password:</strong> ${generatedPassword}</li>
+                </ul>
+                <p><strong>Other Details:</strong></p>
+                <ul>
+                    <li><strong>Role:</strong> ${role || "employee"}</li>
+                    <li><strong>Branch:</strong> ${branch || "N/A"}</li>
+                    <li><strong>Position:</strong> ${position || "N/A"}</li>
+                </ul>
+                <p>Please log in at your earliest convenience. We recommend changing your password after your first login.</p>
+            `
         });
 
         // Avoid sending back the password in the user object
@@ -211,6 +69,46 @@ exports.addUser = async (req, res) => {
 
     } catch (err) {
         logger.error(`Error in addUser: ${err.message || err}`, { stack: err.stack });
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            occurredAt: new Date().toISOString()
+        });
+    }
+};
+
+exports.changePassword = async (req, res) => {
+    try {
+        const { oldPassword, newPassword } = req.body;
+        const userId = req.user._id;
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found",
+                success: false,
+                occurredAt: new Date().toISOString()
+            });
+        }
+
+        const isMatch = await bcrypt.compare(oldPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json({
+                message: "Incorrect old password",
+                success: false,
+                occurredAt: new Date().toISOString()
+            });
+        }
+
+        user.password = newPassword;
+        await user.save();
+
+        return res.status(200).json({
+            message: "Password changed successfully",
+            success: true
+        });
+    } catch (err) {
+        logger.error(`Error in changePassword: ${err.message || err}`, { stack: err.stack });
         return res.status(500).json({
             message: "Internal server error",
             success: false,
@@ -273,6 +171,143 @@ exports.getAllCompanyUsers = async (req, res) => {
 
     } catch (err) {
         logger.error(`Error in getAllCompanyUsers: ${err.message || err}`, { stack: err.stack });
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            occurredAt: new Date().toISOString()
+        });
+    }
+};
+
+exports.updateProfile = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        // Normal employees can only update non-administrative fields
+        const { fullName, phone, address, dateOfBirth, bankAccount } = req.body;
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found",
+                success: false,
+                occurredAt: new Date().toISOString()
+            });
+        }
+
+        if (fullName !== undefined) user.fullName = fullName;
+        if (phone !== undefined) user.phone = phone;
+        if (address !== undefined) user.address = address;
+        if (dateOfBirth !== undefined) user.dateOfBirth = dateOfBirth;
+        if (bankAccount !== undefined) user.bankAccount = bankAccount;
+
+        await user.save();
+
+        const updatedUser = await User.findById(userId).select("-password -refreshToken -otp -otpExpiry");
+
+        return res.status(200).json({
+            message: "Profile updated successfully",
+            success: true,
+            data: updatedUser
+        });
+    } catch (err) {
+        logger.error(`Error in updateProfile: ${err.message || err}`, { stack: err.stack });
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            occurredAt: new Date().toISOString()
+        });
+    }
+};
+
+exports.updateUserByAdmin = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const companyId = req.company._id;
+
+        // Explicit safety check
+        if (req.user.role !== 'owner') {
+            return res.status(403).json({
+                message: "Not authorized. Only owners can perform this action",
+                success: false,
+                occurredAt: new Date().toISOString()
+            });
+        }
+
+        // Admins can update all fields including administrative ones
+        const { fullName, role, salary, branch, position, phone, address, dateOfBirth, bankAccount } = req.body;
+
+        const user = await User.findOne({ _id: id, company: companyId });
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found",
+                success: false,
+                occurredAt: new Date().toISOString()
+            });
+        }
+
+        if (fullName !== undefined) user.fullName = fullName;
+        if (role !== undefined) user.role = role;
+        if (salary !== undefined) user.salary = salary;
+        if (branch !== undefined) user.branch = branch;
+        if (position !== undefined) user.position = position;
+        if (phone !== undefined) user.phone = phone;
+        if (address !== undefined) user.address = address;
+        if (dateOfBirth !== undefined) user.dateOfBirth = dateOfBirth;
+        if (bankAccount !== undefined) user.bankAccount = bankAccount;
+
+        await user.save();
+
+        const updatedUser = await User.findOne({ _id: id }).select("-password -refreshToken -otp -otpExpiry");
+
+        return res.status(200).json({
+            message: "User updated successfully",
+            success: true,
+            data: updatedUser
+        });
+    } catch (err) {
+        logger.error(`Error in updateUserByAdmin: ${err.message || err}`, { stack: err.stack });
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            occurredAt: new Date().toISOString()
+        });
+    }
+};
+
+exports.getUserById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const companyId = req.company._id;
+
+        // Ensure employees can only view their own profile, unless they are an owner
+        if (req.user.role !== 'owner' && req.user._id.toString() !== id) {
+            return res.status(403).json({
+                message: "Not authorized to view this profile",
+                success: false,
+                occurredAt: new Date().toISOString()
+            });
+        }
+
+        // Fetch user ensuring they belong to the correct company
+        const user = await User.findOne({ _id: id, company: companyId })
+            .select("-password -refreshToken -otp -otpExpiry");
+
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found",
+                success: false,
+                occurredAt: new Date().toISOString()
+            });
+        }
+
+        return res.status(200).json({
+            message: "User fetched successfully",
+            success: true,
+            data: user
+        });
+    } catch (err) {
+        logger.error(`Error in getUserById: ${err.message || err}`, { stack: err.stack });
         return res.status(500).json({
             message: "Internal server error",
             success: false,
