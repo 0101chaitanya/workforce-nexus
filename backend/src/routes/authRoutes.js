@@ -5,11 +5,13 @@ const authSchemas = require("../schemas/authSchemas");
 const {
   sendOtp,
   verifyOtp,
+  forgotPasswordOtp,
   register,
   login,
   logout,
   regenerateAccessToken,
-  testGet
+  testGet,
+  resetPassword,
 } = require("../controllers/authController");
 
 const router = express.Router();
@@ -30,7 +32,7 @@ router.post("/regenerate-refresh-token", regenerateAccessToken);
 router.get("/me", protect, testGet);
 
 // Forgot Password Flow
-router.post("/forgot-password-otp", validate(authSchemas.forgotPasswordOtp), authController.forgotPasswordOtp);
-router.post("/reset-password", validate(authSchemas.resetPassword), authController.resetPassword);
+router.post("/forgot-password-otp", validate(authSchemas.forgotPasswordOtp), forgotPasswordOtp);
+router.post("/reset-password", validate(authSchemas.resetPassword), resetPassword);
 
 module.exports = router;
