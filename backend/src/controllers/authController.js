@@ -185,3 +185,47 @@ exports.testGet = catchAsync(async (req, res) => {
         company: req.company
     });
 });
+
+exports.forgotPasswordOtp = catchAsync(async (req, res) => {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+        return res.status(404).json({ message: "User not found", success: false, occurredAt: new Date().toISOString() });
+    }
+
+    const otp = Math.floor(10000 + Math.random() * 90000); // 5 digits
+    user.otp = otp;
+    user.otpExpiry = Date.now() + 15 * 60 * 1000; // valid for 15 minutes
+
+    await user.save();
+
+    await transporter.sendMail({
+        from: process.env.EMAIL,
+        to: email,
+        subject: "Password Reset OTP",
+        html: `<h2>Your OTP for password reset is ${otp}</h2>
+               <p>This code is valid for 15 minutes. If you did not request a password reset, please ignore this email.</p>`,
+    });
+
+    return res.status(200).json({ message: "OTP sent successfully to email", success: true });
+});
+
+exports.resetPassword = catchAsync(async (req, res) => {
+    const { email, otp, newPassword } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "User not found", success: false, occurredAt: new Date().toISOString() });
+
+    if (user.otp !== otp || Date.now() > user.otpExpiry) {
+        return res.status(400).json({ message: "OTP invalid or expired", success: false, occurredAt: new Date().toISOString() });
+    }
+
+    user.password = newPassword; // Pre-save hook in User.js will hash it automatically
+    user.otp = undefined;
+    user.otpExpiry = undefined;
+
+    await user.save();
+
+    return res.status(200).json({ message: "Password reset successfully", success: true });
+});

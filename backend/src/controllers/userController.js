@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const bcrypt = require("bcrypt");
 const { generateSecurePassword } = require("../utils/passwordGenerator");
 const transporter = require("../utils/sendEmail");
 const logger = require("../utils/logger");
@@ -76,6 +77,46 @@ exports.addUser = async (req, res) => {
     }
 };
 
+exports.changePassword = async (req, res) => {
+    try {
+        const { oldPassword, newPassword } = req.body;
+        const userId = req.user._id;
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found",
+                success: false,
+                occurredAt: new Date().toISOString()
+            });
+        }
+
+        const isMatch = await bcrypt.compare(oldPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json({
+                message: "Incorrect old password",
+                success: false,
+                occurredAt: new Date().toISOString()
+            });
+        }
+
+        user.password = newPassword;
+        await user.save();
+
+        return res.status(200).json({
+            message: "Password changed successfully",
+            success: true
+        });
+    } catch (err) {
+        logger.error(`Error in changePassword: ${err.message || err}`, { stack: err.stack });
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            occurredAt: new Date().toISOString()
+        });
+    }
+};
+
 exports.searchUsers = async (req, res) => {
     try {
         const { query, role } = req.query;
@@ -130,6 +171,143 @@ exports.getAllCompanyUsers = async (req, res) => {
 
     } catch (err) {
         logger.error(`Error in getAllCompanyUsers: ${err.message || err}`, { stack: err.stack });
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            occurredAt: new Date().toISOString()
+        });
+    }
+};
+
+exports.updateProfile = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        // Normal employees can only update non-administrative fields
+        const { fullName, phone, address, dateOfBirth, bankAccount } = req.body;
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found",
+                success: false,
+                occurredAt: new Date().toISOString()
+            });
+        }
+
+        if (fullName !== undefined) user.fullName = fullName;
+        if (phone !== undefined) user.phone = phone;
+        if (address !== undefined) user.address = address;
+        if (dateOfBirth !== undefined) user.dateOfBirth = dateOfBirth;
+        if (bankAccount !== undefined) user.bankAccount = bankAccount;
+
+        await user.save();
+
+        const updatedUser = await User.findById(userId).select("-password -refreshToken -otp -otpExpiry");
+
+        return res.status(200).json({
+            message: "Profile updated successfully",
+            success: true,
+            data: updatedUser
+        });
+    } catch (err) {
+        logger.error(`Error in updateProfile: ${err.message || err}`, { stack: err.stack });
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            occurredAt: new Date().toISOString()
+        });
+    }
+};
+
+exports.updateUserByAdmin = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const companyId = req.company._id;
+
+        // Explicit safety check
+        if (req.user.role !== 'owner') {
+            return res.status(403).json({
+                message: "Not authorized. Only owners can perform this action",
+                success: false,
+                occurredAt: new Date().toISOString()
+            });
+        }
+
+        // Admins can update all fields including administrative ones
+        const { fullName, role, salary, branch, position, phone, address, dateOfBirth, bankAccount } = req.body;
+
+        const user = await User.findOne({ _id: id, company: companyId });
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found",
+                success: false,
+                occurredAt: new Date().toISOString()
+            });
+        }
+
+        if (fullName !== undefined) user.fullName = fullName;
+        if (role !== undefined) user.role = role;
+        if (salary !== undefined) user.salary = salary;
+        if (branch !== undefined) user.branch = branch;
+        if (position !== undefined) user.position = position;
+        if (phone !== undefined) user.phone = phone;
+        if (address !== undefined) user.address = address;
+        if (dateOfBirth !== undefined) user.dateOfBirth = dateOfBirth;
+        if (bankAccount !== undefined) user.bankAccount = bankAccount;
+
+        await user.save();
+
+        const updatedUser = await User.findOne({ _id: id }).select("-password -refreshToken -otp -otpExpiry");
+
+        return res.status(200).json({
+            message: "User updated successfully",
+            success: true,
+            data: updatedUser
+        });
+    } catch (err) {
+        logger.error(`Error in updateUserByAdmin: ${err.message || err}`, { stack: err.stack });
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            occurredAt: new Date().toISOString()
+        });
+    }
+};
+
+exports.getUserById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const companyId = req.company._id;
+
+        // Ensure employees can only view their own profile, unless they are an owner
+        if (req.user.role !== 'owner' && req.user._id.toString() !== id) {
+            return res.status(403).json({
+                message: "Not authorized to view this profile",
+                success: false,
+                occurredAt: new Date().toISOString()
+            });
+        }
+
+        // Fetch user ensuring they belong to the correct company
+        const user = await User.findOne({ _id: id, company: companyId })
+            .select("-password -refreshToken -otp -otpExpiry");
+
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found",
+                success: false,
+                occurredAt: new Date().toISOString()
+            });
+        }
+
+        return res.status(200).json({
+            message: "User fetched successfully",
+            success: true,
+            data: user
+        });
+    } catch (err) {
+        logger.error(`Error in getUserById: ${err.message || err}`, { stack: err.stack });
         return res.status(500).json({
             message: "Internal server error",
             success: false,
