@@ -22,6 +22,16 @@ const authSchemas = {
     email: common.email,
     password: common.password,
   }),
+
+  forgotPasswordOtp: z.object({
+    email: common.email,
+  }),
+
+  resetPassword: z.object({
+    email: common.email,
+    otp: common.otp,
+    newPassword: common.newPassword,
+  }),
 };
 
 module.exports = authSchemas;

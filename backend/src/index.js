@@ -9,6 +9,7 @@ const payrollRoutes = require("./routes/payrollRoutes");
 const userRoutes = require("./routes/userRoutes");
 const leaveRoutes = require("./routes/leaveRoutes");
 const companyRoutes = require("./routes/companyRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
 const connectDB = require("./config/db");
 const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
@@ -40,7 +41,7 @@ app.use("/api/payroll", payrollRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/company", companyRoutes);
 app.use("/api/leaves", leaveRoutes);
-
+app.use("/api/dashboard", dashboardRoutes);
 
 app.listen(process.env.PORT, () => {
     console.log(`Server running on port ${process.env.PORT}`);

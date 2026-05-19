@@ -29,4 +29,8 @@ router.post("/regenerate-refresh-token", regenerateAccessToken);
 // --- Profile / Protected Resources ---
 router.get("/me", protect, testGet);
 
+// Forgot Password Flow
+router.post("/forgot-password-otp", validate(authSchemas.forgotPasswordOtp), authController.forgotPasswordOtp);
+router.post("/reset-password", validate(authSchemas.resetPassword), authController.resetPassword);
+
 module.exports = router;

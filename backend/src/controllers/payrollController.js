@@ -1,6 +1,7 @@
 const Payroll = require("../models/Payroll");
 const User = require("../models/User");
 const Leave = require("../models/Leave");
+const PDFDocument = require("pdfkit");
 const logger = require("../utils/logger");
 
 exports.getPayrollHistory = async (req, res) => {
@@ -36,6 +37,87 @@ exports.getPayrollHistory = async (req, res) => {
             success: false,
             occurredAt: new Date().toISOString()
         });
+    }
+};
+
+exports.downloadPayslip = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const companyId = req.company._id;
+
+        // Fetch the payroll record and populate user details
+        const payroll = await Payroll.findOne({ _id: id, company: companyId })
+            .populate('user', 'fullName email position branch');
+
+        if (!payroll) {
+            return res.status(404).json({ message: "Payroll record not found", success: false });
+        }
+
+        // Ensure employees can only download their own payslips
+        if (req.user.role !== 'owner' && payroll.user._id.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: "Not authorized to download this payslip", success: false });
+        }
+
+        const doc = new PDFDocument({ margin: 50, size: 'A4' });
+
+        const filename = `Payslip_${payroll.user.fullName.replace(/\s+/g, '_')}_${payroll.month}_${payroll.year}.pdf`;
+        
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+
+        doc.pipe(res);
+
+        // --- Header Section ---
+        doc.fontSize(22).font('Helvetica-Bold').text('PAYSLIP', { align: 'center' });
+        doc.moveDown();
+        doc.fontSize(12).font('Helvetica').text(`Period: Month ${payroll.month}, ${payroll.year}`, { align: 'center' });
+        doc.moveDown(2);
+
+        // --- Employee Info Section ---
+        doc.fontSize(14).font('Helvetica-Bold').text('Employee Details');
+        doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke(); // Horizontal line
+        doc.moveDown(0.5);
+        
+        doc.fontSize(12).font('Helvetica');
+        doc.text(`Name: ${payroll.user.fullName}`);
+        doc.text(`Email: ${payroll.user.email}`);
+        doc.text(`Position: ${payroll.user.position || 'N/A'}`);
+        doc.text(`Branch: ${payroll.user.branch || 'N/A'}`);
+        doc.moveDown(2);
+
+        // --- Payroll Details Section ---
+        doc.fontSize(14).font('Helvetica-Bold').text('Earnings & Deductions');
+        doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+        doc.moveDown(0.5);
+
+        doc.fontSize(12).font('Helvetica');
+        doc.text('Basic Pay:', { continued: true }).text(`Rs. ${payroll.basicPay.toFixed(2)}`, { align: 'right' });
+        doc.text('Taxes (Deduction):', { continued: true }).text(`Rs. ${payroll.taxes.toFixed(2)}`, { align: 'right' });
+        doc.moveDown();
+        
+        doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+        doc.moveDown(0.5);
+
+        doc.fontSize(14).font('Helvetica-Bold');
+        doc.text('Net Pay:', { continued: true }).text(`Rs. ${payroll.netPay.toFixed(2)}`, { align: 'right' });
+
+        // --- Footer Section ---
+        doc.moveDown(5);
+        doc.fontSize(10).font('Helvetica-Oblique').fillColor('gray');
+        doc.text('This is a computer-generated document and requires no signature.', { align: 'center' });
+
+        doc.end();
+
+    } catch (err) {
+        logger.error(`Error in downloadPayslip: ${err.message || err}`, { stack: err.stack });
+        // Only send a JSON error if the PDF hasn't started streaming yet
+        if (!res.headersSent) {
+            return res.status(500).json({
+                message: "Internal server error generating PDF",
+                success: false,
+                occurredAt: new Date().toISOString()
+            });
+        }
     }
 };
 
