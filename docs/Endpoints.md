@@ -45,7 +45,7 @@
 - **Output (200 OK):** `message` ("Email Verified"), `success` (true).
 - **Output (400 Error):** `message` ("OTP invalid or expired"), `success` (false).
 
-### POST `/api/auth/regenerate-refresh-token`
+### POST `/api/auth/regenerate-access-token`
 - **Description:** Regenerate access token using refresh token.
 - **Input (Cookies):** `refreshToken`
 - **Output (200 OK):** `accessToken` (string), `message`, `success` (true).
