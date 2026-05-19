@@ -1,25 +1,28 @@
+import React from 'react';
 import { useSelector } from 'react-redux';
 import { Navigate } from 'react-router-dom';
 
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const { token, role } = useSelector((state) => state.auth);
 
-  // If there is no token, send the user to the login screen
+  // 1. Force unauthenticated clients back to login screen
   if (!token) {
     return <Navigate to="/login" replace />;
   }
 
-  // If roles are defined for this route, confirm the user has access
-  if (allowedRoles.length > 0) {
-    const normalizedUserRole = role?.toLowerCase();
-    const normalizedAllowedRoles = allowedRoles.map((r) => r.toLowerCase());
+  // 2. Normalize inputs to lowercase to prevent matching errors
+  const normalizedUserRole = role?.toLowerCase(); 
+  
+  // Map "staff" role from backend to "employee" to match frontend layouts cleanly
+  const currentRole = normalizedUserRole === 'staff' ? 'employee' : normalizedUserRole;
+  
+  const normalizedAllowedRoles = allowedRoles.map(r => r.toLowerCase());
 
-    if (!normalizedAllowedRoles.includes(normalizedUserRole)) {
-      return <Navigate to="/unauthorized" replace />;
-    }
+  // 3. Strict security check
+  if (allowedRoles.length > 0 && !normalizedAllowedRoles.includes(currentRole)) {
+    return <Navigate to="/unauthorized" replace />;
   }
 
-  // Render the protected content if authenticated and authorized
   return children;
 };
 

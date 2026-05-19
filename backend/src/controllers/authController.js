@@ -41,7 +41,116 @@ exports.sendOtp = catchAsync(async (req, res) => {
         from: process.env.EMAIL,
         to: email,
         subject: "OTP Verification Email",
-        html: `<h2>Your OTP for email verification is ${otp}</h2>`,
+        html: `<div
+  style="
+    margin: 0;
+    padding: 40px 15px;
+    background: #eef2ff;
+    font-family: Arial, Helvetica, sans-serif;
+  "
+>
+  <div
+    style="
+      max-width: 560px;
+      margin: auto;
+      background: #ffffff;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    "
+  >
+    <!-- Header -->
+    <div
+      style="
+        background: linear-gradient(135deg, #2563eb, #1e40af);
+        padding: 35px 20px;
+        text-align: center;
+        color: white;
+      "
+    >
+      <h1 style="margin: 0; font-size: 32px; letter-spacing: 1px">
+        Verify Your Account
+      </h1>
+
+      <p style="margin-top: 10px; font-size: 15px; opacity: 0.9">
+        Secure OTP Verification
+      </p>
+    </div>
+
+    <!-- Body -->
+    <div style="padding: 40px 35px; text-align: center">
+      <h2 style="margin-top: 0; color: #111827; font-size: 26px">
+        Email Verification
+      </h2>
+
+      <p
+        style="
+          color: #6b7280;
+          font-size: 16px;
+          line-height: 1.6;
+          margin-bottom: 30px;
+        "
+      >
+        Use the verification code below to complete your sign in process. This
+        OTP is valid for only <strong>5 minutes</strong>.
+      </p>
+
+      <!-- OTP Box -->
+      <div
+        style="
+          background: #f8fafc;
+          border: 2px dashed #2563eb;
+          border-radius: 16px;
+          padding: 25px;
+          margin: 30px 0;
+        "
+      >
+        <div
+          style="
+            font-size: 42px;
+            font-weight: bold;
+            letter-spacing: 12px;
+            color: #2563eb;
+          "
+        >
+          ${otp}
+        </div>
+      </div>
+
+      <!-- Security Notice -->
+      <div
+        style="
+          background: #eff6ff;
+          border-left: 4px solid #2563eb;
+          padding: 15px;
+          border-radius: 10px;
+          text-align: left;
+          margin-top: 25px;
+        "
+      >
+        <p style="margin: 0; color: #374151; font-size: 14px; line-height: 1.5">
+          If you did not request this verification code, you can safely ignore
+          this email.
+        </p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div
+      style="
+        padding: 20px;
+        background: #f9fafb;
+        text-align: center;
+        border-top: 1px solid #e5e7eb;
+      "
+    >
+      <p style="margin: 0; color: #9ca3af; font-size: 13px">
+        © 2026 Employee Management System
+      </p>
+    </div>
+  </div>
+</div>
+`,
     });
 
     return res.status(200).json({ message: "OTP sent successfully to email", success: true });
@@ -90,14 +199,71 @@ exports.register = catchAsync(async (req, res) => {
         from: process.env.EMAIL,
         to: email,
         subject: "Registration Successful",
-        html: `<h2>Welcome, ${fullName}!</h2>
-               <p>Your registration ${company ? `for ${company.companyName}` : 'was'} successful.</p>
-               <p>Here are your login credentials:</p>
-               <ul>
-                   <li><strong>Email:</strong> ${email}</li>
-                   <li><strong>Password:</strong> ${password}</li>
-               </ul>
-               <p>Please keep these credentials safe.</p>`,
+        html: `<div style="margin:0; padding:40px 15px; background:#eef2ff; font-family:Arial, Helvetica, sans-serif;">
+
+    <div
+        style="max-width:600px; margin:auto; background:#fff; border-radius:20px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.08);">
+
+        <!-- Header -->
+        <div
+            style="background:linear-gradient(135deg,#2563eb,#1d4ed8); padding:35px 20px; text-align:center; color:#fff;">
+            <h1 style="margin:0; font-size:30px; letter-spacing:1px;">Registration Successful 🎉</h1>
+            <p style="margin:10px 0 0; font-size:15px; opacity:0.9;">Employee Management System</p>
+        </div>
+
+        <!-- Body -->
+        <div style="padding:40px 35px;">
+
+            <h2 style="color:#111827; margin:0;">Welcome, ${fullName}!</h2>
+
+            <p style="color:#4b5563; font-size:16px; line-height:1.7;">
+                Your registration <strong>${company ? `for ${company.companyName}` : 'was'}</strong> successful.
+            </p>
+
+            <p style="color:#6b7280; font-size:15px; line-height:1.7;">
+                Below are your login credentials. Please keep them secure.
+            </p>
+
+            <!-- Credentials Card -->
+            <div style="background:#f8fafc; border:1px solid #dbeafe; border-radius:16px; padding:25px; margin:30px 0;">
+                <h3 style="margin:0 0 20px; color:#2563eb;">Account Credentials</h3>
+                <table style="width:100%; border-collapse:collapse; font-size:15px;">
+                    <tr>
+                        <td style="padding:12px 0; color:#6b7280; font-weight:bold; width:120px;">Email:</td>
+                        <td style="padding:12px 0; color:#111827;">${email}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:12px 0; color:#6b7280; font-weight:bold;">Password:</td>
+                        <td style="padding:12px 0; color:#111827; font-weight:bold;">${password}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Security Notice -->
+            <div
+                style="background:#eff6ff; border-left:4px solid #2563eb; border-radius:12px; padding:18px; margin-top:20px;">
+                <p style="margin:0; color:#374151; font-size:14px; line-height:1.6;">
+                    For better security, we recommend changing your password after your first login.
+                </p>
+            </div>
+
+            <p style="margin-top:30px; color:#4b5563; font-size:15px; line-height:1.7;">
+                Thank you for choosing our Employee Management System.
+            </p>
+
+        </div>
+
+        <!-- Footer -->
+        <div style="background:#f9fafb; border-top:1px solid #e5e7eb; padding:20px; text-align:center;">
+            <p style="margin:0; color:#9ca3af; font-size:13px;">
+                © 2026 Employee Management System. All rights reserved.
+            </p>
+        </div>
+
+    </div>
+
+</div>
+`,
     });
 
     return res.status(201).json({
