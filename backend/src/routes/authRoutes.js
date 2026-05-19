@@ -26,7 +26,7 @@ router.post("/send-otp", validate(authSchemas.sendOtp), sendOtp);
 router.post("/verify-otp", validate(authSchemas.verifyOtp), verifyOtp);
 
 // --- Token Management ---
-router.post("/regenerate-refresh-token", regenerateAccessToken);
+router.post("/regenerate-access-token", regenerateAccessToken);
 
 // --- Profile / Protected Resources ---
 router.get("/me", protect, testGet);
