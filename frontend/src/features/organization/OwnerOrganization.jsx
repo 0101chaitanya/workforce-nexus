@@ -6,6 +6,7 @@ const OwnerOrganization = () => {
     const [company, setCompany] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [successMessage, setSuccessMessage] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [editForm, setEditForm] = useState({ companyName: '', address: '', phone: '' });
     const [saving, setSaving] = useState(false);
@@ -45,13 +46,15 @@ const OwnerOrganization = () => {
     const handleSave = async (e) => {
         e.preventDefault();
         setSaving(true);
+        setError(null);
+        setSuccessMessage(null);
         try {
             await api.put('/company/update', editForm);
             await fetchCompany();
             setIsEditing(false);
-            alert('Organization details updated successfully.');
+            setSuccessMessage('Organization details updated successfully.');
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to update organization details.');
+            setError(err.response?.data?.message || 'Failed to update organization details.');
         } finally {
             setSaving(false);
         }
@@ -98,6 +101,20 @@ const OwnerOrganization = () => {
                     </div>
                 </div>
             </div>
+
+            {error && (
+                <div className="flex items-center gap-3 p-5 bg-rose-50 text-rose-700 rounded-2xl border border-rose-100/50 text-xs font-bold">
+                    <AlertCircle size={20} className="shrink-0" />
+                    {error}
+                </div>
+            )}
+
+            {successMessage && (
+                <div className="flex items-center gap-3 p-5 bg-emerald-50 text-emerald-700 rounded-2xl border border-emerald-100/50 text-xs font-bold">
+                    <AlertCircle size={20} className="shrink-0" />
+                    {successMessage}
+                </div>
+            )}
 
             <div className="grid gap-6 lg:grid-cols-2">
                 <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm space-y-5">
@@ -186,18 +203,11 @@ const OwnerOrganization = () => {
                     )}
                 </div>
 
-                <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm space-y-5">
+                <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
                     <div className="flex items-center gap-3 text-slate-800 font-bold text-lg">
-                        <UserCircle size={24} /> Owner & Account
+                        <UserCircle size={24} /> Owner
                     </div>
-                    <div className="space-y-3 text-slate-600 text-sm">
-                        <p className="font-semibold text-slate-900">{company.owner?.fullName || 'Owner details unavailable'}</p>
-                        <p className="text-slate-500">Owner name</p>
-                        <div className="rounded-2xl bg-slate-50 p-4">
-                            <p className="text-xs uppercase tracking-wider text-slate-400">Account Status</p>
-                            <p className="mt-2 text-slate-700">{company.isVerified ? 'Verified' : 'Unverified'}</p>
-                        </div>
-                    </div>
+                    <p className="mt-4 text-slate-600">{company.owner?.fullName || 'Owner details unavailable'}</p>
                 </div>
             </div>
         </div>

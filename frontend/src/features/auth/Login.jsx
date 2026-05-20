@@ -11,11 +11,15 @@ const Login = () => {
   const { error } = useSelector((state) => state.auth);
 
   const [isForgotMode, setIsForgotMode] = useState(false);
+  const [isOtpMode, setIsOtpMode] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   // Data inputs
   const [loginData, setLoginData] = useState({ identifier: '', password: '' });
   const [recoveryEmail, setRecoveryEmail] = useState('');
+  const [otp, setOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
 
   useEffect(() => {
     dispatch(clearError());
@@ -57,13 +61,15 @@ const Login = () => {
     e.preventDefault();
     if (!recoveryEmail) return;
     setLoading(true);
+    dispatch(clearError());
+    setSuccessMessage('');
 
     try {
       await axiosInterceptors.post('/auth/forgot-password-otp', { email: recoveryEmail });
-      alert("Recovery instructions forwarded! Check your inbox.");
+      setSuccessMessage("Recovery instructions forwarded! Check your inbox.");
       setIsOtpMode(true);
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to issue password restoration ticket.");
+      dispatch(setAuthFailed(err.response?.data?.message || "Failed to issue password restoration ticket."));
     } finally {
       setLoading(false);
     }
@@ -73,16 +79,21 @@ const Login = () => {
     e.preventDefault();
     if (!otp || !newPassword) return;
     setLoading(true);
+    dispatch(clearError());
+    setSuccessMessage('');
 
     try {
       await axiosInterceptors.post('/auth/reset-password', { email: recoveryEmail, otp, newPassword });
-      alert("Password reset successfully! You can now login.");
-      setIsForgotMode(false);
-      setIsOtpMode(false);
-      setOtp('');
-      setNewPassword('');
+      setSuccessMessage("Password reset successfully! You can now login.");
+      setTimeout(() => {
+        setIsForgotMode(false);
+        setIsOtpMode(false);
+        setOtp('');
+        setNewPassword('');
+        setRecoveryEmail('');
+      }, 2000);
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to reset password.");
+      dispatch(setAuthFailed(err.response?.data?.message || "Failed to reset password."));
     } finally {
       setLoading(false);
     }
@@ -135,6 +146,12 @@ const Login = () => {
                 </div>
               )}
 
+              {successMessage && (
+                <div className="mb-5 p-4 bg-emerald-50 text-emerald-600 rounded-2xl text-xs font-bold border border-emerald-100/50 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full shrink-0" /> {successMessage}
+                </div>
+              )}
+
               <form onSubmit={handleAuthSubmit} className="space-y-4">
                 <div>
                   <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -183,6 +200,18 @@ const Login = () => {
                 <h2 className="text-3xl font-black text-slate-800 tracking-tight">Account Recovery</h2>
                 <p className="text-slate-400 mt-1.5 font-medium text-sm">Provide your registered system email to dispatch reset instructions</p>
               </div>
+
+              {error && (
+                <div className="mb-5 p-4 bg-rose-50 text-rose-600 rounded-2xl text-xs font-bold border border-rose-100/50 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-rose-500 rounded-full shrink-0" /> {error}
+                </div>
+              )}
+
+              {successMessage && (
+                <div className="mb-5 p-4 bg-emerald-50 text-emerald-600 rounded-2xl text-xs font-bold border border-emerald-100/50 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full shrink-0" /> {successMessage}
+                </div>
+              )}
 
               {!isOtpMode ? (
                 <form onSubmit={handleRecoverySubmit} className="space-y-4">

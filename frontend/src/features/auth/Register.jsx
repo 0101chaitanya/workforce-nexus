@@ -22,6 +22,7 @@ const Register = () => {
     const [isEmailVerified, setIsEmailVerified] = useState(false);
     const [otpLoading, setOtpLoading] = useState(false); 
     const [passwordError, setPasswordError] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
 
     useEffect(() => {
         dispatch(clearError());
@@ -32,34 +33,44 @@ const Register = () => {
     };
 
     const handleSendOtp = async () => {
-        if (!formData.email) return alert("Please enter email first");
+        if (!formData.email) {
+            dispatch(setAuthFailed("Please enter email first"));
+            return;
+        }
         setOtpLoading(true);
+        dispatch(clearError());
+        setSuccessMessage('');
         try {
             await axiosInterceptors.post('/auth/send-otp', {
                 email: formData.email,
                 companyName: formData.companyName
             });
             setIsOtpSent(true);
-            alert("OTP verification code transmitted successfully!");
+            setSuccessMessage("OTP verification code transmitted successfully!");
         } catch (err) {
-            alert(err.response?.data?.message || "Failed to send OTP code.");
+            dispatch(setAuthFailed(err.response?.data?.message || "Failed to send OTP code."));
         } finally {
             setOtpLoading(false);
         }
     };
 
     const handleVerifyOtp = async () => {
-        if (!formData.otp) return alert("Please enter the verification code");
+        if (!formData.otp) {
+            dispatch(setAuthFailed("Please enter the verification code"));
+            return;
+        }
         setOtpLoading(true);
+        dispatch(clearError());
+        setSuccessMessage('');
         try {
             await axiosInterceptors.post('/auth/verify-otp', {
                 email: formData.email,
                 otp: Number(formData.otp)
             });
             setIsEmailVerified(true);
-            alert("Email verification confirmed!");
+            setSuccessMessage("Email verification confirmed!");
         } catch (err) {
-            alert(err.response?.data?.message || "Invalid validation code.");
+            dispatch(setAuthFailed(err.response?.data?.message || "Invalid validation code."));
         } finally {
             setOtpLoading(false);
         }
@@ -75,18 +86,25 @@ const Register = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!isEmailVerified) return alert("Please complete verification steps first.");
+        if (!isEmailVerified) {
+            dispatch(setAuthFailed("Please complete verification steps first."));
+            return;
+        }
         if (passwordError) return;
 
         dispatch(setLoading(true));
+        dispatch(clearError());
+        setSuccessMessage('');
         try {
             await axiosInterceptors.post('/auth/register', {
                 fullName: formData.fullName,
                 email: formData.email,
                 password: formData.password
             });
-            alert("Company created successfully! Redirecting to login view...");
-            window.location.href = '/login';
+            setSuccessMessage("Company created successfully! Redirecting to login view...");
+            setTimeout(() => {
+                window.location.href = '/login';
+            }, 2000);
         } catch (err) {
             dispatch(setAuthFailed(err.response?.data?.message || "Registration sequence failed."));
         }
@@ -132,6 +150,12 @@ const Register = () => {
                     {error && (
                         <div className="mb-6 p-4 bg-rose-50 text-rose-600 rounded-2xl text-xs font-bold border border-rose-100/50 flex items-center gap-2">
                             <span className="w-1.5 h-1.5 bg-rose-500 rounded-full shrink-0" /> {error}
+                        </div>
+                    )}
+
+                    {successMessage && (
+                        <div className="mb-6 p-4 bg-emerald-50 text-emerald-600 rounded-2xl text-xs font-bold border border-emerald-100/50 flex items-center gap-2">
+                            <CheckCircle size={16} className="shrink-0" /> {successMessage}
                         </div>
                     )}
 

@@ -49,7 +49,7 @@ exports.addUser = async (req, res) => {
                 </ul>
                 <p><strong>Other Details:</strong></p>
                 <ul>
-                    <li><strong>Role:</strong> ${role || "employee"}</li>
+                    <li><strong>Role:</strong> ${"employee"}</li>
                     <li><strong>Branch:</strong> ${branch || "N/A"}</li>
                     <li><strong>Position:</strong> ${position || "N/A"}</li>
                 </ul>

@@ -17,6 +17,7 @@ export default function EmployeeProfile() {
   const [saveLoading, setSaveLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
 
   // Forms
   const [profileForm, setProfileForm] = useState({
@@ -67,6 +68,8 @@ export default function EmployeeProfile() {
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
     setSaveLoading(true);
+    setError(null);
+    setSuccessMessage(null);
     try {
       const payload = {
         fullName: profileForm.fullName || undefined,
@@ -78,7 +81,7 @@ export default function EmployeeProfile() {
 
       const response = await api.put('/users/profile', payload);
       if (response.data?.success) {
-        alert('Profile details updated successfully!');
+        setSuccessMessage('Profile details updated successfully!');
 
         // Sync Redux state with updated user
         const updatedUser = { ...user, ...response.data.data };
@@ -87,7 +90,7 @@ export default function EmployeeProfile() {
         fetchProfileDetails();
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to save profile changes.');
+      setError(err.response?.data?.message || 'Failed to save profile changes.');
     } finally {
       setSaveLoading(false);
     }
@@ -96,14 +99,16 @@ export default function EmployeeProfile() {
   // Submit Password update
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
+    setSuccessMessage(null);
 
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      alert("New password and confirmation password do not match.");
+      setError("New password and confirmation password do not match.");
       return;
     }
 
     if (passwordForm.newPassword.length < 6) {
-      alert("New password must be at least 6 characters.");
+      setError("New password must be at least 6 characters.");
       return;
     }
 
@@ -115,7 +120,7 @@ export default function EmployeeProfile() {
       });
 
       if (response.data?.success) {
-        alert('Password changed successfully!');
+        setSuccessMessage('Password changed successfully!');
         setPasswordForm({
           oldPassword: '',
           newPassword: '',
@@ -123,7 +128,7 @@ export default function EmployeeProfile() {
         });
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to change password.');
+      setError(err.response?.data?.message || 'Failed to change password.');
     } finally {
       setPasswordLoading(false);
     }
@@ -143,6 +148,15 @@ export default function EmployeeProfile() {
       <div className="flex items-center gap-3 p-5 bg-rose-50 text-rose-700 rounded-2xl border border-rose-100/50">
         <AlertCircle size={20} className="shrink-0" />
         <div className="text-xs font-bold">{error}</div>
+      </div>
+    );
+  }
+
+  if (successMessage) {
+    return (
+      <div className="flex items-center gap-3 p-5 bg-emerald-50 text-emerald-700 rounded-2xl border border-emerald-100/50">
+        <AlertCircle size={20} className="shrink-0" />
+        <div className="text-xs font-bold">{successMessage}</div>
       </div>
     );
   }

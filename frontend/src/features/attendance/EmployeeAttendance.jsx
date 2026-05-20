@@ -12,6 +12,7 @@ export default function EmployeeAttendance() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
   const [todayRecord, setTodayRecord] = useState(null);
 
   const fetchAttendance = async () => {
@@ -41,14 +42,16 @@ export default function EmployeeAttendance() {
 
   const handleClockIn = async () => {
     setActionLoading(true);
+    setError(null);
+    setSuccessMessage(null);
     try {
       const response = await api.post('/attendance/clock-in');
       if (response.data?.success) {
-        alert('Clocked in successfully! Have a great day at work.');
+        setSuccessMessage('Clocked in successfully! Have a great day at work.');
         fetchAttendance();
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Clock-in failed.');
+      setError(err.response?.data?.message || 'Clock-in failed.');
     } finally {
       setActionLoading(false);
     }
@@ -56,14 +59,16 @@ export default function EmployeeAttendance() {
 
   const handleClockOut = async () => {
     setActionLoading(true);
+    setError(null);
+    setSuccessMessage(null);
     try {
       const response = await api.put('/attendance/clock-out');
       if (response.data?.success) {
-        alert('Clocked out successfully! Thank you for your work.');
+        setSuccessMessage('Clocked out successfully! Thank you for your work.');
         fetchAttendance();
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Clock-out failed.');
+      setError(err.response?.data?.message || 'Clock-out failed.');
     } finally {
       setActionLoading(false);
     }
@@ -186,6 +191,20 @@ export default function EmployeeAttendance() {
           </div>
         </div>
       </div>
+
+      {error && (
+        <div className="flex items-center gap-3 p-5 bg-rose-50 text-rose-700 rounded-2xl border border-rose-100/50 text-xs font-bold">
+          <AlertCircle size={20} className="shrink-0" />
+          {error}
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="flex items-center gap-3 p-5 bg-emerald-50 text-emerald-700 rounded-2xl border border-emerald-100/50 text-xs font-bold">
+          <AlertCircle size={20} className="shrink-0" />
+          {successMessage}
+        </div>
+      )}
 
       {/* History Log */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">

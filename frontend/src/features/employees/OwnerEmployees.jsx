@@ -6,6 +6,7 @@ export default function OwnerEmployees() {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Modals
@@ -54,16 +55,18 @@ export default function OwnerEmployees() {
   const handleAddSubmit = async (e) => {
     e.preventDefault();
     setModalLoading(true);
+    setError(null);
+    setSuccessMessage(null);
     try {
       const payload = { ...addForm, role: 'employee' };
       if (payload.salary) payload.salary = Number(payload.salary);
       await api.post('/users/add', payload);
-      alert('Employee added successfully. An email with temporary password has been sent.');
+      setSuccessMessage('Employee added successfully. An email with temporary password has been sent.');
       setIsAddModalOpen(false);
       setAddForm({ fullName: '', email: '', salary: '', branch: '', position: '' });
       fetchEmployees();
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to add employee');
+      setError(err.response?.data?.message || 'Failed to add employee');
     } finally {
       setModalLoading(false);
     }
@@ -86,15 +89,17 @@ export default function OwnerEmployees() {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     setModalLoading(true);
+    setError(null);
+    setSuccessMessage(null);
     try {
       const payload = { ...editForm };
       if (payload.salary) payload.salary = Number(payload.salary);
       await api.put(`/users/admin-update/${selectedUser._id}`, payload);
-      alert('Employee updated successfully.');
+      setSuccessMessage('Employee updated successfully.');
       setIsEditModalOpen(false);
       fetchEmployees();
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to update employee');
+      setError(err.response?.data?.message || 'Failed to update employee');
     } finally {
       setModalLoading(false);
     }
@@ -130,6 +135,13 @@ export default function OwnerEmployees() {
         <div className="flex items-center gap-3 p-5 bg-rose-50 text-rose-700 rounded-2xl border border-rose-100/50 text-xs font-bold">
           <AlertCircle size={20} className="shrink-0" />
           {error}
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="flex items-center gap-3 p-5 bg-emerald-50 text-emerald-700 rounded-2xl border border-emerald-100/50 text-xs font-bold">
+          <AlertCircle size={20} className="shrink-0" />
+          {successMessage}
         </div>
       )}
 
