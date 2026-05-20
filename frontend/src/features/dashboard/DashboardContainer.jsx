@@ -8,10 +8,10 @@ const DashboardContainer = () => {
 
   // Redirect to role-specific dashboard path
   if (normalizedRole === 'owner') {
-    return <Navigate to="/owner-dashboard" replace />;
+    return <Navigate to="/owner/dashboard" replace />;
   }
   
-  return <Navigate to="/employee-dashboard" replace />;
+  return <Navigate to="/employee/dashboard" replace />;
 };
 
 export default DashboardContainer;

@@ -1,11 +1,10 @@
-import React from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import Login from './features/auth/Login.jsx';
 import Register from './features/auth/Register.jsx';
 import MainLayout from './components/layout/MainLayout.jsx';
 import ProtectedRoute from './app/routes/protectedRoutes.jsx';
 import DashboardContainer from './features/dashboard/DashboardContainer.jsx';
-import EmployeeManagement from './features/employees/EmployeeManagement.jsx';
+// EmployeeManagement route removed; component kept in repository if needed later
 import MyAttendance from './features/attendance/MyAttendance.jsx';
 import MyLeaves from './features/leaves/MyLeaves.jsx';
 import MyPayroll from './features/payroll/MyPayroll.jsx';
@@ -16,8 +15,6 @@ import OwnerLeaves from './features/owner/OwnerLeaves.jsx';
 import OwnerPayroll from './features/owner/OwnerPayroll.jsx';
 import OwnerReports from './features/owner/OwnerReports.jsx';
 import Profile from './features/profile/Profile.jsx';
-import OwnerDashboard from './features/dashboard/OwnerDashboard.jsx';
-import EmployeeDashboard from './features/dashboard/EmployeeDashboard.jsx';
 
 const UnauthorizedPage = () => (
   <div className="min-h-screen flex items-center justify-center bg-slate-100 p-6">
@@ -41,104 +38,49 @@ export default function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
-        {/* 1. ProtectedRoute validates token & validates role permissions
-          2. MainLayout loads your sidebar with open/close state logic
-        */}
+        {/* Protected layout shell — validates auth token before rendering MainLayout */}
         <Route element={
           <ProtectedRoute>
             <MainLayout />
           </ProtectedRoute>
         }>
 
-          {/* Dashboard Redirect Route */}
+          {/* Shared dashboard redirect — routes to role-specific dashboard */}
           <Route path="/dashboard" element={
             <ProtectedRoute allowedRoles={['owner', 'employee']}>
               <DashboardContainer />
             </ProtectedRoute>
           } />
 
-          {/* Owner Dashboard Route */}
-          <Route path="/owner-dashboard" element={
+          {/* ─── Owner Routes (/owner/*) ─── */}
+          <Route path="/owner" element={
             <ProtectedRoute allowedRoles={['owner']}>
-              <OwnerDashboard />
+              <Outlet />
             </ProtectedRoute>
-          } />
+          }>
+            <Route path="dashboard" element={<OwnerReports />} />
+            <Route path="organization" element={<Organization />} />
+            <Route path="attendance" element={<OwnerAttendance />} />
+            <Route path="leaves" element={<OwnerLeaves />} />
+            <Route path="payroll" element={<OwnerPayroll />} />
+            {/* /owner/employees removed because it's empty */}
+          </Route>
 
-          {/* Employee Dashboard Route */}
-          <Route path="/employee-dashboard" element={
+          {/* ─── Employee Routes (/employee/*) ─── */}
+          <Route path="/employee" element={
             <ProtectedRoute allowedRoles={['employee']}>
-              <EmployeeDashboard />
+              <Outlet />
             </ProtectedRoute>
-          } />
+          }>
+            <Route path="dashboard" element={<MyReports />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="attendance" element={<MyAttendance />} />
+            <Route path="leaves" element={<MyLeaves />} />
+            <Route path="payroll" element={<MyPayroll />} />
+          </Route>
 
-          {/* Owner-Only Secured Routes */}
-          <Route path="/organization" element={
-            <ProtectedRoute allowedRoles={['owner']}>
-              <Organization />
-            </ProtectedRoute>
-          } />
-          <Route path="/attendance" element={
-            <ProtectedRoute allowedRoles={['owner']}>
-              <OwnerAttendance />
-            </ProtectedRoute>
-          } />
-          <Route path="/leaves" element={
-            <ProtectedRoute allowedRoles={['owner']}>
-              <OwnerLeaves />
-            </ProtectedRoute>
-          } />
-          <Route path="/payroll" element={
-            <ProtectedRoute allowedRoles={['owner']}>
-              <OwnerPayroll />
-            </ProtectedRoute>
-          } />
-          <Route path="/reports" element={
-            <ProtectedRoute allowedRoles={['owner']}>
-              <OwnerReports />
-            </ProtectedRoute>
-          } />
-          <Route path="/employees" element={
-            <ProtectedRoute allowedRoles={['owner']}>
-              <EmployeeManagement />
-            </ProtectedRoute>
-          } />
-
-          {/* Employee */}
-          <Route path="/profile" element={
-            <ProtectedRoute allowedRoles={['employee']}>
-              <Profile />
-            </ProtectedRoute>
-          } />
-          <Route path="/my-attendance" element={
-            <ProtectedRoute allowedRoles={['employee']}>
-              <MyAttendance />
-            </ProtectedRoute>
-          } />
-          <Route path="/my-leaves" element={
-            <ProtectedRoute allowedRoles={['employee']}>
-              <MyLeaves />
-            </ProtectedRoute>
-          } />
-          <Route path="/my-payroll" element={
-            <ProtectedRoute allowedRoles={['employee']}>
-              <MyPayroll />
-            </ProtectedRoute>
-          } />
-          <Route path="/my-reports" element={
-            <ProtectedRoute allowedRoles={['employee']}>
-              <MyReports />
-            </ProtectedRoute>
-          } />
         </Route>
-
-
-
-
-
-
       </Routes>
     </BrowserRouter>
   );
 }
-
-

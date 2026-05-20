@@ -4,7 +4,7 @@ import api from '../../app/axiosInterceptors';
 import { setAuthSuccess } from '../auth/authSlice';
 import { 
   User, Mail, Briefcase, Building2, Calendar, Phone, CreditCard, 
-  MapPin, Cake, Lock, Loader2, Save, Key, UserCheck
+  MapPin, Cake, Lock, Loader2, Save, Key, UserCheck, AlertCircle
 } from 'lucide-react';
 
 export default function Profile() {

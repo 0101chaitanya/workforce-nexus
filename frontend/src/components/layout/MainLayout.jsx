@@ -25,23 +25,21 @@ const MainLayout = () => {
 
   // Owner Options mirror App.jsx owner routes in the same order
   const ownerLinks = [
-    { name: 'Dashboard', path: '/owner-dashboard', icon: <LayoutDashboard size={20} /> },
-    { name: 'Organization', path: '/organization', icon: <Building2 size={20} /> },
-    { name: 'Attendance', path: '/attendance', icon: <CalendarCheck size={20} /> },
-    { name: 'Leaves', path: '/leaves', icon: <FileSpreadsheet size={20} /> },
-    { name: 'Payroll', path: '/payroll', icon: <CreditCard size={20} /> },
-    { name: 'Reports', path: '/reports', icon: <BarChart3 size={20} /> },
-    { name: 'Employees', path: '/employees', icon: <Users size={20} /> },
+    { name: 'Dashboard', path: '/owner/dashboard', icon: <LayoutDashboard size={20} /> },
+    { name: 'Organization', path: '/owner/organization', icon: <Building2 size={20} /> },
+    { name: 'Attendance', path: '/owner/attendance', icon: <CalendarCheck size={20} /> },
+    { name: 'Leaves', path: '/owner/leaves', icon: <FileSpreadsheet size={20} /> },
+    { name: 'Payroll', path: '/owner/payroll', icon: <CreditCard size={20} /> },
+    // 'Employees' removed — no dedicated owner employees page
   ];
 
   // Employee Options (4 primary + 2 down-most = 6 total options)
   const employeeLinks = [
-    { name: 'Dashboard', path: '/employee-dashboard', icon: <LayoutDashboard size={20} /> },
-    { name: 'Profile', path: '/profile', icon: <UserCircle size={20} /> },
-    { name: 'My Attendance', path: '/my-attendance', icon: <CalendarCheck size={20} /> },
-    { name: 'My Leaves', path: '/my-leaves', icon: <FileSpreadsheet size={20} /> },
-    { name: 'My Payroll', path: '/my-payroll', icon: <CreditCard size={20} /> },
-    { name: 'My Reports', path: '/my-reports', icon: <BarChart3 size={20} /> },
+    { name: 'Dashboard', path: '/employee/dashboard', icon: <LayoutDashboard size={20} /> },
+    { name: 'Profile', path: '/employee/profile', icon: <UserCircle size={20} /> },
+    { name: 'My Attendance', path: '/employee/attendance', icon: <CalendarCheck size={20} /> },
+    { name: 'My Leaves', path: '/employee/leaves', icon: <FileSpreadsheet size={20} /> },
+    { name: 'My Payroll', path: '/employee/payroll', icon: <CreditCard size={20} /> },
   ];
 
   const primaryLinks = userRole === 'owner' ? ownerLinks : employeeLinks;
