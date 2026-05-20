@@ -10,7 +10,14 @@ import MyAttendance from './features/attendance/MyAttendance.jsx';
 import MyLeaves from './features/leaves/MyLeaves.jsx';
 import MyPayroll from './features/payroll/MyPayroll.jsx';
 import MyReports from './features/reports/MyReports.jsx';
+import Organization from './features/organization/Organization.jsx';
+import OwnerAttendance from './features/owner/OwnerAttendance.jsx';
+import OwnerLeaves from './features/owner/OwnerLeaves.jsx';
+import OwnerPayroll from './features/owner/OwnerPayroll.jsx';
+import OwnerReports from './features/owner/OwnerReports.jsx';
 import Profile from './features/profile/Profile.jsx';
+import OwnerDashboard from './features/dashboard/OwnerDashboard.jsx';
+import EmployeeDashboard from './features/dashboard/EmployeeDashboard.jsx';
 
 const UnauthorizedPage = () => (
   <div className="min-h-screen flex items-center justify-center bg-slate-100 p-6">
@@ -38,22 +45,65 @@ export default function App() {
           2. MainLayout loads your sidebar with open/close state logic
         */}
         <Route element={
-          <ProtectedRoute allowedRoles={['owner', 'employee']}>
+          <ProtectedRoute>
             <MainLayout />
           </ProtectedRoute>
         }>
 
+          {/* Dashboard Redirect Route */}
+          <Route path="/dashboard" element={
+            <ProtectedRoute allowedRoles={['owner', 'employee']}>
+              <DashboardContainer />
+            </ProtectedRoute>
+          } />
 
-          <Route path="/dashboard" element={<DashboardContainer />} />
+          {/* Owner Dashboard Route */}
+          <Route path="/owner-dashboard" element={
+            <ProtectedRoute allowedRoles={['owner']}>
+              <OwnerDashboard />
+            </ProtectedRoute>
+          } />
+
+          {/* Employee Dashboard Route */}
+          <Route path="/employee-dashboard" element={
+            <ProtectedRoute allowedRoles={['employee']}>
+              <EmployeeDashboard />
+            </ProtectedRoute>
+          } />
 
           {/* Owner-Only Secured Routes */}
+          <Route path="/organization" element={
+            <ProtectedRoute allowedRoles={['owner']}>
+              <Organization />
+            </ProtectedRoute>
+          } />
+          <Route path="/attendance" element={
+            <ProtectedRoute allowedRoles={['owner']}>
+              <OwnerAttendance />
+            </ProtectedRoute>
+          } />
+          <Route path="/leaves" element={
+            <ProtectedRoute allowedRoles={['owner']}>
+              <OwnerLeaves />
+            </ProtectedRoute>
+          } />
+          <Route path="/payroll" element={
+            <ProtectedRoute allowedRoles={['owner']}>
+              <OwnerPayroll />
+            </ProtectedRoute>
+          } />
+          <Route path="/reports" element={
+            <ProtectedRoute allowedRoles={['owner']}>
+              <OwnerReports />
+            </ProtectedRoute>
+          } />
           <Route path="/employees" element={
             <ProtectedRoute allowedRoles={['owner']}>
               <EmployeeManagement />
             </ProtectedRoute>
           } />
 
-          {/* Employee-Only Secured Routes */}
+          {/* Employee */}
           <Route path="/profile" element={
             <ProtectedRoute allowedRoles={['employee']}>
               <Profile />

@@ -23,20 +23,20 @@ const MainLayout = () => {
     navigate('/login');
   };
 
-  // Owner Options (7 primary + 2 down-most = 9 total options)
+  // Owner Options mirror App.jsx owner routes in the same order
   const ownerLinks = [
-    { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} /> },
+    { name: 'Dashboard', path: '/owner-dashboard', icon: <LayoutDashboard size={20} /> },
     { name: 'Organization', path: '/organization', icon: <Building2 size={20} /> },
-    { name: 'Employees', path: '/employees', icon: <Users size={20} /> },
     { name: 'Attendance', path: '/attendance', icon: <CalendarCheck size={20} /> },
     { name: 'Leaves', path: '/leaves', icon: <FileSpreadsheet size={20} /> },
     { name: 'Payroll', path: '/payroll', icon: <CreditCard size={20} /> },
     { name: 'Reports', path: '/reports', icon: <BarChart3 size={20} /> },
+    { name: 'Employees', path: '/employees', icon: <Users size={20} /> },
   ];
 
   // Employee Options (4 primary + 2 down-most = 6 total options)
   const employeeLinks = [
-    { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} /> },
+    { name: 'Dashboard', path: '/employee-dashboard', icon: <LayoutDashboard size={20} /> },
     { name: 'Profile', path: '/profile', icon: <UserCircle size={20} /> },
     { name: 'My Attendance', path: '/my-attendance', icon: <CalendarCheck size={20} /> },
     { name: 'My Leaves', path: '/my-leaves', icon: <FileSpreadsheet size={20} /> },
