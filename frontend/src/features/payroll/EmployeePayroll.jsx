@@ -31,6 +31,7 @@ export default function EmployeePayroll() {
 
   const handleDownload = async (payrollId, filename) => {
     setDownloadingId(payrollId);
+    setError(null);
     try {
       const response = await api.get(`/payroll/${payrollId}/download`, {
         responseType: 'blob'
@@ -46,7 +47,7 @@ export default function EmployeePayroll() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      alert('Failed to download payslip. Please try again.');
+      setError('Failed to download payslip. Please try again.');
     } finally {
       setDownloadingId(null);
     }

@@ -11,11 +11,15 @@ const Login = () => {
   const { error } = useSelector((state) => state.auth);
 
   const [isForgotMode, setIsForgotMode] = useState(false);
+  const [isOtpMode, setIsOtpMode] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   // Data inputs
   const [loginData, setLoginData] = useState({ identifier: '', password: '' });
   const [recoveryEmail, setRecoveryEmail] = useState('');
+  const [otp, setOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
 
   useEffect(() => {
     dispatch(clearError());
@@ -42,7 +46,7 @@ const Login = () => {
 
       // Navigate directly to the role-specific dashboard — no intermediate redirect needed
       const role = response.data?.user?.role?.toLowerCase();
-      const normalizedRole = role === 'staff' ? 'employee' : role;
+      const normalizedRole = role;
       const destination = normalizedRole === 'owner' ? '/owner' : '/employee';
       navigate(destination);
     } catch (err) {
@@ -57,13 +61,39 @@ const Login = () => {
     e.preventDefault();
     if (!recoveryEmail) return;
     setLoading(true);
+    dispatch(clearError());
+    setSuccessMessage('');
 
     try {
-      await axiosInterceptors.post('/auth/forgot-password', { email: recoveryEmail });
-      alert("Recovery instructions forwarded! Check your inbox.");
-      setIsForgotMode(false);
+      await axiosInterceptors.post('/auth/forgot-password-otp', { email: recoveryEmail });
+      setSuccessMessage("Recovery instructions forwarded! Check your inbox.");
+      setIsOtpMode(true);
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to issue password restoration ticket.");
+      dispatch(setAuthFailed(err.response?.data?.message || "Failed to issue password restoration ticket."));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetSubmit = async (e) => {
+    e.preventDefault();
+    if (!otp || !newPassword) return;
+    setLoading(true);
+    dispatch(clearError());
+    setSuccessMessage('');
+
+    try {
+      await axiosInterceptors.post('/auth/reset-password', { email: recoveryEmail, otp, newPassword });
+      setSuccessMessage("Password reset successfully! You can now login.");
+      setTimeout(() => {
+        setIsForgotMode(false);
+        setIsOtpMode(false);
+        setOtp('');
+        setNewPassword('');
+        setRecoveryEmail('');
+      }, 2000);
+    } catch (err) {
+      dispatch(setAuthFailed(err.response?.data?.message || "Failed to reset password."));
     } finally {
       setLoading(false);
     }
@@ -116,6 +146,12 @@ const Login = () => {
                 </div>
               )}
 
+              {successMessage && (
+                <div className="mb-5 p-4 bg-emerald-50 text-emerald-600 rounded-2xl text-xs font-bold border border-emerald-100/50 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full shrink-0" /> {successMessage}
+                </div>
+              )}
+
               <form onSubmit={handleAuthSubmit} className="space-y-4">
                 <div>
                   <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -165,26 +201,69 @@ const Login = () => {
                 <p className="text-slate-400 mt-1.5 font-medium text-sm">Provide your registered system email to dispatch reset instructions</p>
               </div>
 
-              <form onSubmit={handleRecoverySubmit} className="space-y-4">
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Registered Email Address</label>
-                  <div className="relative mt-1.5">
-                    <Mail className="absolute left-3.5 top-3.5 text-slate-400" size={18} />
-                    <input type="email" value={recoveryEmail} onChange={(e) => setRecoveryEmail(e.target.value)} required
-                      className="w-full pl-11 pr-4 py-3 bg-slate-50/50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all duration-200 text-sm font-medium text-slate-700" placeholder="yourname@company.com" />
-                  </div>
+              {error && (
+                <div className="mb-5 p-4 bg-rose-50 text-rose-600 rounded-2xl text-xs font-bold border border-rose-100/50 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-rose-500 rounded-full shrink-0" /> {error}
                 </div>
+              )}
 
-                <button type="submit" disabled={loading || !recoveryEmail}
-                  className="w-full py-3.5 bg-indigo-600 text-white font-bold text-sm rounded-2xl shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition transform active:scale-98 disabled:bg-slate-300 disabled:shadow-none cursor-not-allowed mt-2">
-                  {loading ? 'Transmitting Token...' : 'Send Recovery Link'}
-                </button>
+              {successMessage && (
+                <div className="mb-5 p-4 bg-emerald-50 text-emerald-600 rounded-2xl text-xs font-bold border border-emerald-100/50 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full shrink-0" /> {successMessage}
+                </div>
+              )}
 
-                <button type="button" onClick={() => setIsForgotMode(false)}
-                  className="w-full text-center text-sm font-bold text-slate-500 hover:text-slate-800 transition mt-2">
-                  Return to Sign-In View
-                </button>
-              </form>
+              {!isOtpMode ? (
+                <form onSubmit={handleRecoverySubmit} className="space-y-4">
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Registered Email Address</label>
+                    <div className="relative mt-1.5">
+                      <Mail className="absolute left-3.5 top-3.5 text-slate-400" size={18} />
+                      <input type="email" value={recoveryEmail} onChange={(e) => setRecoveryEmail(e.target.value)} required
+                        className="w-full pl-11 pr-4 py-3 bg-slate-50/50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all duration-200 text-sm font-medium text-slate-700" placeholder="yourname@company.com" />
+                    </div>
+                  </div>
+
+                  <button type="submit" disabled={loading || !recoveryEmail}
+                    className="w-full py-3.5 bg-indigo-600 text-white font-bold text-sm rounded-2xl shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition transform active:scale-98 disabled:bg-slate-300 disabled:shadow-none cursor-not-allowed mt-2">
+                    {loading ? 'Transmitting Token...' : 'Send Recovery Link'}
+                  </button>
+
+                  <button type="button" onClick={() => { setIsForgotMode(false); setIsOtpMode(false); setRecoveryEmail(''); }}
+                    className="w-full text-center text-sm font-bold text-slate-500 hover:text-slate-800 transition mt-2">
+                    Return to Sign-In View
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleResetSubmit} className="space-y-4">
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500">One-Time Password (OTP)</label>
+                    <div className="relative mt-1.5">
+                      <Lock className="absolute left-3.5 top-3.5 text-slate-400" size={18} />
+                      <input type="text" value={otp} onChange={(e) => setOtp(e.target.value)} required
+                        className="w-full pl-11 pr-4 py-3 bg-slate-50/50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all duration-200 text-sm font-medium text-slate-700" placeholder="Enter OTP" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500">New Password</label>
+                    <div className="relative mt-1.5">
+                      <Lock className="absolute left-3.5 top-3.5 text-slate-400" size={18} />
+                      <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required
+                        className="w-full pl-11 pr-4 py-3 bg-slate-50/50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all duration-200 text-sm font-medium text-slate-700" placeholder="••••••••" />
+                    </div>
+                  </div>
+
+                  <button type="submit" disabled={loading || !otp || !newPassword}
+                    className="w-full py-3.5 bg-indigo-600 text-white font-bold text-sm rounded-2xl shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition transform active:scale-98 disabled:bg-slate-300 disabled:shadow-none cursor-not-allowed mt-2">
+                    {loading ? 'Resetting Password...' : 'Reset Password'}
+                  </button>
+
+                  <button type="button" onClick={() => setIsOtpMode(false)}
+                    className="w-full text-center text-sm font-bold text-slate-500 hover:text-slate-800 transition mt-2">
+                    Back to Email
+                  </button>
+                </form>
+              )}
             </>
           )}
 

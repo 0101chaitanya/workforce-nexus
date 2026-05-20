@@ -2,6 +2,7 @@ import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Navigate, Outlet } from 'react-router-dom';
 import { logout } from '../../features/auth/authSlice';
+import api from '../../app/axiosInterceptors';
 
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const { token, role } = useSelector((state) => state.auth);
@@ -11,6 +12,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   if (!token) {
     if (role) {
       setTimeout(() => {
+        api.post('/auth/logout').catch(() => {});
         dispatch(logout());
       }, 0);
     }

@@ -9,6 +9,7 @@ export default function EmployeeLeaves() {
   const [loading, setLoading] = useState(true);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
 
   const [form, setForm] = useState({
@@ -39,14 +40,16 @@ export default function EmployeeLeaves() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
+    setSuccessMessage(null);
 
     if (new Date(form.startDate) > new Date(form.endDate)) {
-      alert('Start date cannot be after end date.');
+      setError('Start date cannot be after end date.');
       return;
     }
 
     if (form.reason.trim().length < 5) {
-      alert('Reason must be at least 5 characters long.');
+      setError('Reason must be at least 5 characters long.');
       return;
     }
 
@@ -60,7 +63,7 @@ export default function EmployeeLeaves() {
       });
 
       if (response.data?.success) {
-        alert('Leave application submitted successfully!');
+        setSuccessMessage('Leave application submitted successfully!');
         setForm({
           type: 'sick',
           startDate: '',
@@ -71,7 +74,7 @@ export default function EmployeeLeaves() {
         fetchLeaves();
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to apply for leave.');
+      setError(err.response?.data?.message || 'Failed to apply for leave.');
     } finally {
       setSubmitLoading(false);
     }
@@ -99,6 +102,20 @@ export default function EmployeeLeaves() {
           Apply for Leave
         </button>
       </div>
+
+      {error && (
+        <div className="flex items-center gap-3 p-5 bg-rose-50 text-rose-700 rounded-2xl border border-rose-100/50 text-xs font-bold">
+          <AlertCircle size={20} className="shrink-0" />
+          {error}
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="flex items-center gap-3 p-5 bg-emerald-50 text-emerald-700 rounded-2xl border border-emerald-100/50 text-xs font-bold">
+          <AlertCircle size={20} className="shrink-0" />
+          {successMessage}
+        </div>
+      )}
 
       {/* Leave Summary Widgets */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

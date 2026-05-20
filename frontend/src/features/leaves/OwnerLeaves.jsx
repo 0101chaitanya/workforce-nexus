@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../app/axiosInterceptors';
-import { Loader2, User, FileSpreadsheet, CheckCircle2, XCircle, RefreshCcw } from 'lucide-react';
+import { Loader2, User, FileSpreadsheet, CheckCircle2, XCircle, RefreshCcw, MessageSquare } from 'lucide-react';
 
 const OwnerLeaves = () => {
   const [leaves, setLeaves] = useState([]);
@@ -9,6 +9,12 @@ const OwnerLeaves = () => {
   const [loading, setLoading] = useState(true);
   const [actionPending, setActionPending] = useState(null);
   const [error, setError] = useState(null);
+
+  // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedLeave, setSelectedLeave] = useState(null);
+  const [actionType, setActionType] = useState(null);
+  const [remarks, setRemarks] = useState('');
 
   const fetchUsers = async () => {
     try {
@@ -43,15 +49,33 @@ const OwnerLeaves = () => {
   }, [targetUserId]);
 
   const updateLeave = async (leaveId, status) => {
-    setActionPending(leaveId);
+    setSelectedLeave(leaveId);
+    setActionType(status);
+    setRemarks('');
+    setIsModalOpen(true);
+  };
+
+  const handleConfirmAction = async () => {
+    setActionPending(selectedLeave);
     try {
-      await api.put(`/leaves/${leaveId}/status`, { status });
+      await api.put(`/leaves/${selectedLeave}/status`, { status: actionType, remarks });
       await fetchLeaves();
+      setIsModalOpen(false);
+      setSelectedLeave(null);
+      setActionType(null);
+      setRemarks('');
     } catch (err) {
       setError(err.response?.data?.message || 'Could not update leave status.');
     } finally {
       setActionPending(null);
     }
+  };
+
+  const handleCancelAction = () => {
+    setIsModalOpen(false);
+    setSelectedLeave(null);
+    setActionType(null);
+    setRemarks('');
   };
 
   return (
@@ -105,6 +129,7 @@ const OwnerLeaves = () => {
                   <th className="px-4 py-4 text-left font-semibold">Type</th>
                   <th className="px-4 py-4 text-left font-semibold">Dates</th>
                   <th className="px-4 py-4 text-left font-semibold">Status</th>
+                  <th className="px-4 py-4 text-left font-semibold">Remarks</th>
                   <th className="px-4 py-4 text-left font-semibold">Actions</th>
                 </tr>
               </thead>
@@ -120,6 +145,16 @@ const OwnerLeaves = () => {
                       <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${leave.status === 'approved' ? 'bg-emerald-100 text-emerald-700' : leave.status === 'rejected' ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-700'}`}>
                         {leave.status}
                       </span>
+                    </td>
+                    <td className="px-4 py-4 text-slate-700">
+                      {leave.remarks ? (
+                        <div className="flex items-start gap-2">
+                          <MessageSquare size={14} className="mt-0.5 text-slate-400 shrink-0" />
+                          <span className="text-slate-600">{leave.remarks}</span>
+                        </div>
+                      ) : (
+                        <span className="text-slate-400">-</span>
+                      )}
                     </td>
                     <td className="px-4 py-4 text-slate-700">
                       {leave.status === 'pending' ? (
@@ -150,6 +185,48 @@ const OwnerLeaves = () => {
           </div>
         )}
       </div>
+
+      {/* Modal for approve/reject with remarks */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl p-6 md:p-8">
+            <h2 className="text-2xl font-black text-slate-800 mb-6">
+              {actionType === 'approved' ? 'Approve Leave' : 'Reject Leave'}
+            </h2>
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase">Reason / Remarks</label>
+                <textarea
+                  value={remarks}
+                  onChange={(e) => setRemarks(e.target.value)}
+                  placeholder="Provide a reason for this action..."
+                  className="w-full mt-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm resize-none"
+                  rows={4}
+                />
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={handleCancelAction}
+                  className="flex-1 py-3 bg-slate-100 text-slate-700 font-bold text-sm rounded-xl hover:bg-slate-200 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmAction}
+                  disabled={actionPending === selectedLeave}
+                  className={`flex-1 py-3 text-white font-bold text-sm rounded-xl transition ${
+                    actionType === 'approved'
+                      ? 'bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400'
+                      : 'bg-rose-600 hover:bg-rose-700 disabled:bg-rose-400'
+                  }`}
+                >
+                  {actionPending === selectedLeave ? 'Processing...' : actionType === 'approved' ? 'Approve' : 'Reject'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

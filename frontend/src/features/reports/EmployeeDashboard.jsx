@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import api from '../../app/axiosInterceptors';
 import {
-  BarChart3, Loader2, AlertCircle, Calendar, Briefcase, FileText, CheckCircle, Clock, PieChart
+  BarChart3, Loader2, AlertCircle, Calendar, Briefcase, FileText, CheckCircle, Clock, PieChart, Users
 } from 'lucide-react';
 
 export default function EmployeeDashboard() {
-  const [stats, setStats] = useState({
-    attendanceCount: 0,
-    averageHours: 0,
-    leavesApplied: 0,
-    leavesApproved: 0,
-    payrollCount: 0
-  });
+  const { role } = useSelector((state) => state.auth);
+  const isOwner = role?.toLowerCase() === 'owner';
+
+  const [stats, setStats] = useState(
+    isOwner 
+      ? { totalEmployees: 0, todayAttendance: 0, employeesOnLeave: 0, recentPayrollAmount: 0, recentPayrollMonth: '', recentPayrollYear: '' }
+      : { attendanceCount: 0, averageHours: 0, leavesApplied: 0, leavesApproved: 0, payrollCount: 0 }
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -19,27 +21,40 @@ export default function EmployeeDashboard() {
     setLoading(true);
     setError(null);
     try {
-      // Parallel fetches for history logs
-      const [attRes, leaveRes, payRes] = await Promise.all([
-        api.get('/attendance/history'),
-        api.get('/leaves/history'),
-        api.get('/payroll/history')
-      ]);
+      if (isOwner) {
+        const res = await api.get('/dashboard/stats');
+        const data = res.data?.data || {};
+        setStats({
+          totalEmployees: data.totalEmployees || 0,
+          todayAttendance: data.todayAttendance || 0,
+          employeesOnLeave: data.employeesOnLeave || 0,
+          recentPayrollAmount: data.recentPayroll?.amount || 0,
+          recentPayrollMonth: data.recentPayroll?.month || '',
+          recentPayrollYear: data.recentPayroll?.year || ''
+        });
+      } else {
+        // Parallel fetches for history logs
+        const [attRes, leaveRes, payRes] = await Promise.all([
+          api.get('/attendance/history'),
+          api.get('/leaves/history'),
+          api.get('/payroll/history')
+        ]);
 
-      const attendanceData = attRes.data?.success ? attRes.data.data : [];
-      const leavesData = leaveRes.data?.success ? leaveRes.data.data : [];
-      const payrollData = payRes.data?.success ? payRes.data.data : [];
+        const attendanceData = attRes.data?.success ? attRes.data.data : [];
+        const leavesData = leaveRes.data?.success ? leaveRes.data.data : [];
+        const payrollData = payRes.data?.success ? payRes.data.data : [];
 
-      const totalHours = attendanceData.reduce((acc, curr) => acc + (curr.totalHours || 0), 0);
-      const avgHrs = attendanceData.length > 0 ? (totalHours / attendanceData.length).toFixed(1) : 0;
+        const totalHours = attendanceData.reduce((acc, curr) => acc + (curr.totalHours || 0), 0);
+        const avgHrs = attendanceData.length > 0 ? (totalHours / attendanceData.length).toFixed(1) : 0;
 
-      setStats({
-        attendanceCount: attendanceData.length,
-        averageHours: avgHrs,
-        leavesApplied: leavesData.length,
-        leavesApproved: leavesData.filter(l => l.status === 'approved').length,
-        payrollCount: payrollData.length
-      });
+        setStats({
+          attendanceCount: attendanceData.length,
+          averageHours: avgHrs,
+          leavesApplied: leavesData.length,
+          leavesApproved: leavesData.filter(l => l.status === 'approved').length,
+          payrollCount: payrollData.length
+        });
+      }
     } catch (err) {
       setError('Some report components could not be fully aggregated.');
     } finally {
@@ -86,61 +101,115 @@ export default function EmployeeDashboard() {
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
-        {/* Metric 1 */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
-          <div className="flex justify-between items-center">
-            <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Attendance Rate</span>
-            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
-              <Calendar size={18} />
+        {isOwner ? (
+          <>
+            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Total Employees</span>
+                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                  <Users size={18} />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-2xl font-black text-slate-800">{stats.totalEmployees}</h3>
+                <p className="text-[11px] text-slate-400 mt-1 font-medium">Active employees in company.</p>
+              </div>
             </div>
-          </div>
-          <div>
-            <h3 className="text-2xl font-black text-slate-800">{stats.attendanceCount} Shifts</h3>
-            <p className="text-[11px] text-slate-400 mt-1 font-medium">Total registered workdays in history.</p>
-          </div>
-        </div>
 
-        {/* Metric 2 */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
-          <div className="flex justify-between items-center">
-            <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Average Shift Hours</span>
-            <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
-              <Clock size={18} />
+            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Active Shifts Today</span>
+                <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
+                  <Clock size={18} />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-2xl font-black text-slate-800">{stats.todayAttendance}</h3>
+                <p className="text-[11px] text-slate-400 mt-1 font-medium">Employees clocked in today.</p>
+              </div>
             </div>
-          </div>
-          <div>
-            <h3 className="text-2xl font-black text-slate-800">{stats.averageHours} Hours</h3>
-            <p className="text-[11px] text-slate-400 mt-1 font-medium">Average working duration per clocked shift.</p>
-          </div>
-        </div>
 
-        {/* Metric 3 */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
-          <div className="flex justify-between items-center">
-            <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Leave Approvals</span>
-            <div className="p-2 bg-amber-50 text-amber-600 rounded-xl">
-              <CheckCircle size={18} />
+            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Absences Today</span>
+                <div className="p-2 bg-amber-50 text-amber-600 rounded-xl">
+                  <Calendar size={18} />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-2xl font-black text-slate-800">{stats.employeesOnLeave}</h3>
+                <p className="text-[11px] text-slate-400 mt-1 font-medium">Employees on approved leave.</p>
+              </div>
             </div>
-          </div>
-          <div>
-            <h3 className="text-2xl font-black text-slate-800">{stats.leavesApproved} / {stats.leavesApplied}</h3>
-            <p className="text-[11px] text-slate-400 mt-1 font-medium">Approved leaves versus total submissions.</p>
-          </div>
-        </div>
 
-        {/* Metric 4 */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
-          <div className="flex justify-between items-center">
-            <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Payslips Generated</span>
-            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
-              <FileText size={18} />
+            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Last Payroll Disbursed</span>
+                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                  <FileText size={18} />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-2xl font-black text-slate-800">${stats.recentPayrollAmount}</h3>
+                <p className="text-[11px] text-slate-400 mt-1 font-medium">{stats.recentPayrollMonth} {stats.recentPayrollYear}</p>
+              </div>
             </div>
-          </div>
-          <div>
-            <h3 className="text-2xl font-black text-slate-800">{stats.payrollCount} Payouts</h3>
-            <p className="text-[11px] text-slate-400 mt-1 font-medium">Payslip sheets ready for download.</p>
-          </div>
-        </div>
+          </>
+        ) : (
+          <>
+            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Attendance Rate</span>
+                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                  <Calendar size={18} />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-2xl font-black text-slate-800">{stats.attendanceCount} Shifts</h3>
+                <p className="text-[11px] text-slate-400 mt-1 font-medium">Total registered workdays in history.</p>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Average Shift Hours</span>
+                <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
+                  <Clock size={18} />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-2xl font-black text-slate-800">{stats.averageHours} Hours</h3>
+                <p className="text-[11px] text-slate-400 mt-1 font-medium">Average working duration per clocked shift.</p>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Leave Approvals</span>
+                <div className="p-2 bg-amber-50 text-amber-600 rounded-xl">
+                  <CheckCircle size={18} />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-2xl font-black text-slate-800">{stats.leavesApproved} / {stats.leavesApplied}</h3>
+                <p className="text-[11px] text-slate-400 mt-1 font-medium">Approved leaves versus total submissions.</p>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Payslips Generated</span>
+                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                  <FileText size={18} />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-2xl font-black text-slate-800">{stats.payrollCount} Payouts</h3>
+                <p className="text-[11px] text-slate-400 mt-1 font-medium">Payslip sheets ready for download.</p>
+              </div>
+            </div>
+          </>
+        )}
 
       </div>
 
@@ -148,21 +217,27 @@ export default function EmployeeDashboard() {
       <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
         <h3 className="font-black text-slate-800 text-sm tracking-wide uppercase flex items-center gap-2">
           <PieChart size={16} className="text-indigo-600" />
-          Shift Compliance Insights
+          {isOwner ? "Company Overview" : "Shift Compliance Insights"}
         </h3>
-        <p className="text-xs text-slate-400 font-medium">Your work record compliance summaries are calculated locally from live logs. Contact your administrator if any payroll or check-in adjustment is required.</p>
+        <p className="text-xs text-slate-400 font-medium">
+          {isOwner 
+            ? "Summary of organizational statistics and metrics. Review the tabs for more granular data."
+            : "Your work record compliance summaries are calculated locally from live logs. Contact your administrator if any payroll or check-in adjustment is required."}
+        </p>
 
-        <div className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-6 text-xs font-semibold text-slate-600">
-          <div className="p-4 bg-slate-50 rounded-xl space-y-2">
-            <span className="text-[10px] text-slate-400 uppercase font-black">Attendance Summary</span>
-            <div className="flex justify-between"><span>Workdays Present</span><span className="font-bold text-slate-800">{stats.attendanceCount} days</span></div>
-          </div>
+        {!isOwner && (
+          <div className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-6 text-xs font-semibold text-slate-600">
+            <div className="p-4 bg-slate-50 rounded-xl space-y-2">
+              <span className="text-[10px] text-slate-400 uppercase font-black">Attendance Summary</span>
+              <div className="flex justify-between"><span>Workdays Present</span><span className="font-bold text-slate-800">{stats.attendanceCount} days</span></div>
+            </div>
 
-          <div className="p-4 bg-slate-50 rounded-xl space-y-2">
-            <span className="text-[10px] text-slate-400 uppercase font-black">Leaves Summary</span>
-            <div className="flex justify-between"><span>Unpaid/Paid Approved Leaves</span><span className="font-bold text-slate-800">{stats.leavesApproved} days</span></div>
+            <div className="p-4 bg-slate-50 rounded-xl space-y-2">
+              <span className="text-[10px] text-slate-400 uppercase font-black">Leaves Summary</span>
+              <div className="flex justify-between"><span>Unpaid/Paid Approved Leaves</span><span className="font-bold text-slate-800">{stats.leavesApproved} days</span></div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
     </div>
