@@ -126,15 +126,11 @@
   - `position` (string, optional)
 - **Output (201 Created):** `message`, `success`, `data` (User object), `generatedPassword` (string).
 
-### GET `/api/users/directory`
+### GET `/api/users/all`
 - **Description:** Search users in the company. *(Owner Only)*
 - **Input Data (Query):**
   - `query` (string, optional): Search term for name/email.
   - `role` (string, optional): "employee" or "owner".
-- **Output (200 OK):** `message`, `success`, `data` (Array of User objects).
-
-### GET `/api/users/all`
-- **Description:** Get all users in the company. *(Owner Only)*
 - **Output (200 OK):** `message`, `success`, `data` (Array of User objects).
 
 ### PUT `/api/users/profile`

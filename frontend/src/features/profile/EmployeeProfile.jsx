@@ -176,7 +176,7 @@ export default function EmployeeProfile() {
 
             <div>
               <h3 className="text-lg font-black text-slate-800 tracking-tight">{profile?.fullName}</h3>
-              <p className="text-xs text-indigo-600 font-bold capitalize">{profile?.role} • {profile?.position || 'Staff member'}</p>
+              <p className="text-xs text-indigo-600 font-bold capitalize">{profile?.role} • {profile?.position || 'Employee'}</p>
             </div>
 
             <div className="pt-2">

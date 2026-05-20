@@ -39,3 +39,28 @@ exports.getProtectedCompanyInfo = catchAsync(async (req, res) => {
         data: company
     });
 });
+
+exports.updateCompanyInfo = catchAsync(async (req, res) => {
+    const companyId = req.company._id;
+    const { companyName, address, phone } = req.body;
+
+    const company = await Company.findById(companyId);
+
+    if (!company) {
+        return res.status(404).json({ message: "Company not found", success: false, occurredAt: new Date().toISOString() });
+    }
+
+    if (companyName !== undefined) company.companyName = companyName;
+    if (address !== undefined) company.address = address;
+    if (phone !== undefined) company.phone = phone;
+
+    await company.save();
+
+    const updatedCompany = await Company.findById(companyId).populate("owner", "fullName email phone role");
+
+    return res.status(200).json({
+        success: true,
+        message: "Company details updated successfully",
+        data: updatedCompany
+    });
+});

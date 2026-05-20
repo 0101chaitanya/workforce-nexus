@@ -6,7 +6,7 @@ const logger = require("../utils/logger");
 
 exports.addUser = async (req, res) => {
     try {
-        const { fullName, email, role, salary, branch, position } = req.body;
+        const { fullName, email, salary, branch, position } = req.body;
         const generatedPassword = generateSecurePassword();
         const companyId = req.company._id;
 
@@ -24,7 +24,7 @@ exports.addUser = async (req, res) => {
             fullName,
             email,
             password: generatedPassword,
-            role: role || "employee",
+            role: "employee",
             company: companyId,
             salary,
             branch,
@@ -119,31 +119,60 @@ exports.changePassword = async (req, res) => {
 
 exports.searchUsers = async (req, res) => {
     try {
-        const { query, role } = req.query;
+        const { query, page, limit } = req.query;
         const companyId = req.company._id;
 
         let searchQuery = { company: companyId };
 
-        if (query) {
+        if (query && query.trim() !== "") {
             searchQuery.$or = [
                 { fullName: { $regex: query, $options: "i" } },
                 { email: { $regex: query, $options: "i" } }
             ];
+        } else {
+            searchQuery.role = { $ne: "owner" };
         }
 
-        if (role) {
-            searchQuery.role = role;
+        // If pagination params are provided, use pagination; otherwise fetch all
+        if (page !== undefined && limit !== undefined) {
+            const pageNum = parseInt(page) || 1;
+            const limitNum = parseInt(limit) || 10;
+
+            const skip = (pageNum - 1) * limitNum;
+            const total = await User.countDocuments(searchQuery);
+            const users = await User.find(searchQuery)
+                .select("-password -refreshToken -otp -otpExpiry")
+                .sort({ fullName: 1 })
+                .skip(skip)
+                .limit(limitNum);
+
+            const totalPages = Math.ceil(total / limitNum);
+
+            return res.status(200).json({
+                message: "Users fetched successfully",
+                success: true,
+                data: users,
+                pagination: {
+                    page: pageNum,
+                    limit: limitNum,
+                    total,
+                    totalPages,
+                    hasNext: pageNum < totalPages,
+                    hasPrev: pageNum > 1
+                }
+            });
+        } else {
+            // Fetch all users without pagination
+            const users = await User.find(searchQuery)
+                .select("-password -refreshToken -otp -otpExpiry")
+                .sort({ fullName: 1 });
+
+            return res.status(200).json({
+                message: "Users fetched successfully",
+                success: true,
+                data: users
+            });
         }
-
-        const users = await User.find(searchQuery)
-            .select("-password -refreshToken -otp -otpExpiry")
-            .sort({ fullName: 1 });
-
-        return res.status(200).json({
-            message: "Users fetched successfully",
-            success: true,
-            data: users
-        });
 
     } catch (err) {
         logger.error(`Error in searchUsers: ${err.message || err}`, { stack: err.stack });
@@ -159,7 +188,7 @@ exports.getAllCompanyUsers = async (req, res) => {
     try {
         const companyId = req.company._id;
 
-        const users = await User.find({ company: companyId })
+        const users = await User.find({ company: companyId, role: { $ne: "owner" } })
             .select("-password -refreshToken -otp -otpExpiry")
             .sort({ fullName: 1 });
 

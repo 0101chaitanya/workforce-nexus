@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate, Outlet } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { logout } from '../../features/auth/authSlice';
+import api from '../../app/axiosInterceptors';
 import {
   LayoutDashboard, Building2, Users, CalendarCheck,
   FileSpreadsheet, CreditCard, BarChart3, UserCircle, LogOut, Menu, ChevronLeft
@@ -10,6 +12,7 @@ const MainLayout = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   // Extract authentication variables directly from Redux Store state
   const { user, role } = useSelector((state) => state.auth);
@@ -18,7 +21,13 @@ const MainLayout = () => {
   // Show company name from registration, or fallback gracefully
   const companyName = user?.companyName || "EMS Workspace";
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await api.post('/auth/logout');
+    } catch (err) {
+      console.error("Logout request failure", err);
+    }
+    dispatch(logout());
     localStorage.clear();
     navigate('/login');
   };
@@ -27,10 +36,10 @@ const MainLayout = () => {
   const ownerLinks = [
     { name: 'Dashboard', path: '/owner', icon: <LayoutDashboard size={20} /> },
     { name: 'Organization', path: '/owner/organization', icon: <Building2 size={20} /> },
+    { name: 'Employees', path: '/owner/employees', icon: <Users size={20} /> },
     { name: 'Attendance', path: '/owner/attendance', icon: <CalendarCheck size={20} /> },
     { name: 'Leaves', path: '/owner/leaves', icon: <FileSpreadsheet size={20} /> },
     { name: 'Payroll', path: '/owner/payroll', icon: <CreditCard size={20} /> },
-    // 'Employees' removed — no dedicated owner employees page
   ];
 
   // Employee Options (4 primary + 2 down-most = 6 total options)

@@ -13,7 +13,7 @@ const EmployeeLeaves = lazy(() => import('./features/leaves/EmployeeLeaves.jsx')
 const EmployeePayroll = lazy(() => import('./features/payroll/EmployeePayroll.jsx'));
 const EmployeeDashboard = lazy(() => import('./features/reports/EmployeeDashboard.jsx'));
 const EmployeeProfile = lazy(() => import('./features/profile/EmployeeProfile.jsx'));
-
+const OwnerEmployees = lazy(() => import('./features/employees/OwnerEmployees.jsx'));
 const OwnerAttendance = lazy(() => import('./features/attendance/OwnerAttendance.jsx'));
 const OwnerLeaves = lazy(() => import('./features/leaves/OwnerLeaves.jsx'));
 const OwnerPayroll = lazy(() => import('./features/payroll/OwnerPayroll.jsx'));
@@ -60,6 +60,14 @@ export default function App() {
               element={
                 <Suspense fallback={<LoadingSpinner />}>
                   <OwnerOrganization />
+                </Suspense>
+              }
+            />
+            <Route
+              path="employees"
+              element={
+                <Suspense fallback={<LoadingSpinner />}>
+                  <OwnerEmployees />
                 </Suspense>
               }
             />
