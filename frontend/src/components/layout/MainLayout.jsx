@@ -25,7 +25,7 @@ const MainLayout = () => {
 
   // Owner Options mirror App.jsx owner routes in the same order
   const ownerLinks = [
-    { name: 'Dashboard', path: '/owner/dashboard', icon: <LayoutDashboard size={20} /> },
+    { name: 'Dashboard', path: '/owner', icon: <LayoutDashboard size={20} /> },
     { name: 'Organization', path: '/owner/organization', icon: <Building2 size={20} /> },
     { name: 'Attendance', path: '/owner/attendance', icon: <CalendarCheck size={20} /> },
     { name: 'Leaves', path: '/owner/leaves', icon: <FileSpreadsheet size={20} /> },
@@ -35,11 +35,11 @@ const MainLayout = () => {
 
   // Employee Options (4 primary + 2 down-most = 6 total options)
   const employeeLinks = [
-    { name: 'Dashboard', path: '/employee/dashboard', icon: <LayoutDashboard size={20} /> },
+    { name: 'Dashboard', path: '/employee', icon: <LayoutDashboard size={20} /> },
     { name: 'Profile', path: '/employee/profile', icon: <UserCircle size={20} /> },
-    { name: 'My Attendance', path: '/employee/attendance', icon: <CalendarCheck size={20} /> },
-    { name: 'My Leaves', path: '/employee/leaves', icon: <FileSpreadsheet size={20} /> },
-    { name: 'My Payroll', path: '/employee/payroll', icon: <CreditCard size={20} /> },
+    { name: 'Attendance', path: '/employee/attendance', icon: <CalendarCheck size={20} /> },
+    { name: 'Leaves', path: '/employee/leaves', icon: <FileSpreadsheet size={20} /> },
+    { name: 'Payroll', path: '/employee/payroll', icon: <CreditCard size={20} /> },
   ];
 
   const primaryLinks = userRole === 'owner' ? ownerLinks : employeeLinks;
@@ -90,6 +90,7 @@ const MainLayout = () => {
                 onClick={() => setMobileOpen(false)}
                 className={({ isActive }) => isActive ? linkActive : linkInactive}
                 title={isCollapsed ? link.name : ""}
+                end={link.path === '/owner' || link.path === '/employee'}
               >
                 <div className="shrink-0">{link.icon}</div>
                 {!isCollapsed && <span className="text-sm tracking-wide truncate">{link.name}</span>}
@@ -127,7 +128,13 @@ const MainLayout = () => {
 
         {/* Dynamic Outlet Target Container */}
         <main className="flex-1 p-6 md:p-8 max-w-400 w-full mx-auto">
-          <Outlet />
+          <React.Suspense fallback={
+            <div className="flex items-center justify-center min-h-[50vh]">
+              <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          }>
+            <Outlet />
+          </React.Suspense>
         </main>
       </div>
     </div>

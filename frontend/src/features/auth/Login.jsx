@@ -39,8 +39,12 @@ const Login = () => {
 
       const response = await axiosInterceptors.post('/auth/login', payload);
       dispatch(setAuthSuccess(response.data));
-      alert("Authentication verified successfully! Access unlocked.");
-      navigate('/dashboard');         
+
+      // Navigate directly to the role-specific dashboard — no intermediate redirect needed
+      const role = response.data?.user?.role?.toLowerCase();
+      const normalizedRole = role === 'staff' ? 'employee' : role;
+      const destination = normalizedRole === 'owner' ? '/owner' : '/employee';
+      navigate(destination);
     } catch (err) {
       dispatch(setAuthFailed(err.response?.data?.message || "Invalid credentials provided."));
     } finally {

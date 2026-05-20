@@ -29,7 +29,7 @@ axiosInterceptors.interceptors.response.use(
                 localStorage.setItem("token", res.data.accessToken)
                 console.log('got new access token succesfully ')
                 originalRequest.headers.Authorization = `Bearer ${res.data.accessToken}`
-                return instance(originalRequest)
+                return axiosInterceptors(originalRequest)
 
             }
             catch (err) {
