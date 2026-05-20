@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../app/axiosInterceptors';
-import { 
+import {
   CreditCard, Download, Loader2, AlertCircle, FileText, Calendar, DollarSign
 } from 'lucide-react';
 
-export default function MyPayroll() {
+export default function EmployeePayroll() {
   const [payrolls, setPayrolls] = useState([]);
   const [loading, setLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState(null);
@@ -61,7 +61,7 @@ export default function MyPayroll() {
 
   return (
     <div className="space-y-6">
-      
+
       {/* Banner */}
       <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>

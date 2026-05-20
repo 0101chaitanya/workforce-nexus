@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../app/axiosInterceptors';
-import { 
+import {
   FileSpreadsheet, Send, History, Loader2, AlertCircle, Plus, Calendar, Type, FileText, CheckCircle, Clock, XCircle
 } from 'lucide-react';
 
-export default function MyLeaves() {
+export default function EmployeeLeaves() {
   const [leaves, setLeaves] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitLoading, setSubmitLoading] = useState(false);
@@ -79,7 +79,7 @@ export default function MyLeaves() {
 
   return (
     <div className="space-y-6">
-      
+
       {/* Banner */}
       <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -187,13 +187,12 @@ export default function MyLeaves() {
                       {leave.reason}
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                        leave.status === 'approved' 
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${leave.status === 'approved'
                           ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
                           : leave.status === 'rejected'
-                          ? 'bg-rose-50 text-rose-700 border-rose-100'
-                          : 'bg-amber-50 text-amber-700 border-amber-100'
-                      }`}>
+                            ? 'bg-rose-50 text-rose-700 border-rose-100'
+                            : 'bg-amber-50 text-amber-700 border-amber-100'
+                        }`}>
                         {leave.status}
                       </span>
                     </td>
@@ -212,7 +211,7 @@ export default function MyLeaves() {
       {isApplyModalOpen && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-3xl max-w-md w-full border border-slate-100 shadow-2xl p-6 md:p-8 space-y-6 relative">
-            <button 
+            <button
               onClick={() => setIsApplyModalOpen(false)}
               className="absolute top-6 right-6 p-2 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-slate-700 transition"
             >

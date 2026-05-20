@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import api from '../../app/axiosInterceptors';
-import { 
-  CalendarCheck, Clock, LogIn, LogOut, Loader2, 
+import {
+  CalendarCheck, Clock, LogIn, LogOut, Loader2,
   AlertCircle, History, Play, Square, CheckCircle, Coffee
 } from 'lucide-react';
 
-export default function MyAttendance() {
+export default function EmployeeAttendance() {
   const { user } = useSelector((state) => state.auth);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -112,7 +112,7 @@ export default function MyAttendance() {
                     <Coffee size={28} />
                   </div>
                   <h4 className="text-base font-black text-slate-800">Shift Active</h4>
-                  <p className="text-xs text-slate-500 font-medium">Clocked in at <span className="font-bold text-slate-700">{new Date(todayRecord.checkInTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span></p>
+                  <p className="text-xs text-slate-500 font-medium">Clocked in at <span className="font-bold text-slate-700">{new Date(todayRecord.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></p>
                 </div>
               )
             ) : (
@@ -234,15 +234,14 @@ export default function MyAttendance() {
                       {record.totalHours !== undefined ? `${record.totalHours} hrs` : '--'}
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                        record.status === 'present' 
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${record.status === 'present'
                           ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
                           : record.status === 'half-day'
-                          ? 'bg-amber-50 text-amber-700 border-amber-100'
-                          : record.status === 'leave'
-                          ? 'bg-indigo-50 text-indigo-700 border-indigo-100'
-                          : 'bg-rose-50 text-rose-700 border-rose-100'
-                      }`}>
+                            ? 'bg-amber-50 text-amber-700 border-amber-100'
+                            : record.status === 'leave'
+                              ? 'bg-indigo-50 text-indigo-700 border-indigo-100'
+                              : 'bg-rose-50 text-rose-700 border-rose-100'
+                        }`}>
                         {record.status}
                       </span>
                     </td>

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../app/axiosInterceptors';
-import { 
+import {
   BarChart3, Loader2, AlertCircle, Calendar, Briefcase, FileText, CheckCircle, Clock, PieChart
 } from 'lucide-react';
 
-export default function MyReports() {
+export default function EmployeeDashboard() {
   const [stats, setStats] = useState({
     attendanceCount: 0,
     averageHours: 0,
@@ -62,13 +62,13 @@ export default function MyReports() {
 
   return (
     <div className="space-y-6">
-      
+
       {/* Banner */}
       <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
             <BarChart3 className="text-indigo-600" size={26} />
-            My Performance Reports
+            Employee Dashboard
           </h1>
           <p className="text-slate-500 text-sm mt-1">
             Analyze aggregated insights about your shifts, leaves, and compensation histories.
@@ -85,7 +85,7 @@ export default function MyReports() {
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        
+
         {/* Metric 1 */}
         <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
           <div className="flex justify-between items-center">
@@ -151,13 +151,13 @@ export default function MyReports() {
           Shift Compliance Insights
         </h3>
         <p className="text-xs text-slate-400 font-medium">Your work record compliance summaries are calculated locally from live logs. Contact your administrator if any payroll or check-in adjustment is required.</p>
-        
+
         <div className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-6 text-xs font-semibold text-slate-600">
           <div className="p-4 bg-slate-50 rounded-xl space-y-2">
             <span className="text-[10px] text-slate-400 uppercase font-black">Attendance Summary</span>
             <div className="flex justify-between"><span>Workdays Present</span><span className="font-bold text-slate-800">{stats.attendanceCount} days</span></div>
           </div>
-          
+
           <div className="p-4 bg-slate-50 rounded-xl space-y-2">
             <span className="text-[10px] text-slate-400 uppercase font-black">Leaves Summary</span>
             <div className="flex justify-between"><span>Unpaid/Paid Approved Leaves</span><span className="font-bold text-slate-800">{stats.leavesApproved} days</span></div>

@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
 import { setAuthSuccess } from '../auth/authSlice';
-import { 
-  User, Mail, Briefcase, Building2, Calendar, Phone, CreditCard, 
+import {
+  User, Mail, Briefcase, Building2, Calendar, Phone, CreditCard,
   MapPin, Cake, Lock, Loader2, Save, Key, UserCheck, AlertCircle
 } from 'lucide-react';
 
-export default function Profile() {
+export default function EmployeeProfile() {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
 
@@ -79,11 +79,11 @@ export default function Profile() {
       const response = await api.put('/users/profile', payload);
       if (response.data?.success) {
         alert('Profile details updated successfully!');
-        
+
         // Sync Redux state with updated user
         const updatedUser = { ...user, ...response.data.data };
         dispatch(setAuthSuccess({ user: updatedUser, token: localStorage.getItem('token') }));
-        
+
         fetchProfileDetails();
       }
     } catch (err) {
@@ -151,7 +151,7 @@ export default function Profile() {
 
   return (
     <div className="space-y-6">
-      
+
       {/* Banner card */}
       <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -166,25 +166,24 @@ export default function Profile() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         {/* Info card (Left) */}
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs text-center space-y-4">
             <div className="w-20 h-20 bg-indigo-600 text-white rounded-3xl flex items-center justify-center text-3xl font-black mx-auto shadow-md">
               {initials}
             </div>
-            
+
             <div>
               <h3 className="text-lg font-black text-slate-800 tracking-tight">{profile?.fullName}</h3>
               <p className="text-xs text-indigo-600 font-bold capitalize">{profile?.role} • {profile?.position || 'Staff member'}</p>
             </div>
 
             <div className="pt-2">
-              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
-                profile?.isVerified 
-                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-100/50' 
-                  : 'bg-amber-50 text-amber-700 border border-amber-100/50'
-              }`}>
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${profile?.isVerified
+                ? 'bg-emerald-50 text-emerald-700 border border-emerald-100/50'
+                : 'bg-amber-50 text-amber-700 border border-amber-100/50'
+                }`}>
                 <UserCheck size={14} />
                 {profile?.isVerified ? 'Verified Profile' : 'Pending Verification'}
               </span>
@@ -193,7 +192,7 @@ export default function Profile() {
 
           <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
             <h4 className="font-extrabold text-slate-800 text-sm tracking-wide uppercase">Corporate Specs</h4>
-            
+
             <div className="space-y-3.5 text-xs font-semibold text-slate-600">
               <div className="flex items-center gap-2.5">
                 <Mail size={16} className="text-slate-400 shrink-0" />
@@ -217,7 +216,7 @@ export default function Profile() {
 
         {/* Action cards (Right - forms) */}
         <div className="lg:col-span-2 space-y-6">
-          
+
           {/* Edit Details */}
           <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-6">
             <div>
