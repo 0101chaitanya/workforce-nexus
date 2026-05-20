@@ -5,6 +5,12 @@ import Register from './features/auth/Register.jsx';
 import MainLayout from './components/layout/MainLayout.jsx';
 import ProtectedRoute from './app/routes/protectedRoutes.jsx';
 import DashboardContainer from './features/dashboard/DashboardContainer.jsx';
+import EmployeeManagement from './features/employees/EmployeeManagement.jsx';
+import MyAttendance from './features/attendance/MyAttendance.jsx';
+import MyLeaves from './features/leaves/MyLeaves.jsx';
+import MyPayroll from './features/payroll/MyPayroll.jsx';
+import MyReports from './features/reports/MyReports.jsx';
+import Profile from './features/profile/Profile.jsx';
 
 const UnauthorizedPage = () => (
   <div className="min-h-screen flex items-center justify-center bg-slate-100 p-6">
@@ -36,14 +42,53 @@ export default function App() {
             <MainLayout />
           </ProtectedRoute>
         }>
-          
+
 
           <Route path="/dashboard" element={<DashboardContainer />} />
-          <Route path="/profile" element={<div className="p-6 bg-white rounded-2xl border text-sm text-slate-600 font-medium">Profile Settings Feature View</div>} />
-          
+
+          {/* Owner-Only Secured Routes */}
+          <Route path="/employees" element={
+            <ProtectedRoute allowedRoles={['owner']}>
+              <EmployeeManagement />
+            </ProtectedRoute>
+          } />
+
+          {/* Employee-Only Secured Routes */}
+          <Route path="/profile" element={
+            <ProtectedRoute allowedRoles={['employee']}>
+              <Profile />
+            </ProtectedRoute>
+          } />
+          <Route path="/my-attendance" element={
+            <ProtectedRoute allowedRoles={['employee']}>
+              <MyAttendance />
+            </ProtectedRoute>
+          } />
+          <Route path="/my-leaves" element={
+            <ProtectedRoute allowedRoles={['employee']}>
+              <MyLeaves />
+            </ProtectedRoute>
+          } />
+          <Route path="/my-payroll" element={
+            <ProtectedRoute allowedRoles={['employee']}>
+              <MyPayroll />
+            </ProtectedRoute>
+          } />
+          <Route path="/my-reports" element={
+            <ProtectedRoute allowedRoles={['employee']}>
+              <MyReports />
+            </ProtectedRoute>
+          } />
         </Route>
 
-        </Routes> 
+
+
+
+
+
+      </Routes>
     </BrowserRouter>
   );
 }
+
+
