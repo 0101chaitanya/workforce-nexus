@@ -1,18 +1,17 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
-import OwnerDashboard from './OwnerDashboard';
-import EmployeeDashboard from './EmployeeDashboard';
+import { Navigate } from 'react-router-dom';
 
 const DashboardContainer = () => {
   const { role } = useSelector((state) => state.auth);
   const normalizedRole = role?.toLowerCase();
 
-  // If the backend returns "staff" or "employee", load the Employee view layout
+  // Redirect to role-specific dashboard path
   if (normalizedRole === 'owner') {
-    return <OwnerDashboard />;
+    return <Navigate to="/owner/dashboard" replace />;
   }
   
-  return <EmployeeDashboard />;
+  return <Navigate to="/employee/dashboard" replace />;
 };
 
 export default DashboardContainer;

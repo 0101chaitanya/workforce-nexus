@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate, Outlet } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { 
-  LayoutDashboard, Building2, Users, CalendarCheck, 
+import {
+  LayoutDashboard, Building2, Users, CalendarCheck,
   FileSpreadsheet, CreditCard, BarChart3, UserCircle, LogOut, Menu, ChevronLeft
 } from 'lucide-react';
 
@@ -13,7 +13,7 @@ const MainLayout = () => {
 
   // Extract authentication variables directly from Redux Store state
   const { user, role } = useSelector((state) => state.auth);
-  
+
   const userRole = role?.toLowerCase();
   // Show company name from registration, or fallback gracefully
   const companyName = user?.companyName || "EMS Workspace";
@@ -23,25 +23,23 @@ const MainLayout = () => {
     navigate('/login');
   };
 
-  // Owner Options (7 primary + 2 down-most = 9 total options)
+  // Owner Options mirror App.jsx owner routes in the same order
   const ownerLinks = [
-    { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} /> },
-    { name: 'Organization', path: '/organization', icon: <Building2 size={20} /> },
-    { name: 'Employees', path: '/employees', icon: <Users size={20} /> },
-    { name: 'Attendance', path: '/attendance', icon: <CalendarCheck size={20} /> },
-    { name: 'Leaves', path: '/leaves', icon: <FileSpreadsheet size={20} /> },
-    { name: 'Payroll', path: '/payroll', icon: <CreditCard size={20} /> },
-    { name: 'Reports', path: '/reports', icon: <BarChart3 size={20} /> },
+    { name: 'Dashboard', path: '/owner/dashboard', icon: <LayoutDashboard size={20} /> },
+    { name: 'Organization', path: '/owner/organization', icon: <Building2 size={20} /> },
+    { name: 'Attendance', path: '/owner/attendance', icon: <CalendarCheck size={20} /> },
+    { name: 'Leaves', path: '/owner/leaves', icon: <FileSpreadsheet size={20} /> },
+    { name: 'Payroll', path: '/owner/payroll', icon: <CreditCard size={20} /> },
+    // 'Employees' removed — no dedicated owner employees page
   ];
 
   // Employee Options (4 primary + 2 down-most = 6 total options)
   const employeeLinks = [
-    { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} /> },
-    { name: 'My Attendance', path: '/my-attendance', icon: <CalendarCheck size={20} /> },
-    { name: 'My Leaves', path: '/my-leaves', icon: <FileSpreadsheet size={20} /> },
-    { name: 'My Payroll', path: '/my-payroll', icon: <CreditCard size={20} /> },
-    { name: 'My Reports', path: '/my-reports', icon: <BarChart3 size={20} /> },
-
+    { name: 'Dashboard', path: '/employee/dashboard', icon: <LayoutDashboard size={20} /> },
+    { name: 'Profile', path: '/employee/profile', icon: <UserCircle size={20} /> },
+    { name: 'My Attendance', path: '/employee/attendance', icon: <CalendarCheck size={20} /> },
+    { name: 'My Leaves', path: '/employee/leaves', icon: <FileSpreadsheet size={20} /> },
+    { name: 'My Payroll', path: '/employee/payroll', icon: <CreditCard size={20} /> },
   ];
 
   const primaryLinks = userRole === 'owner' ? ownerLinks : employeeLinks;
@@ -55,7 +53,7 @@ const MainLayout = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 antialiased font-sans">
-      
+
       {/* Mobile Sidebar Dark Overlay Drawer Dismissal Backdrop */}
       {mobileOpen && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40 lg:hidden" onClick={() => setMobileOpen(false)} />
@@ -63,7 +61,7 @@ const MainLayout = () => {
 
       {/* High-Contrast Indigo Sidebar Frame */}
       <aside className={`fixed top-0 bottom-0 left-0 bg-indigo-600 text-white flex flex-col justify-between z-50 shadow-xl transition-all duration-300 ease-in-out ${sidebarWidth} ${mobileTranslate}`}>
-        
+
         {/* Upper Operations Container */}
         <div className="p-4 flex flex-col gap-6 overflow-hidden">
           <div className="flex items-center justify-between min-h-10 px-2">
@@ -76,7 +74,7 @@ const MainLayout = () => {
                 {companyName.charAt(0).toUpperCase()}
               </div>
             )}
-            
+
             {/* Collapse Trigger arrow icon - Laptop viewports only */}
             <button onClick={() => setIsCollapsed(!isCollapsed)} className="hidden lg:flex p-1.5 hover:bg-white/10 rounded-lg text-indigo-200 hover:text-white transition">
               <ChevronLeft size={18} className={`transform transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} />
@@ -102,16 +100,6 @@ const MainLayout = () => {
 
         {/* Down Most Separated Block Options: Profile & Logout */}
         <div className="p-4 border-t border-white/10 space-y-1 bg-indigo-700/40">
-          <NavLink
-            to="/profile"
-            onClick={() => setMobileOpen(false)}
-            className={({ isActive }) => isActive ? linkActive : linkInactive}
-            title={isCollapsed ? "Profile" : ""}
-          >
-            <div className="shrink-0"><UserCircle size={20} /></div>
-            {!isCollapsed && <span className="text-sm tracking-wide">Profile</span>}
-          </NavLink>
-
           <button
             onClick={handleLogout}
             className="flex items-center gap-3 px-4 py-3.5 text-rose-200 hover:bg-rose-600 hover:text-white rounded-xl font-semibold transition-all duration-150 w-full"
@@ -125,7 +113,7 @@ const MainLayout = () => {
 
       {/* Main Content Area Workspace right column view window */}
       <div className={`flex flex-col min-h-screen transition-all duration-300 ${isCollapsed ? 'lg:pl-20' : 'lg:pl-64'}`}>
-        
+
         {/* Mobile Top Header - Visible on phone and tablet viewports */}
         <header className="lg:hidden bg-white border-b border-slate-200 h-16 px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs">
           <button onClick={() => setMobileOpen(true)} className="p-2 -ml-2 text-slate-600 hover:bg-slate-50 rounded-xl border border-slate-200 transition">
@@ -147,3 +135,4 @@ const MainLayout = () => {
 };
 
 export default MainLayout;
+//i"_f/X[8FlhB
