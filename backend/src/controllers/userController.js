@@ -127,7 +127,8 @@ exports.searchUsers = async (req, res) => {
         if (query && query.trim() !== "") {
             searchQuery.$or = [
                 { fullName: { $regex: query, $options: "i" } },
-                { email: { $regex: query, $options: "i" } }
+                { email: { $regex: query, $options: "i" } },
+                { identity: { $regex: query, $options: "i" } }
             ];
         } else {
             searchQuery.role = { $ne: "owner" };

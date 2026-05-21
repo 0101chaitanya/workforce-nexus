@@ -46,10 +46,41 @@ const userSchema = new mongoose.Schema({
     }, salary: {
         type: Number,
     },
+    identity: {
+        type: String,
+        unique: true,
+        sparse: true,
+    },
 }, { timestamps: true });
 
-// Hash password before saving
+// Hash password before saving, and assign unique identity if missing
 userSchema.pre('save', async function (next) {
+    if (!this.identity) {
+        const generateIdentity = () => {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            for (let i = 0; i < 6; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return `EMP-${result}`;
+        };
+
+        let unique = false;
+        let attempts = 0;
+        while (!unique && attempts < 100) {
+            const tempIdentity = generateIdentity();
+            const existing = await this.constructor.findOne({ identity: tempIdentity });
+            if (!existing) {
+                this.identity = tempIdentity;
+                unique = true;
+            }
+            attempts++;
+        }
+        if (!unique) {
+            return next(new Error('Failed to generate a unique identity after multiple attempts'));
+        }
+    }
+
     if (!this.isModified('password')) return next();
     try {
         const salt = await bcrypt.genSalt(10);

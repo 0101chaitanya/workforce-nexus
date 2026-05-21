@@ -107,7 +107,7 @@ exports.clockOut = async (req, res) => {
 
 exports.getAttendanceHistory = async (req, res) => {
     try {
-        const { targetUserId } = req.query;
+        const { targetUserId, page, limit } = req.query;
         const companyId = req.company._id;
 
         let query = { company: companyId };
@@ -121,15 +121,44 @@ exports.getAttendanceHistory = async (req, res) => {
             query.user = req.user._id;
         }
 
-        const attendanceHistory = await Attendance.find(query)
-            .populate('user', 'fullName email position')
-            .sort({ date: -1 });
+        if (page !== undefined && limit !== undefined) {
+            const pageNum = parseInt(page) || 1;
+            const limitNum = parseInt(limit) || 10;
+            const skip = (pageNum - 1) * limitNum;
 
-        return res.status(200).json({
-            message: "Attendance history fetched successfully",
-            success: true,
-            data: attendanceHistory
-        });
+            const total = await Attendance.countDocuments(query);
+            const attendanceHistory = await Attendance.find(query)
+                .populate('user', 'fullName email position identity')
+                .sort({ date: -1 })
+                .skip(skip)
+                .limit(limitNum);
+
+            const totalPages = Math.ceil(total / limitNum);
+
+            return res.status(200).json({
+                message: "Attendance history fetched successfully",
+                success: true,
+                data: attendanceHistory,
+                pagination: {
+                    page: pageNum,
+                    limit: limitNum,
+                    total,
+                    totalPages,
+                    hasNext: pageNum < totalPages,
+                    hasPrev: pageNum > 1
+                }
+            });
+        } else {
+            const attendanceHistory = await Attendance.find(query)
+                .populate('user', 'fullName email position identity')
+                .sort({ date: -1 });
+
+            return res.status(200).json({
+                message: "Attendance history fetched successfully",
+                success: true,
+                data: attendanceHistory
+            });
+        }
 
     } catch (err) {
         logger.error(`Error in getAttendanceHistory: ${err.message || err}`, { stack: err.stack });

@@ -26,9 +26,33 @@ const payrollSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    hra: {
+        type: Number,
+        default: 0
+    },
+    conveyance: {
+        type: Number,
+        default: 0
+    },
+    medical: {
+        type: Number,
+        default: 0
+    },
+    bonus: {
+        type: Number,
+        default: 0
+    },
+    unpaidLeaveDeductions: {
+        type: Number,
+        default: 0
+    },
     taxes: {
         type: Number,
         default: 0
+    },
+    grossPay: {
+        type: Number,
+        required: true
     },
     netPay: {
         type: Number,

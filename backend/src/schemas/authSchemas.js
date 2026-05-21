@@ -8,7 +8,7 @@ const authSchemas = {
   }),
 
   verifyOtp: z.object({
-    email: common.email,
+    email: common.emailOrIdentity,
     otp: common.otp,
   }),
 
@@ -19,16 +19,16 @@ const authSchemas = {
   }),
 
   login: z.object({
-    email: common.email,
+    email: common.emailOrIdentity,
     password: common.password,
   }),
 
   forgotPasswordOtp: z.object({
-    email: common.email,
+    email: common.emailOrIdentity,
   }),
 
   resetPassword: z.object({
-    email: common.email,
+    email: common.emailOrIdentity,
     otp: common.otp,
     newPassword: common.newPassword,
   }),

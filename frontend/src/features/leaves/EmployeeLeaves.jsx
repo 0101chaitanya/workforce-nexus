@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../app/axiosInterceptors';
+import Pagination from '../../components/common/Pagination';
 import {
   FileSpreadsheet, Send, History, Loader2, AlertCircle, Plus, Calendar, Type, FileText, CheckCircle, Clock, XCircle
 } from 'lucide-react';
@@ -19,13 +20,49 @@ export default function EmployeeLeaves() {
     reason: ''
   });
 
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [paginationInfo, setPaginationInfo] = useState({
+    total: 0,
+    totalPages: 1,
+    hasNext: false,
+    hasPrev: false
+  });
+  const [leaveStats, setLeaveStats] = useState({
+    pending: 0,
+    approved: 0,
+    rejected: 0
+  });
+
   const fetchLeaves = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await api.get('/leaves/history');
+      const response = await api.get('/leaves/history', {
+        params: { page, limit }
+      });
       if (response.data?.success) {
-        setLeaves(response.data.data);
+        const data = response.data.data || [];
+        setLeaves(data);
+        if (response.data.pagination) {
+          setPaginationInfo(response.data.pagination);
+        } else {
+          setPaginationInfo({
+            total: data.length,
+            totalPages: 1,
+            hasNext: false,
+            hasPrev: false
+          });
+        }
+        if (response.data.stats) {
+          setLeaveStats(response.data.stats);
+        } else {
+          setLeaveStats({
+            pending: data.filter(l => l.status === 'pending').length,
+            approved: data.filter(l => l.status === 'approved').length,
+            rejected: data.filter(l => l.status === 'rejected').length
+          });
+        }
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load leave history.');
@@ -36,7 +73,7 @@ export default function EmployeeLeaves() {
 
   useEffect(() => {
     fetchLeaves();
-  }, []);
+  }, [page, limit]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -71,7 +108,11 @@ export default function EmployeeLeaves() {
           reason: ''
         });
         setIsApplyModalOpen(false);
-        fetchLeaves();
+        if (page === 1) {
+          fetchLeaves();
+        } else {
+          setPage(1);
+        }
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to apply for leave.');
@@ -126,7 +167,7 @@ export default function EmployeeLeaves() {
           <div>
             <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Pending Approvals</span>
             <h3 className="text-xl font-black text-slate-800">
-              {leaves.filter(l => l.status === 'pending').length}
+              {leaveStats.pending}
             </h3>
           </div>
         </div>
@@ -138,7 +179,7 @@ export default function EmployeeLeaves() {
           <div>
             <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Approved Leaves</span>
             <h3 className="text-xl font-black text-slate-800">
-              {leaves.filter(l => l.status === 'approved').length}
+              {leaveStats.approved}
             </h3>
           </div>
         </div>
@@ -150,7 +191,7 @@ export default function EmployeeLeaves() {
           <div>
             <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Rejected Requests</span>
             <h3 className="text-xl font-black text-slate-800">
-              {leaves.filter(l => l.status === 'rejected').length}
+              {leaveStats.rejected}
             </h3>
           </div>
         </div>
@@ -222,6 +263,21 @@ export default function EmployeeLeaves() {
             </table>
           </div>
         )}
+        <div className="px-6 pb-6">
+          <Pagination
+            page={page}
+            limit={limit}
+            total={paginationInfo.total}
+            totalPages={paginationInfo.totalPages}
+            hasNext={paginationInfo.hasNext}
+            hasPrev={paginationInfo.hasPrev}
+            onPageChange={setPage}
+            onLimitChange={(newLimit) => {
+              setLimit(newLimit);
+              setPage(1);
+            }}
+          />
+        </div>
       </div>
 
       {/* --- MODAL: APPLY FOR LEAVE --- */}

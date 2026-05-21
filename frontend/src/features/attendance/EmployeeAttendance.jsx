@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import api from '../../app/axiosInterceptors';
+import Pagination from '../../components/common/Pagination';
 import {
   CalendarCheck, Clock, LogIn, LogOut, Loader2,
   AlertCircle, History, Play, Square, CheckCircle, Coffee
@@ -15,19 +16,43 @@ export default function EmployeeAttendance() {
   const [successMessage, setSuccessMessage] = useState(null);
   const [todayRecord, setTodayRecord] = useState(null);
 
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [paginationInfo, setPaginationInfo] = useState({
+    total: 0,
+    totalPages: 1,
+    hasNext: false,
+    hasPrev: false
+  });
+
   const fetchAttendance = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await api.get('/attendance/history');
+      const response = await api.get('/attendance/history', {
+        params: { page, limit }
+      });
       if (response.data?.success) {
-        const data = response.data.data;
+        const data = response.data.data || [];
         setHistory(data);
 
-        // Check if there is an attendance record for today
-        const todayStr = new Date().toDateString();
-        const todayRec = data.find(rec => new Date(rec.date).toDateString() === todayStr);
-        setTodayRecord(todayRec || null);
+        if (response.data.pagination) {
+          setPaginationInfo(response.data.pagination);
+        } else {
+          setPaginationInfo({
+            total: data.length,
+            totalPages: 1,
+            hasNext: false,
+            hasPrev: false
+          });
+        }
+
+        // Only check today's record from page 1 data
+        if (page === 1) {
+          const todayStr = new Date().toDateString();
+          const todayRec = data.find(rec => new Date(rec.date).toDateString() === todayStr);
+          setTodayRecord(todayRec || null);
+        }
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load attendance history.');
@@ -38,7 +63,7 @@ export default function EmployeeAttendance() {
 
   useEffect(() => {
     fetchAttendance();
-  }, []);
+  }, [page, limit]);
 
   const handleClockIn = async () => {
     setActionLoading(true);
@@ -48,7 +73,11 @@ export default function EmployeeAttendance() {
       const response = await api.post('/attendance/clock-in');
       if (response.data?.success) {
         setSuccessMessage('Clocked in successfully! Have a great day at work.');
-        fetchAttendance();
+        if (page === 1) {
+          fetchAttendance();
+        } else {
+          setPage(1);
+        }
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Clock-in failed.');
@@ -65,7 +94,11 @@ export default function EmployeeAttendance() {
       const response = await api.put('/attendance/clock-out');
       if (response.data?.success) {
         setSuccessMessage('Clocked out successfully! Thank you for your work.');
-        fetchAttendance();
+        if (page === 1) {
+          fetchAttendance();
+        } else {
+          setPage(1);
+        }
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Clock-out failed.');
@@ -270,6 +303,21 @@ export default function EmployeeAttendance() {
             </table>
           </div>
         )}
+        <div className="px-6 pb-6">
+          <Pagination
+            page={page}
+            limit={limit}
+            total={paginationInfo.total}
+            totalPages={paginationInfo.totalPages}
+            hasNext={paginationInfo.hasNext}
+            hasPrev={paginationInfo.hasPrev}
+            onPageChange={setPage}
+            onLimitChange={(newLimit) => {
+              setLimit(newLimit);
+              setPage(1);
+            }}
+          />
+        </div>
       </div>
     </div>
   );

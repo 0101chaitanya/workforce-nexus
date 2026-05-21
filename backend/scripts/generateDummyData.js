@@ -220,10 +220,17 @@ const generateData = async () => {
         }
 
         const dailyWage = monthlySalary / daysInMonth;
-        const deductions = Math.round(unpaidDays * dailyWage);
-        const basicPay = Math.max(0, monthlySalary - deductions);
-        const taxes = Math.round(basicPay * 0.15); // 15% estimated taxes
-        const netPay = basicPay - taxes;
+        const unpaidLeaveDeductions = Math.round(unpaidDays * dailyWage);
+        const basicPay = Math.round(monthlySalary * 0.5);
+        const hra = Math.round(monthlySalary * 0.3);
+        const conveyance = Math.round(monthlySalary * 0.1);
+        const medical = Math.round(monthlySalary * 0.1);
+        const bonus = 0;
+        const grossPay = basicPay + hra + conveyance + medical + bonus;
+        
+        const taxableIncome = grossPay - unpaidLeaveDeductions;
+        const taxes = Math.round(taxableIncome * 0.1); // 10% taxes
+        const netPay = taxableIncome - taxes;
 
         await Payroll.create({
           user: emp._id,
@@ -231,6 +238,12 @@ const generateData = async () => {
           month,
           year: currentYear,
           basicPay,
+          hra,
+          conveyance,
+          medical,
+          bonus,
+          unpaidLeaveDeductions,
+          grossPay,
           taxes,
           netPay,
           paidDate: new Date(currentYear, month - 1, 28),

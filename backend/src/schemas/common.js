@@ -8,6 +8,13 @@ const common = {
   // Email with standard validation
   email: z.string().email("Invalid email format").trim(),
 
+  // Email or Identity (e.g. EMP-A1B2C3)
+  emailOrIdentity: z.string().trim().refine(val => {
+      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+      const isIdentity = /^EMP-[A-Z0-9]{6}$/i.test(val);
+      return isEmail || isIdentity;
+  }, "Must be a valid corporate email or identity code (e.g., EMP-7A9F23)"),
+
   // Password for login (minimal check)
   password: z.string().min(8, "Password must be at least 8 characters"),
 
