@@ -208,6 +208,12 @@ export default function EmployeeProfile() {
             <h4 className="font-extrabold text-slate-800 text-sm tracking-wide uppercase">Corporate Specs</h4>
 
             <div className="space-y-3.5 text-xs font-semibold text-slate-600">
+              {profile?.identity && (
+                <div className="flex items-center gap-2.5">
+                  <UserCheck size={16} className="text-slate-400 shrink-0" />
+                  <span className="font-mono text-slate-800 bg-slate-100 px-1.5 py-0.5 rounded text-[10px] font-bold">ID: {profile.identity}</span>
+                </div>
+              )}
               <div className="flex items-center gap-2.5">
                 <Mail size={16} className="text-slate-400 shrink-0" />
                 <span className="truncate">{profile?.email}</span>

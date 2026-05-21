@@ -11,6 +11,7 @@ const sanitizeUser = (user) => ({
     _id: user._id,
     fullName: user.fullName,
     email: user.email,
+    identity: user.identity,
     role: user.role,
     isVerified: user.isVerified
 });
@@ -160,7 +161,12 @@ exports.verifyOtp = catchAsync(async (req, res) => {
     const { email, otp } = req.body;
 
     // Direct lookup avoids redundantly searching Company collection first
-    const user = await User.findOne({ email });
+    const user = await User.findOne({
+        $or: [
+            { email: email.toLowerCase() },
+            { identity: email.toUpperCase() }
+        ]
+    });
     if (!user) return res.status(400).json({ message: "User did not request an OTP", success: false, occurredAt: new Date().toISOString() });
 
     if (user.otp !== otp || Date.now() > user.otpExpiry) {
@@ -182,7 +188,12 @@ exports.verifyOtp = catchAsync(async (req, res) => {
 exports.register = catchAsync(async (req, res) => {
     const { fullName, email, password } = req.body;
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({
+        $or: [
+            { email: email.toLowerCase() },
+            { identity: email.toUpperCase() }
+        ]
+    });
     if (!user) return res.status(404).json({ message: "User not found", success: false, occurredAt: new Date().toISOString() });
     if (!user.isVerified) return res.status(403).json({ message: "Email verification is required before registration", success: false, occurredAt: new Date().toISOString() });
     if (user.password) return res.status(400).json({ message: "User is already registered", success: false, occurredAt: new Date().toISOString() });
@@ -275,7 +286,12 @@ exports.register = catchAsync(async (req, res) => {
 exports.login = catchAsync(async (req, res) => {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email }).populate({
+    const user = await User.findOne({
+        $or: [
+            { email: email.toLowerCase() },
+            { identity: email.toUpperCase() }
+        ]
+    }).populate({
         path: "company",
         populate: { path: "owner", select: "fullName email" }
     });
@@ -355,7 +371,12 @@ exports.testGet = catchAsync(async (req, res) => {
 exports.forgotPasswordOtp = catchAsync(async (req, res) => {
     const { email } = req.body;
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({
+        $or: [
+            { email: email.toLowerCase() },
+            { identity: email.toUpperCase() }
+        ]
+    });
     if (!user) {
         return res.status(404).json({ message: "User not found", success: false, occurredAt: new Date().toISOString() });
     }
@@ -368,7 +389,7 @@ exports.forgotPasswordOtp = catchAsync(async (req, res) => {
 
     await transporter.sendMail({
         from: process.env.EMAIL,
-        to: email,
+        to: user.email,
         subject: "Password Reset OTP",
         html: `<h2>Your OTP for password reset is ${otp}</h2>
                <p>This code is valid for 15 minutes. If you did not request a password reset, please ignore this email.</p>`,
@@ -380,7 +401,12 @@ exports.forgotPasswordOtp = catchAsync(async (req, res) => {
 exports.resetPassword = catchAsync(async (req, res) => {
     const { email, otp, newPassword } = req.body;
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({
+        $or: [
+            { email: email.toLowerCase() },
+            { identity: email.toUpperCase() }
+        ]
+    });
     if (!user) return res.status(404).json({ message: "User not found", success: false, occurredAt: new Date().toISOString() });
 
     if (user.otp !== otp || Date.now() > user.otpExpiry) {

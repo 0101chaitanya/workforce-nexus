@@ -155,13 +155,13 @@ const Login = () => {
               <form onSubmit={handleAuthSubmit} className="space-y-4">
                 <div>
                   <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                    Corporate Email
+                    Corporate Email or ID
                   </label>
                   <div className="relative mt-1.5">
                     <Mail className="absolute left-3.5 top-3.5 text-slate-400" size={18} />
-                    <input type="email" name="identifier" value={loginData.identifier} onChange={handleInputChange} required
+                    <input type="text" name="identifier" value={loginData.identifier} onChange={handleInputChange} required
                       className="w-full pl-11 pr-4 py-3 bg-slate-50/50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all duration-200 text-sm font-medium text-slate-700"
-                      placeholder="name@company.com" />
+                      placeholder="name@company.com or EMP-XXXXXX" />
                   </div>
                 </div>
 
@@ -216,11 +216,11 @@ const Login = () => {
               {!isOtpMode ? (
                 <form onSubmit={handleRecoverySubmit} className="space-y-4">
                   <div>
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Registered Email Address</label>
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Registered Email or ID</label>
                     <div className="relative mt-1.5">
                       <Mail className="absolute left-3.5 top-3.5 text-slate-400" size={18} />
-                      <input type="email" value={recoveryEmail} onChange={(e) => setRecoveryEmail(e.target.value)} required
-                        className="w-full pl-11 pr-4 py-3 bg-slate-50/50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all duration-200 text-sm font-medium text-slate-700" placeholder="yourname@company.com" />
+                      <input type="text" value={recoveryEmail} onChange={(e) => setRecoveryEmail(e.target.value)} required
+                        className="w-full pl-11 pr-4 py-3 bg-slate-50/50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all duration-200 text-sm font-medium text-slate-700" placeholder="yourname@company.com or EMP-XXXXXX" />
                     </div>
                   </div>
 

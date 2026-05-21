@@ -173,7 +173,7 @@ export default function OwnerEmployees() {
         <Search className="absolute left-4 top-3 text-slate-400" size={20} />
         <input
           type="text"
-          placeholder="Search by name or email (min. 2 characters)..."
+          placeholder="Search by name, email or ID (min. 2 characters)..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200/80 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-sm font-medium text-slate-700"
@@ -194,7 +194,14 @@ export default function OwnerEmployees() {
                 </span>
               </div>
               <h3 className="mt-4 text-lg font-black text-slate-800">{emp.fullName}</h3>
-              <p className="text-xs font-medium text-slate-400 mt-0.5">{emp.email}</p>
+              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                <p className="text-xs font-medium text-slate-400">{emp.email}</p>
+                {emp.identity && (
+                  <span className="px-1.5 py-0.5 text-[9px] bg-slate-100 text-slate-500 rounded font-mono font-bold tracking-wider shrink-0 border border-slate-200/40">
+                    {emp.identity}
+                  </span>
+                )}
+              </div>
 
               <div className="mt-4 space-y-2 text-xs font-semibold text-slate-600">
                 <div className="flex items-center gap-2">
