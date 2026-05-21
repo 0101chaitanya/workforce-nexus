@@ -9,6 +9,7 @@ export default function EmployeePayroll() {
   const [payrolls, setPayrolls] = useState([]);
   const [loading, setLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState(null);
+  const [tenureDownloading, setTenureDownloading] = useState(false);
   const [error, setError] = useState(null);
 
   const [page, setPage] = useState(1);
@@ -75,6 +76,29 @@ export default function EmployeePayroll() {
     }
   };
 
+  const handleDownloadTenure = async () => {
+    setTenureDownloading(true);
+    setError(null);
+    try {
+      const response = await api.get('/payroll/tenure/download', {
+        responseType: 'blob'
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Tenure_Payslip_${new Date().getFullYear()}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError('Failed to download consolidated payslip. Please try again.');
+    } finally {
+      setTenureDownloading(false);
+    }
+  };
+
   // Month mapping helper
   const getMonthName = (monthNumber) => {
     const date = new Date();
@@ -96,6 +120,18 @@ export default function EmployeePayroll() {
             Track your monthly earnings, tax deductions, and download computer-generated payslips.
           </p>
         </div>
+        <button
+          onClick={handleDownloadTenure}
+          disabled={tenureDownloading || payrolls.length === 0}
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs transition disabled:opacity-50"
+        >
+          {tenureDownloading ? (
+            <Loader2 className="animate-spin" size={12} />
+          ) : (
+            <Download size={12} />
+          )}
+          Download Tenure Payslip
+        </button>
       </div>
 
       {/* Main Payslip History Log */}
@@ -123,7 +159,8 @@ export default function EmployeePayroll() {
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 uppercase tracking-wider text-[10px]">
                   <th className="px-6 py-4">Pay Period</th>
-                  <th className="px-6 py-4">Basic Salary</th>
+                  <th className="px-6 py-4">Gross Salary</th>
+                  <th className="px-6 py-4">Leave Deductions</th>
                   <th className="px-6 py-4">Tax Deductions</th>
                   <th className="px-6 py-4">Net Payout</th>
                   <th className="px-6 py-4">Status</th>
@@ -133,6 +170,8 @@ export default function EmployeePayroll() {
               <tbody className="divide-y divide-slate-100">
                 {payrolls.map((pay) => {
                   const filename = `Payslip_${getMonthName(pay.month)}_${pay.year}.pdf`;
+                  const calculatedGross = pay.grossPay || (pay.basicPay + (pay.hra || 0) + (pay.conveyance || 0) + (pay.medical || 0) + (pay.bonus || 0));
+                  const calculatedDeductions = pay.unpaidLeaveDeductions || 0;
                   return (
                     <tr key={pay._id} className="hover:bg-slate-50/50 transition">
                       <td className="px-6 py-4 font-bold text-slate-800 flex items-center gap-2">
@@ -140,7 +179,10 @@ export default function EmployeePayroll() {
                         {getMonthName(pay.month)} {pay.year}
                       </td>
                       <td className="px-6 py-4 font-medium text-slate-700">
-                        ₹{pay.basicPay.toLocaleString()}
+                        ₹{calculatedGross.toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 text-rose-600 font-medium">
+                        ₹{calculatedDeductions.toLocaleString()}
                       </td>
                       <td className="px-6 py-4 text-rose-600 font-medium">
                         ₹{pay.taxes.toLocaleString()}

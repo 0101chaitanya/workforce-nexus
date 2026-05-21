@@ -66,7 +66,11 @@ const OwnerAttendance = () => {
     }
 
     // Skip search query if it exactly matches the currently selected user
-    if (selectedUserObj && (searchQuery === selectedUserObj.fullName || searchQuery === selectedUserObj.email)) {
+    if (selectedUserObj && (
+      searchQuery === selectedUserObj.fullName ||
+      searchQuery === selectedUserObj.email ||
+      searchQuery === selectedUserObj.identity
+    )) {
       return;
     }
 
@@ -91,7 +95,7 @@ const OwnerAttendance = () => {
   const handleSelectUser = (user) => {
     setTargetUserId(user._id);
     setSelectedUserObj(user);
-    setSearchQuery(user.fullName || user.email);
+    setSearchQuery(user.identity || user.fullName || user.email);
     setShowDropdown(false);
     setPage(1);
   };
@@ -110,7 +114,10 @@ const OwnerAttendance = () => {
     if (val === '') {
       handleClearSearch();
     } else {
-      if (selectedUserObj && val !== selectedUserObj.fullName && val !== selectedUserObj.email) {
+      if (selectedUserObj &&
+          val !== selectedUserObj.fullName &&
+          val !== selectedUserObj.email &&
+          val !== selectedUserObj.identity) {
         setTargetUserId('');
         setSelectedUserObj(null);
       }
@@ -138,7 +145,7 @@ const OwnerAttendance = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
-              placeholder="Type name or email to look up..."
+              placeholder="Type name, email, or employee ID to look up..."
               className="w-full pl-11 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
             />
             {searchQuery && (
@@ -163,7 +170,14 @@ const OwnerAttendance = () => {
                     onClick={() => handleSelectUser(user)}
                     className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition font-medium"
                   >
-                    <div className="font-bold">{user.fullName}</div>
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold text-slate-800">{user.fullName}</span>
+                      {user.identity && (
+                        <span className="text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-full">
+                          {user.identity}
+                        </span>
+                      )}
+                    </div>
                     <div className="text-xs text-slate-400">{user.email} • {user.position || 'Employee'}</div>
                   </button>
                 ))}
@@ -198,6 +212,7 @@ const OwnerAttendance = () => {
               <table className="min-w-full divide-y divide-slate-200 text-sm">
                 <thead className="bg-slate-50 text-slate-600">
                   <tr>
+                    <th className="px-4 py-4 text-left font-semibold">Employee ID</th>
                     <th className="px-4 py-4 text-left font-semibold">Employee</th>
                     <th className="px-4 py-4 text-left font-semibold">Date</th>
                     <th className="px-4 py-4 text-left font-semibold">Check-in</th>
@@ -209,6 +224,15 @@ const OwnerAttendance = () => {
                 <tbody className="divide-y divide-slate-200 bg-white">
                   {attendance.map((item) => (
                     <tr key={item._id}>
+                      <td className="px-4 py-4 text-slate-700 font-mono text-xs">
+                        {item.user?.identity ? (
+                          <span className="bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded-md font-bold">
+                            {item.user.identity}
+                          </span>
+                        ) : (
+                          '-'
+                        )}
+                      </td>
                       <td className="px-4 py-4 text-slate-700">
                         {item.user?.fullName || item.user?.email || 'Unknown'}
                       </td>

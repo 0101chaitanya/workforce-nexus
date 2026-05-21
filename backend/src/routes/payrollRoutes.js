@@ -10,5 +10,6 @@ router.use(protect); // All payroll routes are protected
 
 router.get("/history", validateQuery(ownerSchemas.historyQuery), payrollController.getPayrollHistory);
 router.post("/generate", isAuthorized(), payrollController.generateCompanyPayroll);
+router.get("/tenure/download", payrollController.downloadTenurePayslip);
 router.get("/:id/download", payrollController.downloadPayslip);
 module.exports = router;

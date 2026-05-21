@@ -128,7 +128,7 @@ exports.getAttendanceHistory = async (req, res) => {
 
             const total = await Attendance.countDocuments(query);
             const attendanceHistory = await Attendance.find(query)
-                .populate('user', 'fullName email position')
+                .populate('user', 'fullName email position identity')
                 .sort({ date: -1 })
                 .skip(skip)
                 .limit(limitNum);
@@ -150,7 +150,7 @@ exports.getAttendanceHistory = async (req, res) => {
             });
         } else {
             const attendanceHistory = await Attendance.find(query)
-                .populate('user', 'fullName email position')
+                .populate('user', 'fullName email position identity')
                 .sort({ date: -1 });
 
             return res.status(200).json({

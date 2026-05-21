@@ -75,7 +75,7 @@ exports.getLeaveHistory = async (req, res) => {
 
             const total = await Leave.countDocuments(query);
             const leaves = await Leave.find(query)
-                .populate('user', 'fullName email position')
+                .populate('user', 'fullName email position identity')
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limitNum);
@@ -98,7 +98,7 @@ exports.getLeaveHistory = async (req, res) => {
             });
         } else {
             const leaves = await Leave.find(query)
-                .populate('user', 'fullName email position')
+                .populate('user', 'fullName email position identity')
                 .sort({ createdAt: -1 }); // Most recent first
 
             return res.status(200).json({
