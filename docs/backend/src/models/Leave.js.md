@@ -31,9 +31,15 @@ The `Leave` model stores employee time-off requests, documenting leave types, du
 - **Lines 1-2 (Imports)**:
   - **Basic Function**: Import dependency.
   - **Detailed Explanation**: Imports `mongoose` (Line 1) to define schemas and interface with MongoDB database collections.
+  - **Key Function Calls**:
+    - `require("mongoose")`: Loads the Mongoose library to support MongoDB database interactions and object modeling. Returns the Mongoose module object.
 - **Lines 3-28 (Leave Schema Declaration)**:
   - **Basic Function**: Declare fields and validations for leave requests.
   - **Detailed Explanation**: Declares `leaveSchema` (Line 3). It references the `User` who requested the leave (Lines 4-8), and references the `Company` partition (Lines 9-13). It enforces a leave `type` restricted to sick, personal, annual, or unpaid (Lines 14-18). It requires `startDate` and `endDate` Date inputs (Lines 19-20), as well as a textual `reason` (Line 21). It uses an enum constraint for `status` consisting of pending, approved, and rejected, defaulting to pending (Lines 22-26). It also includes optional supervisor `remarks` (Line 27). The schema is configured with `timestamps: true` (Line 28) to track entry changes automatically.
+  - **Key Function Calls**:
+    - `new mongoose.Schema(definition, options)`: Constructor called to define the database schema fields and configuration constraints (such as `timestamps: true`). Returns a Schema instance.
 - **Line 31 (Model Compilation & Export)**:
   - **Basic Function**: Compile and export the database model.
   - **Detailed Explanation**: Compiles and exports the mongoose model named `Leave` (Line 31) for use in application-wide controllers.
+  - **Key Function Calls**:
+    - `mongoose.model("Leave", leaveSchema)`: Compiles `leaveSchema` into a model constructor named `'Leave'`. It exposes database interaction APIs to create, search, and update leave request records in MongoDB.

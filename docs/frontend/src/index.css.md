@@ -20,3 +20,5 @@
 - **Lines 1-1 (Tailwind Import Directive)**:
   - **Basic Function**: Imports Tailwind CSS package components.
   - **Detailed Explanation**: Uses `@import "tailwindcss";` to import Tailwind CSS framework utilities, base styles, components, and variables into the React app stylesheet.
+  - **Key Function Calls**:
+    - `@import "tailwindcss"`: A CSS at-rule directive used to import the Tailwind CSS framework library (including base styles, components, utilities, and variables) into the stylesheet during compile/build time. No JavaScript/programming function calls are present.

@@ -26,9 +26,12 @@
 - **Lines 1-8 (Introduction and Plugins)**:
   - **Basic Function**: Introduces the template and list of official React compilation plugins.
   - **Detailed Explanation**: States that this is a minimal React/Vite template with Hot Module Replacement (HMR) and specifies official Babel/SWC compilation plugin links.
+  - **Key Function Calls**: None
 - **Lines 10-12 (React Compiler)**:
   - **Basic Function**: Clarifies compiler usage within the template.
   - **Detailed Explanation**: Notes that the React Compiler is disabled due to potential build/development performance impacts, and links to installation docs.
+  - **Key Function Calls**: None
 - **Lines 14-17 (Expanding the ESLint configuration)**:
   - **Basic Function**: Guidelines for expanding linter/type-safety tooling.
   - **Detailed Explanation**: Recommends upgrading to TypeScript for larger applications and lists resources for integrating `typescript-eslint`.
+  - **Key Function Calls**: None

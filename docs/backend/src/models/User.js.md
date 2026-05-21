@@ -41,15 +41,37 @@ The `User` model represents all system actors (Employees and Owners). It maintai
 - **Lines 1-2 (Imports)**:
   - **Basic Function**: Load database and security dependencies.
   - **Detailed Explanation**: Imports `mongoose` (Line 1) for schema management and `bcrypt` (Line 2) for secure password hashing.
+  - **Key Function Calls**:
+    - `require('mongoose')`: Loads the Mongoose library for MongoDB object modeling. Returns the Mongoose module object.
+    - `require('bcrypt')`: Loads the Bcrypt library for hashing passwords. Returns the Bcrypt module object.
 - **Lines 4-54 (User Schema Definition)**:
   - **Basic Function**: Define all schema properties, types, and database index options.
   - **Detailed Explanation**: Declares `userSchema` (Line 4). Properties include `accessToken`, `address`, `bankAccount`, `branch`, a reference to `Company` (Lines 13-14), `dateOfBirth`, a unique and lowercase-validated `email` (Line 18), `fullName`, `isVerified`, `joinDate` (defaulting to current date), OTP configurations (Lines 25-29), `password`, `phone`, profile `photo` ObjectId, `position`, `roleDescription`, `refreshToken`, a `role` enum string restricted to "employee" or "owner" (Lines 42-45), salary number, and a unique `identity` sparse-indexed string (Lines 49-53) to prevent collisions.
+  - **Key Function Calls**:
+    - `new mongoose.Schema(definition, options)`: Constructor used to create a new Mongoose Schema instance using the defined attributes and options (e.g., `{ timestamps: true }`).
+    - `new Date()`: Instantiates a new Date object representing the current date and time, utilized here to set the default `joinDate`.
 - **Lines 57-92 (Pre-Save Middleware)**:
   - **Basic Function**: Automatically configure fields and hash passwords prior to database insertions/updates.
   - **Detailed Explanation**: Registers a pre-save hook (Line 57). First, if the user doesn't have an `identity`, it defines a random character-generator (Lines 59-66) and runs a retry loop (Lines 70-78) attempting to generate and find if that code already exists in the database. If it exists, it retries up to 100 times. If it fails to get a unique code, it fails with an error (Line 80). Second, it verifies if the password is modified (Line 84). If so, it generates a salt with 10 rounds (Line 86) and hashes the user's password (Line 87).
+  - **Key Function Calls**:
+    - `userSchema.pre('save', middlewareFunction)`: Registers an asynchronous pre-save middleware hook that intercepts save requests. Returns the schema object for chaining.
+    - `generateIdentity()`: Custom helper function that constructs a random employee identity prefixed with `EMP-`.
+    - `Math.random()`: Generates a pseudo-random floating-point number between 0 and 1.
+    - `Math.floor(x)`: Rounds a number down to the nearest integer. Used to generate random indices for characters in identity generation.
+    - `chars.charAt(index)`: Returns the character at the specified index within the string of available characters.
+    - `this.constructor.findOne(query)`: Mongoose query method called on the model class to find an existing document with the generated identity. Returns a Promise resolving to the matching document or `null`.
+    - `next(error)`: A callback invoked to notify Mongoose to proceed to the next hook/save operation or report an error.
+    - `new Error(message)`: Constructor that instantiates a new Error object.
+    - `this.isModified('password')`: Mongoose instance method checking if the `'password'` path has been modified. Returns a boolean.
+    - `bcrypt.genSalt(10)`: Asynchronously generates a salt for secure hashing. Returns a Promise resolving to the generated salt string.
+    - `bcrypt.hash(password, salt)`: Asynchronously hashes the password using the generated salt. Returns a Promise resolving to the hashed password string.
 - **Lines 95-97 (Password Comparison Method)**:
   - **Basic Function**: Add helper to compare password input.
   - **Detailed Explanation**: Declares an instance method `comparePassword` (Line 95) that calls `bcrypt.compare` asynchronously (Line 96) to match the incoming plain text password against the hashed string.
+  - **Key Function Calls**:
+    - `bcrypt.compare(candidatePassword, hash)`: Asynchronously compares the plain text candidate password with the stored hash. Returns a Promise resolving to a boolean.
 - **Lines 99-101 (Model Export)**:
   - **Basic Function**: Compile and export the User model.
   - **Detailed Explanation**: Compiles the Mongoose model named `User` (Line 99) and exports it (Line 101).
+  - **Key Function Calls**:
+    - `mongoose.model('User', userSchema)`: Compiles the database schema into a Mongoose model named `'User'`, returning a class constructor capable of CRUD operations on the corresponding collection.

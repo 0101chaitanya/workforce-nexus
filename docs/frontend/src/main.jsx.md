@@ -25,6 +25,11 @@
 - **Lines 1-6 (Module & Styling Imports)**:
   - **Basic Function**: Imports resources needed to bootstrap the application.
   - **Detailed Explanation**: Imports `StrictMode` from `react` for runtime checks, `createRoot` from `react-dom/client` for mounting to the DOM, `Provider` from `react-redux` to feed the store to the React tree, the global stylesheet `index.css`, the root React component `App.jsx`, and the configured Redux store instance from `src/app/store.js`.
+  - **Key Function Calls**: None.
 - **Lines 8-14 (DOM Initialization & Root Rendering)**:
   - **Basic Function**: Targets the HTML mount point and executes the React application bootstrap.
   - **Detailed Explanation**: Calls `createRoot` targeting the `root` element from the DOM. Then, it calls `.render()` containing the `<App />` component nested inside `<Provider store={store}>` and `<StrictMode>`.
+  - **Key Function Calls**:
+    - `document.getElementById(id)`: A native Web API method on the document object. It is called to locate the HTML container element by its ID where the React application will be mounted. It accepts `'root'` (string) as its parameter. Returns the corresponding DOM `Element` object (or `null` if not found).
+    - `createRoot(container)`: A React DOM client function. It is called to initialize a React root at the target DOM node. It accepts the target container DOM element as its parameter. Returns a React root object instance.
+    - `render(element)`: A method on the React root instance returned by `createRoot`. It is called to render the React element tree to the DOM container. It accepts the root JSX element (here, `<StrictMode>` wrapping `<Provider>` and `<App />`) as its parameter and has the side effect of initializing, mounting, and displaying the application layout on the page.

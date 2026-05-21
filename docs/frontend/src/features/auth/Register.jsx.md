@@ -41,31 +41,86 @@
 - **Lines 1-6 (Imports)**:
   - **Basic Function**: Imports React and Redux hooks, Router components, axios interceptors client, authSlice actions, and Lucide icons.
   - **Detailed Explanation**: Imports `React`, `useState`, and `useEffect` hooks. Imports Redux hooks `useDispatch` and `useSelector`. Imports `Link` and `useNavigate` for navigation. Imports `axiosInterceptors` for API calls. Imports actions `setLoading`, `setAuthFailed`, and `clearError` from `authSlice`. Imports multiple icons from `lucide-react`.
+  - **Key Function Calls**: None.
 - **Lines 8-26 (State & Hooks)**:
   - **Basic Function**: Component instantiation and state definitions.
   - **Detailed Explanation**: Instantiates dispatch and navigate hooks. Extracts `loading` and `error` from global Redux state. Sets up local state for `formData` (companyName, fullName, email, otp, password, confirmPassword), `isOtpSent`, `isEmailVerified`, `otpLoading` (for verification request indicators), `passwordError` (for validation alerts), and `successMessage` (for notifications).
+  - **Key Function Calls**:
+    - `useDispatch()`: Obtains the Redux store dispatch function.
+    - `useNavigate()`: Obtains a React Router navigation helper function.
+    - `useSelector(selector)`: Selects `loading` and `error` fields from `state.auth`.
+    - `useState(initialValue)`: Invoked multiple times to initialize states: `formData` (object with empty fields), `isOtpSent` (false), `isEmailVerified` (false), `otpLoading` (false), `passwordError` (''), and `successMessage` ('').
 - **Lines 28-30 (useEffect)**:
   - **Basic Function**: Clears previous authentication errors.
   - **Detailed Explanation**: Fires `dispatch(clearError())` when the component mounts to reset any errors stored in Redux state.
+  - **Key Function Calls**:
+    - `useEffect(effect, dependencies)`: Hook setup to execute error-clearing actions on component mount.
+    - `clearError()`: Action creator returning the clear error action.
+    - `dispatch(action)`: Dispatches `clearError` action to Redux.
 - **Lines 32-34 (handleChange)**:
   - **Basic Function**: Handles form field updates.
   - **Detailed Explanation**: Updates specific keys in the local `formData` state object based on the input name dynamically.
+  - **Key Function Calls**:
+    - `setFormData(callbackOrValue)`: Overwrites local `formData` using shallow copying with input modifications.
 - **Lines 36-56 (handleSendOtp)**:
   - **Basic Function**: Sends an email verification OTP code request to the server.
   - **Detailed Explanation**: Validates that an email is present. Sets `otpLoading` state, clears errors and success messages. Sends a POST request to `/auth/send-otp` with the email and company name. On success, sets `isOtpSent` to `true` and prints a success notification.
+  - **Key Function Calls**:
+    - `dispatch(action)`: Dispatches Redux actions (`setAuthFailed`, `clearError`).
+    - `setAuthFailed(errorMessage)`: Action creator invoked with a validation failure string.
+    - `setOtpLoading(boolean)`: Updates OTP submit button loading spinner indicator state.
+    - `clearError()`: Action creator to clear Redux authentication errors.
+    - `setSuccessMessage(string)`: Updates the success notification visual alert.
+    - `axiosInterceptors.post(endpoint, payload)`: Posts the email and companyName properties to the `/auth/send-otp` route to generate the OTP.
+    - `setIsOtpSent(boolean)`: Activates the OTP form verification input container.
 - **Lines 58-78 (handleVerifyOtp)**:
   - **Basic Function**: Verifies the OTP code submitted by the user.
   - **Detailed Explanation**: Checks that the OTP field is populated. Sets `otpLoading` to true, clears errors and success messages. Sends a POST request to `/auth/verify-otp` with the email and the parsed numeric OTP. On success, sets `isEmailVerified` to `true` and updates the success notification.
+  - **Key Function Calls**:
+    - `dispatch(action)`: Dispatches Redux actions.
+    - `setAuthFailed(errorMessage)`: Action creator to generate an OTP failure action.
+    - `setOtpLoading(boolean)`: Controls loading indicator visibility on verification trigger.
+    - `clearError()`: Clears active errors.
+    - `setSuccessMessage(string)`: Sets feedback notification messages.
+    - `Number(string)`: Parsed function converting the OTP input string into a standard numeric type.
+    - `axiosInterceptors.post(endpoint, payload)`: Submits email and numeric otp to `/auth/verify-otp` via HTTP POST.
+    - `setIsEmailVerified(boolean)`: Updates email verification status flag to lock input items.
 - **Lines 80-86 (useEffect)**:
   - **Basic Function**: Monitors passwords for mismatches.
   - **Detailed Explanation**: Compares `password` and `confirmPassword` and sets `passwordError` to a mismatch warning if they differ, clearing it when they match.
+  - **Key Function Calls**:
+    - `useEffect(effect, dependencies)`: Runs password consistency validation whenever password input fields are altered.
+    - `setPasswordError(string)`: Updates or clears password mismatch status alerts.
 - **Lines 88-112 (handleSubmit)**:
   - **Basic Function**: Registers the new company and owner user account.
   - **Detailed Explanation**: Prevents standard form reload. Checks email verification status. Dispatches loading state, clears errors and success messages. Sends a POST request to `/auth/register` containing `fullName`, `email`, and `password`. Displays a successful setup message and redirects to `/login` after a 2-second timeout.
+  - **Key Function Calls**:
+    - `e.preventDefault()`: Halts default browser submit-and-reload actions.
+    - `dispatch(action)`: Dispatches actions to the Redux store.
+    - `setAuthFailed(errorMessage)`: Action creator handling validation issues.
+    - `setLoading(boolean)`: Redux slice action creator setting the global auth loading visual spinner state.
+    - `clearError()`: Produces error clearing action.
+    - `setSuccessMessage(string)`: Updates state to display setup completion confirmations.
+    - `axiosInterceptors.post(endpoint, payload)`: Sends registration fields to the `/auth/register` route via POST.
+    - `setTimeout(callback, delay)`: Triggers navigation after a 2-second timeout.
+    - `navigate(path)`: Navigates programmatically to the `/login` route.
 - **Lines 114-141 (Left Design Sidebar UI)**:
   - **Basic Function**: Renders decorative sidebar on larger screens.
   - **Detailed Explanation**: Displays branding elements, portal name, tagline, and corporate description inside a styled Tailwind container hidden on smaller screens.
+  - **Key Function Calls**:
+    - `Briefcase({ size, className })`: Renders Lucide briefcase icon component.
 - **Lines 143-259 (Right Interactive Form Area UI)**:
   - **Basic Function**: Renders registration forms and action buttons.
   - **Detailed Explanation**: Houses inputs for Company Name and Owner Full Name (which are disabled once email is verified), the Corporate Email address with a "Send OTP" button, a conditional verification field for OTP if it has been sent, status message blocks, and password/confirm password fields that are interactive only after successful email verification. Includes the submit button and navigation links.
+  - **Key Function Calls**:
+    - `CheckCircle({ size, className })`: Renders verification status check icon.
+    - `Building({ size, className })`: Renders Lucide building icon component.
+    - `User({ size, className })`: Renders Lucide user icon component.
+    - `Mail({ size, className })`: Renders Lucide mail icon component.
+    - `Lock({ size, className })`: Renders Lucide lock icon component.
+    - `ShieldCheck({ size, className })`: Renders Lucide shield check verification icon.
+    - `handleChange(event)`: Input change event trigger binding.
+    - `handleSendOtp()`: Mouse click handler to request OTP dispatch.
+    - `handleVerifyOtp()`: Mouse click handler to verify standard OTP values.
+    - `handleSubmit(event)`: Form submission handler trigger.
 

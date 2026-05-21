@@ -38,9 +38,15 @@ The `Payroll` model represents monthly compensation records for employees. It ag
 - **Lines 1-2 (Imports)**:
   - **Basic Function**: Import database wrapper.
   - **Detailed Explanation**: Imports `mongoose` (Line 1) to create the schema structures.
+  - **Key Function Calls**:
+    - `require("mongoose")`: Loads the Mongoose library to provide schema building and MongoDB interface functions. Returns the Mongoose module object.
 - **Lines 3-69 (Payroll Schema Definition)**:
   - **Basic Function**: Structure the database schema for payroll records.
   - **Detailed Explanation**: Declares `payrollSchema` (Line 3). It defines `user` (Lines 4-8) and `company` (Lines 9-13) references. It validates `month` as a required Number between 1 and 12 (Lines 15-20), and `year` as a required Number (Lines 21-24). It sets `basicPay` as a required Number (Lines 25-28). It includes additive earnings: `hra` (Lines 29-32), `conveyance` (Lines 33-36), `medical` (Lines 37-40), and `bonus` (Lines 41-44). Deductions are stored in `unpaidLeaveDeductions` (Lines 45-48) and `taxes` (Lines 49-52). It requires calculated summaries `grossPay` (Lines 53-56) and `netPay` (Lines 57-60). It supports an optional payment date `paidDate` (Lines 61-63), and restricts the lifecycle `status` to not-generated, pending, or generated, defaulting to not-generated (Lines 64-68). Options `timestamps: true` (Line 69) is included to track updates automatically.
+  - **Key Function Calls**:
+    - `new mongoose.Schema(definition, options)`: Constructor called to define the structure, indices, and validations of a Mongoose Schema. Returns a Schema instance.
 - **Lines 71-73 (Model Instantiation & Export)**:
   - **Basic Function**: Instantiate and export the database model.
   - **Detailed Explanation**: Compiles the model named `Payroll` using `payrollSchema` (Line 71) and exports it (Line 73) using CommonJS.
+  - **Key Function Calls**:
+    - `mongoose.model("Payroll", payrollSchema)`: Compiles the `payrollSchema` into a model named `'Payroll'`, exposing database operation APIs to interact with the payrolls collection in MongoDB.

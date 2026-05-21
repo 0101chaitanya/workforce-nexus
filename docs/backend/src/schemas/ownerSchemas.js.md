@@ -28,6 +28,9 @@
 - **Lines 1-2 (Imports)**:
   - **Basic Function**: Import dependencies.
   - **Detailed Explanation**: Imports `z` namespace from `zod` (Line 1) and imports standard properties from the local shared schemas helper `common` (Line 2).
+  - **Key Function Calls**:
+    - `require("zod")`: Loads the Zod validation library module. Called to obtain the `z` schema definition object. Parameters: `"zod"` (the package name). Returns the exported `zod` module namespace.
+    - `require("./common")`: Loads the shared common schemas definition module. Called to obtain the shared schema primitives. Parameters: `"./common"` (the relative path to the common schemas module). Returns the exported `common` object dictionary.
 - **Lines 4-30 (Owner Validation Schemas)**:
   - **Basic Function**: Structure field-level validations for administrative tasks.
   - **Detailed Explanation**: Declares `ownerSchemas` container object (Line 4).
@@ -35,6 +38,19 @@
     - `searchUsersQuery` (Lines 13-17) processes text searches with minimum length 2 and maximum length 100, alongside coerced pagination integers (`page`, `limit`).
     - `updateCompany` (Lines 19-23) allows modifying `companyName` (Line 20), `address` (max length 500) (Line 21), and `phone` (Line 22).
     - `historyQuery` (Lines 25-29) checks for an optional target user ObjectId (Line 26) and handles coerced pagination integers (Lines 27-28).
+  - **Key Function Calls**:
+    - `z.object(shape)`: Creates a Zod object schema validating the shape of an object against specified field schemas. Parameters: `shape` (an object mapping keys to Zod schema types). Returns a `ZodObject` validation schema instance.
+    - `optional()`: Marks a schema field as optional. Parameters: None. Returns a `ZodOptional` schema.
+    - `z.string()`: Initiates a Zod validator object for validating string types. Parameters: None. Returns a `ZodString` validation schema instance.
+    - `trim()`: Applies trimming of leading and trailing whitespace to a string before validation. Parameters: None. Returns the updated `ZodString` schema.
+    - `min(limit)`: Sets a minimum value or length check. Parameters: `limit` (number representing minimum length). Returns the updated Zod schema instance.
+    - `max(limit)`: Sets a maximum value or length check. Parameters: `limit` (number representing maximum length). Returns the updated Zod schema instance.
+    - `or(schema)`: Combines the current schema with an alternative validator in a union (logical OR). Parameters: `schema` (a Zod schema object). Returns a `ZodUnion` schema.
+    - `z.literal(value)`: Restricts a schema to match an exact value. Parameters: `value` (e.g. `""`). Returns a `ZodLiteral` schema.
+    - `z.coerce.number()`: Creates a Zod number schema that casts/coerces input values to numbers. Parameters: None. Returns a `ZodNumber` instance.
+    - `int()`: Enforces that the numeric value must be an integer. Parameters: None. Returns the updated `ZodNumber` schema.
+    - `positive()`: Enforces that the numeric value must be strictly greater than 0. Parameters: None. Returns the updated `ZodNumber` schema.
 - **Line 32 (Module Exports)**:
   - **Basic Function**: Export validation configurations.
   - **Detailed Explanation**: Exports the compiled `ownerSchemas` dictionary (Line 32) for route validation middleware.
+  - **Key Function Calls**: None.

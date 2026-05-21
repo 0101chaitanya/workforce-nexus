@@ -37,6 +37,9 @@ Defines the following schema patterns:
 - **Lines 1-2 (Imports)**:
   - **Basic Function**: Import dependency.
   - **Detailed Explanation**: Imports `z` namespace from `zod` (Line 1) to declare validation primitives.
+  - **Key Function Calls**:
+    - `require("zod")`: Loads the Zod validation library module. Called to obtain the `z` schema definition object. Parameters: `"zod"` (the package name). Returns the exported `zod` module namespace.
+
 - **Lines 4-84 (Common Schema Dictionary)**:
   - **Basic Function**: Define specific rules, lengths, patterns, and errors for reusable properties.
   - **Detailed Explanation**: Declares `common` object (Line 4). It includes:
@@ -55,6 +58,26 @@ Defines the following schema patterns:
     - Text size definitions: `shortText` (Line 64), `tinyText` (Line 67), `mediumText` (Line 70), and `optionalMediumText` (Line 73).
     - `isoDate` validating standard ISO date-time strings (Line 76).
     - Enum definitions: `leaveType` (Line 79), `approvalStatus` (Line 82), and `reviewStatus` (Line 83).
+  - **Key Function Calls**:
+    - `z.string()`: Initiates a Zod validator object for validating string types. Parameters: None. Returns a `ZodString` validation schema instance.
+    - `regex(pattern, message)`: Restricts a string validator to match a specific regular expression. Parameters: `pattern` (RegExp pattern) and `message` (custom error string returned when validation fails). Returns the updated `ZodString` schema.
+    - `email(message)`: Restricts a string validator to validate standard email formats. Parameters: `message` (custom error string). Returns the updated `ZodString` schema.
+    - `trim()`: Applies trimming of leading and trailing whitespace to a string before validation. Parameters: None. Returns the updated `ZodString` schema.
+    - `refine(refinementFn, message)`: Registers a custom validation function (refinement) that must return `true` to pass. Parameters: `refinementFn` (a function returning boolean) and `message` (custom error string). Returns a `ZodEffects` schema.
+    - `test(val)`: A standard JavaScript RegExp method called on regex objects to test if the string `val` matches the pattern. Parameters: `val` (the input string). Returns `true` if matched, `false` otherwise.
+    - `min(limit, message)`: Sets a minimum value or length check. Parameters: `limit` (number representing minimum value or string length) and `message` (custom error string). Returns the updated Zod schema instance.
+    - `max(limit, message)`: Sets a maximum value or length check. Parameters: `limit` (number representing maximum value or string length) and `message` (custom error string). Returns the updated Zod schema instance.
+    - `z.coerce.number()`: Creates a Zod number schema that attempts to cast/coerce input values to numbers first. Parameters: None. Returns a `ZodNumber` instance.
+    - `int()`: Enforces that the numeric value must be an integer. Parameters: None. Returns the updated `ZodNumber` schema.
+    - `z.union(schemas)`: Validates that an input matches at least one of the schemas in the array. Parameters: `schemas` (an array of Zod validation schemas). Returns a `ZodUnion` schema.
+    - `z.literal(value)`: Restricts a schema to match an exact value. Parameters: `value` (the exact value, e.g., `""` or `undefined`). Returns a `ZodLiteral` schema.
+    - `optional()`: Marks a schema field as optional (allowing `undefined` values). Parameters: None. Returns a `ZodOptional` schema.
+    - `positive(message)`: Enforces that the numeric value must be strictly greater than 0. Parameters: `message` (custom error string). Returns the updated `ZodNumber` schema.
+    - `default(value)`: Sets a default value for the field if it is undefined. Parameters: `value` (the default value, e.g. `0`). Returns a `ZodDefault` schema.
+    - `z.enum(values)`: Creates a validation schema matching a list of specific string values. Parameters: `values` (an array of valid string values). Returns a `ZodEnum` schema.
+    - `datetime(options)`: Restricts a string schema to follow a valid ISO 8601 date-time format. Parameters: `options` (an object specifying configurations, like `{ message: "Invalid date format" }`). Returns the updated `ZodString` schema.
+
 - **Line 86 (Module Exports)**:
   - **Basic Function**: Export validation rules.
   - **Detailed Explanation**: Exports the `common` validators object (Line 86) to be referenced by other schema configurations.
+  - **Key Function Calls**: None.

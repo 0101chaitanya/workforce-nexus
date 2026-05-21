@@ -26,12 +26,19 @@
 - **Lines 1-5 (ESLint Plugin and Utility Imports)**:
   - **Basic Function**: Imports the libraries and helpers required to define the linter configurations.
   - **Detailed Explanation**: Imports `@eslint/js` for standard rules, `globals` to identify built-in global objects, `eslint-plugin-react-hooks` and `eslint-plugin-react-refresh` for React developer conventions, and config helpers from `eslint/config`.
+  - **Key Function Calls**: None
 - **Line 7-8 (Build Ignores)**:
   - **Basic Function**: Configures paths that the linter should bypass.
   - **Detailed Explanation**: Uses `globalIgnores(['dist'])` inside the configuration array to prevent checking production builds.
+  - **Key Function Calls**:
+    - `defineConfig(configs)`: Utility helper from `eslint/config` called to validate and format the ESLint config array, returning a schema-compatible flat configuration array for export.
+    - `globalIgnores(patterns)`: Configuration utility from `eslint/config` called with `['dist']` to produce a configuration object that excludes the `dist` directory from lint checks.
 - **Lines 9-15 (Linter Target & Config Rules)**:
   - **Basic Function**: Specifies the files to lint and the configurations they inherit.
   - **Detailed Explanation**: Targets all `.js` and `.jsx` files and extends the rule bases from the recommended JS rules, the React Hooks flat configuration rules, and the Vite-specific React refresh configuration.
+  - **Key Function Calls**: None
 - **Lines 16-21 (Global Settings)**:
   - **Basic Function**: Sets global variables and syntax features.
   - **Detailed Explanation**: Configures `globals.browser` so variables like `window` or `document` are not flagged, and enables parsing of JSX syntax under `ecmaFeatures`.
+  - **Key Function Calls**:
+    - `defineConfig(configs)`: (Closing) Marks the closing of the `defineConfig` utility function wrapper surrounding the configuration objects array.

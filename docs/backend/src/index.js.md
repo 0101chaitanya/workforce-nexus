@@ -44,19 +44,41 @@
 - **Lines 1-13 (Imports and Configuration)**:
   - **Basic Function**: Load modules, libraries, configurations, and environment variables.
   - **Detailed Explanation**: Imports `express` and initializes the application (`app = express()`). It also imports `cors` for cross-origin security, `dotenv` for env variables, `connectDB` for database connection, `cookieParser` for cookies, `morgan` for HTTP logging, `logger` (custom winston wrapper) for custom logging, and `path` for directories. Calls `dotenv.config()` to populate `process.env`.
+  - **Key Function Calls**:
+    - `require(module)`: Node.js CommonJS standard function to load modules. Loaded modules: `express`, `cors`, `dotenv`, `./config/db`, `cookie-parser`, `morgan`, `./utils/logger`, and `path`. Returns the imported module exports.
+    - `express()`: Initializes an Express application instance. Returns the Express application object (`app`).
+    - `dotenv.config()`: Loads and parses key-value pairs from the `.env` file in the current working directory, appending them to `process.env`. Returns an object containing the parsed variables or an error.
 - **Lines 14-22 (Route Imports)**:
   - **Basic Function**: Import route definitions for all features.
   - **Detailed Explanation**: Imports routers for `/api/auth`, `/api/attendance`, `/api/payroll`, `/api/users`, `/api/leaves`, `/api/company`, and `/api/dashboard` from their respective files.
+  - **Key Function Calls**:
+    - `require(module)`: Loads the sub-router modules: `./routes/authRoutes`, `./routes/attendanceRoutes`, `./routes/payrollRoutes`, `./routes/userRoutes`, `./routes/leaveRoutes`, `./routes/companyRoutes`, and `./routes/dashboardRoutes`. Returns the Express Router objects.
 - **Lines 23-24 (Database Connection)**:
   - **Basic Function**: Connect to MongoDB.
   - **Detailed Explanation**: Invokes the `connectDB()` function which uses mongoose to connect to the MongoDB instance using connection options.
+  - **Key Function Calls**:
+    - `connectDB()`: Calls the database connection routine imported from `./config/db` to connect Mongoose to the MongoDB database. Returns a Promise.
 - **Lines 25-40 (Global Middleware Registration)**:
   - **Basic Function**: Set up utility middlewares for logging, security, and payload parsing.
   - **Detailed Explanation**: Employs Morgan HTTP logger in `'dev'` mode, piping output streams through custom `logger.http`. Configures CORS to allow incoming requests specifically from `FRONTEND_URL` while enabling cookies/credentials. Applies `cookie-parser` to parse cookies, `express.json()` to parse JSON payloads, and `express.urlencoded()` to parse URL-encoded payloads.
+  - **Key Function Calls**:
+    - `app.use(middleware)`: Mounts a middleware function globally on the Express application. Returns the Express application object.
+    - `morgan('dev', options)`: Initializes Morgan request logger in developer mode. The stream option is configured to redirect logs. Returns the Morgan middleware function.
+    - `message.trim()`: Standard String prototype method. Trims whitespace and newlines from Morgan log lines. Returns the clean string.
+    - `logger.http(message)`: Custom Winston wrapper logging method. Logs HTTP request information at the HTTP level. Returns the logger instance.
+    - `cors(options)`: Configures CORS settings with custom allowed origins, credentials support, and standard HTTP headers and methods. Returns the CORS middleware function.
+    - `cookieParser()`: Initializes cookie parser middleware to extract and populate cookies in `req.cookies`. Returns the cookie parser middleware function.
+    - `express.json()`: Express built-in middleware that parses incoming requests with JSON payloads, populating `req.body`. Returns the JSON parser middleware function.
+    - `express.urlencoded({ extended: true })`: Express built-in middleware that parses URL-encoded body payloads (supporting nested structures), populating `req.body`. Returns the URL-encoded parser middleware function.
 - **Lines 41-49 (API Route Mapping)**:
   - **Basic Function**: Mount feature routes onto prefix paths.
   - **Detailed Explanation**: Configures Express paths `/api/auth`, `/api/attendance`, `/api/payroll`, `/api/users`, `/api/company`, `/api/leaves`, and `/api/dashboard` to route traffic into their respective imported router modules.
+  - **Key Function Calls**:
+    - `app.use(prefix, router)`: Mounts specialized sub-routers to specific base path prefixes on the application. Returns the Express application object.
 - **Lines 50-53 (Server Startup)**:
   - **Basic Function**: Start the server to listen on the configured port.
   - **Detailed Explanation**: Listens on `process.env.PORT` for incoming client requests, printing a success message using the custom winston logger once the server begins running.
+  - **Key Function Calls**:
+    - `app.listen(port, callback)`: Starts the HTTP server listening on the specified port. Invokes the callback function once the server starts. Returns an `http.Server` instance.
+    - `logger.info(message)`: Custom Winston wrapper logging method. Logs a server startup confirmation message at information level. Returns the logger instance.
 

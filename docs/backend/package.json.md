@@ -43,12 +43,18 @@
 - **Lines 1-7 (Metadata & Entrypoint)**:
   - **Basic Function**: Package identifier and module format definition.
   - **Detailed Explanation**: Declares package name as `ems-backend` (Line 2), version as `1.0.0` (Line 3), privacy settings (Line 4), entrypoint file as `src/index.js` (Line 6), and configuration to use standard CommonJS modules (Line 7).
+  - **Key Function Calls**: None
 - **Lines 8-11 (Scripts)**:
   - **Basic Function**: Command configurations to start the backend application.
   - **Detailed Explanation**: `start` (Line 9) runs the main entrypoint file directly with Node.js. `dev` (Line 10) uses nodemon to monitor changes in source files and automatically restart the application with a 2-second delay.
+  - **Key Function Calls**:
+    - `node src/index.js`: Launches the Node.js runtime process to execute the backend entry point.
+    - `nodemon --delay 2 src/index.js`: Runs nodemon to monitor file changes in development, restarting the server with a 2-second reload delay.
 - **Lines 12-28 (Dependencies)**:
   - **Basic Function**: List of external NPM packages required for runtime execution.
   - **Detailed Explanation**: Includes cryptography library `bcrypt`, cookie parser middleware `cookie-parser`, CORS configuration utility `cors`, environment config loader `dotenv`, router framework `express`, password generator `generate-password`, auth token library `jsonwebtoken`, MongoDB client libraries `mongodb` and `mongoose`, HTTP logger `morgan`, file uploader `multer`, emailer `nodemailer`, PDF generator `pdfkit`, logging framework `winston`, and schema validator `zod`.
+  - **Key Function Calls**: None
 - **Lines 29-32 (DevDependencies)**:
   - **Basic Function**: Packages required only for development and local testing.
   - **Detailed Explanation**: Specifying `nodemon` (Line 30) as a dev dependency to automate local hot-reloading during backend development.
+  - **Key Function Calls**: None

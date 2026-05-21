@@ -25,6 +25,10 @@
 - **Lines 1-2 (Redux Imports)**:
   - **Basic Function**: Imports store configuration and state slice reducers.
   - **Detailed Explanation**: Imports `configureStore` from `@reduxjs/toolkit` and imports `authReducer` from `../features/auth/authSlice.js`.
+  - **Key Function Calls**:
+    - None.
 - **Lines 4-10 (Store Configuration & Export)**:
   - **Basic Function**: Initializes and registers the global Redux store object.
   - **Detailed Explanation**: Creates `store` using `configureStore` by declaring the `auth` property using the `authReducer` to manage authentication state. Finally, exports `store` as default.
+  - **Key Function Calls**:
+    - `configureStore(options)`: Sets up and configures the Redux store with the provided options object. It registers the slice reducers under the `reducer` field (mapping the `auth` state slice to `authReducer`). It returns the configured Redux store instance, which has built-in support for Redux DevTools and default middleware (such as Redux Thunk).

@@ -31,9 +31,15 @@ The `Company` model acts as the organizational boundary in the database, partiti
 - **Lines 1-2 (Imports)**:
   - **Basic Function**: Import dependency.
   - **Detailed Explanation**: Imports `mongoose` (Line 1) to create the schema and build the model.
+  - **Key Function Calls**:
+    - `require('mongoose')`: Loads the Mongoose library to provide MongoDB object modeling and schema definition. Returns the Mongoose module object.
 - **Lines 3-25 (Company Schema Declaration)**:
   - **Basic Function**: Define company attributes and validation constraints.
   - **Detailed Explanation**: Declares `companySchema` (Line 3). It defines `companyName` as a required, unique, and trimmed String (Lines 4-6). It requires `email` as a unique, lowercase String (Lines 7-9). It sets `isVerified` as a Boolean defaulting to false (Lines 10-12). It defines `owner` as a User collection reference ObjectId (Lines 13-15). It includes an optional `logo` file identifier (Lines 16-18), contact `address` (Lines 19-21), and contact `phone` number (Lines 22-24). The schema is configured with `timestamps: true` (Line 25) to auto-populate `createdAt` and `updatedAt`.
+  - **Key Function Calls**:
+    - `new mongoose.Schema(definition, options)`: Constructor called to define the Company schema layout and constraints (such as `timestamps: true`). Returns a Schema instance.
 - **Lines 27-28 (Model Instantiation & Export)**:
   - **Basic Function**: Compile and export the database model.
   - **Detailed Explanation**: Compiles the model named `Company` using `companySchema` (Line 27) and exports it (Line 28) for application-wide use.
+  - **Key Function Calls**:
+    - `mongoose.model('Company', companySchema)`: Compiles the `companySchema` into a model constructor named `'Company'`. Returns a Model constructor object to interact with the companies collection in MongoDB.

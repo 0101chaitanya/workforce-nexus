@@ -45,9 +45,12 @@ Detailed documentation for the React + Vite + Tailwind + Redux-toolkit frontend 
 - **Lines 1-4 (Introduction)**:
   - **Basic Function**: State the purpose of the documentation directory.
   - **Detailed Explanation**: Lines 1-3 declare the title and general overview of the documentation map structure, stating that it mirrors the main project structure.
+  - **Key Function Calls**: None
 - **Lines 5-30 (Directory Structure & Maps)**:
   - **Basic Function**: Provide hyperlinks to documentation sections.
   - **Detailed Explanation**: Tabulates documentation links for Backend modules (Lines 7-15) covering routes, controllers, models, schemas, middleware, and utils, and Frontend modules (Lines 17-29) covering core App entrypoint, state management slices, common UI components, and domain features.
+  - **Key Function Calls**: None
 - **Lines 33-37 (Architecture Flow Overview)**:
   - **Basic Function**: Summarize the system's request and security lifecycle.
   - **Detailed Explanation**: Explains how Axios network layers (Line 34) interact with JWT validation middleware (Line 35), and Mongoose database model operations (Line 36).
+  - **Key Function Calls**: None

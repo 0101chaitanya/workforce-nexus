@@ -28,15 +28,30 @@ Maps paths to the following middleware/controller chains:
 - **Lines 1-5 (Imports)**:
   - **Basic Function**: Import dependencies and modules.
   - **Detailed Explanation**: Imports `express` (Line 1), authorization guard `protect` (Line 2), query validation middleware `validateQuery` (Line 3), schema configurations `ownerSchemas` (Line 4), and `attendanceController` actions (Line 5).
+  - **Key Function Calls**:
+    - `require("express")`: Loads the Express module to create routers and manage middlewares. Parameters: `"express"` (string). Returns: The exported Express framework function/object.
+    - `require("../middleware/authMiddleware")`: Loads the authentication middleware module. Parameters: `"../middleware/authMiddleware"` (string). Returns: An object containing `protect`.
+    - `require("../middleware/validationMiddleware")`: Loads the validation middleware module. Parameters: `"../middleware/validationMiddleware"` (string). Returns: An object containing `validateQuery`.
+    - `require("../schemas/ownerSchemas")`: Loads schemas configured for owner validations. Parameters: `"../schemas/ownerSchemas"` (string). Returns: The owner validation schemas object.
+    - `require("../controllers/attendanceController")`: Loads the attendance controller module. Parameters: `"../controllers/attendanceController"` (string). Returns: The attendance controller actions object.
 - **Lines 7-9 (Router Setup)**:
   - **Basic Function**: Instantiate router and declare middleware.
   - **Detailed Explanation**: Instantiates the router instance `express.Router()` (Line 7). It applies `protect` as a global middleware (Line 9), ensuring any incoming requests to these endpoints must have a valid JWT.
+  - **Key Function Calls**:
+    - `express.Router()`: Creates a new modular router instance. Parameters: None. Returns: A new Express router object.
+    - `router.use(protect)`: Mounts the `protect` middleware globally on this router instance. Parameters: `protect` (middleware function). Returns: The router instance (for method chaining).
 - **Lines 11-13 (Route Mappings)**:
   - **Basic Function**: Set HTTP routes and validation handlers.
   - **Detailed Explanation**:
     - `POST /clock-in` maps to `clockIn` (Line 11).
     - `PUT /clock-out` maps to `clockOut` (Line 12).
     - `GET /history` validates pagination/user query parameters using `ownerSchemas.historyQuery` and maps to `getAttendanceHistory` (Line 13).
+  - **Key Function Calls**:
+    - `router.post("/clock-in", attendanceController.clockIn)`: Registers a POST route handler for the clock-in endpoint. Parameters: `"/clock-in"` (string), `attendanceController.clockIn` (middleware function). Returns: The router instance.
+    - `router.put("/clock-out", attendanceController.clockOut)`: Registers a PUT route handler for the clock-out endpoint. Parameters: `"/clock-out"` (string), `attendanceController.clockOut` (middleware function). Returns: The router instance.
+    - `validateQuery(ownerSchemas.historyQuery)`: Creates a query validation middleware. Parameters: `ownerSchemas.historyQuery` (validation schema). Returns: A middleware function.
+    - `router.get("/history", validateQuery(...), attendanceController.getAttendanceHistory)`: Registers a GET route handler for attendance history. Parameters: `"/history"` (string), query validation middleware, `attendanceController.getAttendanceHistory` (middleware function). Returns: The router instance.
 - **Line 15 (Module Export)**:
   - **Basic Function**: Export the router.
   - **Detailed Explanation**: Exports `router` (Line 15) using CommonJS to be loaded in the main Express application.
+  - **Key Function Calls**: None.

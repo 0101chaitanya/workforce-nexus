@@ -35,12 +35,20 @@
 - **Lines 1-5 (Project Metadata)**:
   - **Basic Function**: Basic metadata configuration of the frontend project.
   - **Detailed Explanation**: Sets package name to `"vite-project"`, marks it as `"private": true`, sets version to `"0.0.0"`, and specifies `"type": "module"` to use ES6 modules throughout the directory.
+  - **Key Function Calls**: None
 - **Lines 6-11 (Scripts configuration)**:
   - **Basic Function**: Defines terminal scripts for development and deployment.
   - **Detailed Explanation**: Maps `"dev"` to `vite`, `"build"` to `vite build` for production packaging, `"lint"` to `eslint .` to run code analysis, and `"preview"` to `vite preview` to serve the local build.
+  - **Key Function Calls**:
+    - `vite`: Starts the local Vite development server with hot module replacement (HMR). It compiles assets on the fly and serves them. It is called when running the `npm run dev` script.
+    - `vite build`: Runs Vite's production build process, which bundles and minifies all frontend code (HTML, CSS, JS/JSX) and outputs optimized static files to the `dist/` directory. It is called when running the `npm run build` script.
+    - `eslint .`: Runs ESLint on the entire project directory (`.`) to identify syntax errors, logic problems, or style guide violations. It is called when running the `npm run lint` script.
+    - `vite preview`: Boots up a local static server to host the production build files stored in the `dist/` directory for local testing. It is called when running the `npm run preview` script.
 - **Lines 12-22 (Runtime Dependencies)**:
   - **Basic Function**: Declares libraries required during application runtime.
   - **Detailed Explanation**: Lists state management tools `@reduxjs/toolkit` and `react-redux`, `@tailwindcss/vite` and `tailwindcss` for styling, `axios` for API calls, `lucide-react` for icons, and React v19 libraries (`react`, `react-dom`) and `react-router-dom` for routing.
+  - **Key Function Calls**: None
 - **Lines 23-34 (Development Dependencies)**:
   - **Basic Function**: Declares helper packages for compiling, checking type declarations, and linting.
   - **Detailed Explanation**: Includes ESLint packages (`@eslint/js`, `eslint`, `eslint-plugin-react-hooks`, `eslint-plugin-react-refresh`, `globals`), React types for TypeScript/IDE assistance, the Vite React plugin (`@vitejs/plugin-react`), and the core `vite` build tool.
+  - **Key Function Calls**: None

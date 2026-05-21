@@ -23,6 +23,8 @@
 - **Lines 1-8 (Document Declaration & Head Configuration)**:
   - **Basic Function**: Configures the document metadata.
   - **Detailed Explanation**: Defines HTML5 doctype and opens the document structure with English language settings. The head configures UTF-8 encoding, a responsive viewport, a favicon SVG import from `/favicon.svg`, and the page title.
+  - **Key Function Calls**: None.
 - **Lines 9-13 (Body Elements & App Mounting)**:
   - **Basic Function**: Creates the target DOM mount point and executes the script.
   - **Detailed Explanation**: Provides the `<div id="root">` element, which is targeted by React DOM in `src/main.jsx`. Loads the app's React entry script `/src/main.jsx` as an ES module via `<script type="module">`.
+  - **Key Function Calls**: None (loads the `/src/main.jsx` script via `<script type="module">` to mount the React application, but contains no direct JavaScript function calls).

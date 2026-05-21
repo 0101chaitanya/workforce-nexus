@@ -31,24 +31,45 @@
 - **Lines 1-2 (Module Imports)**:
   - **Basic Function**: Loads React and lucide-react arrow icons.
   - **Detailed Explanation**: Imports `React` and the `ChevronLeft` and `ChevronRight` icons to use inside the pagination buttons.
+  - **Key Function Calls**: None.
 - **Lines 4-14 (Component Header & Props)**:
   - **Basic Function**: Defines the Pagination function component and its expected props.
   - **Detailed Explanation**: Receives pagination properties (`page`, `limit`, `total`, `totalPages`, `hasNext`, `hasPrev`) along with callbacks (`onPageChange`, `onLimitChange`) and the optional `limitOptions` array (defaulting to `[5, 10, 25, 50]`).
+  - **Key Function Calls**: None.
 - **Line 15 (Guard Clause)**:
   - **Basic Function**: Prevents rendering if data is empty.
   - **Detailed Explanation**: If `total` is missing or is `0`, returns `null` to hide the pagination UI.
+  - **Key Function Calls**: None.
 - **Lines 17-36 (Visible Page Array Calculation)**:
   - **Basic Function**: Calculates which page number buttons to show.
   - **Detailed Explanation**: Defines helper `getPageNumbers`. It targets a max of 5 visible pages. If totalPages is less than 5, it returns an array from 1 to `totalPages`. Otherwise, it calculates `start` and `end` offsets around the active `page` value, correcting for boundary overflows. Returns an array of visible page indexes.
+  - **Key Function Calls**:
+    - `Array.from(arrayLike, mapFn)`: Dynamically generates the sequence of numbers when `totalPages` is small. Arguments are `{ length: totalPages }` and a map function `(_, i) => i + 1`. Returns an array of page integers.
+    - `Math.max(val1, val2)`: Computes the lower bound of the visible pages list to avoid indexes below 1. Arguments are calculated start page index and `1`. Returns the larger number.
+    - `Math.floor(x)`: Computes the half-span size of the visible range. Argument is `maxVisible / 2`. Returns the integer floor value `2`.
+    - `pages.push(val)`: Appends page index integers to the local helper array in a loop. Argument is the current page number `i`. Mutates the array.
 - **Lines 38-46 (Record Information Text)**:
   - **Basic Function**: Renders description statistics.
   - **Detailed Explanation**: Displays a text block highlighting the index range of current items being viewed (using `(page - 1) * limit + 1` for start and `page * limit` capped at `total` for end) out of the total record count.
+  - **Key Function Calls**:
+    - `Math.min(val1, val2)`: Calculates starting index offset boundary. Arguments are `total` and calculated offset `(page - 1) * limit + 1`. Returns the smaller value.
+    - `Math.min(val1, val2)` (second call): Caps the ending index of displayed items so it does not exceed the total record count. Arguments are `page * limit` and `total`. Returns the smaller value.
 - **Lines 49-64 (Limit Selector Dropdown)**:
   - **Basic Function**: Renders a dropdown selector to modify row display limits.
   - **Detailed Explanation**: If `onLimitChange` is supplied, renders a select block. Sets its value to `limit`. On selection change, it converts the selected value to a number and fires `onLimitChange(newValue)`. Iterates over `limitOptions` to render standard `<option>` tags.
+  - **Key Function Calls**:
+    - `onLimitChange(newValue)`: Invoked on select component change to update parent limit value. Argument is the parsed limit integer.
+    - `Number(value)`: Converts the option string value to a numeric type. Argument is `e.target.value`. Returns the number.
+    - `limitOptions.map(callback)`: Renders options for each limit value. Argument is a callback function mapping each option size. Returns an array of JSX option tags.
 - **Lines 66-98 (Page Control Buttons)**:
   - **Basic Function**: Renders the previous, page number, and next button navigation controls.
   - **Detailed Explanation**:
     - Renders the previous page button: when clicked, calls `onPageChange(page - 1)` (bounded by 1); disabled if `hasPrev` is false.
     - Loops over the calculated pages array to render numeric buttons: highlighted in indigo if active, triggering `onPageChange(pageNum)` on click.
     - Renders the next page button: when clicked, calls `onPageChange(page + 1)` (bounded by `totalPages`); disabled if `hasNext` is false.
+  - **Key Function Calls**:
+    - `onPageChange(newPage)`: Triggered on pagination button clicks to load the respective page. Argument is the calculated page integer.
+    - `Math.max(val1, val2)`: Restricts the previous page selection pointer to not fall below page 1. Arguments are `page - 1` and `1`. Returns the larger number.
+    - `getPageNumbers()`: Evaluates the helper method to get the list of visible page integers. Takes no arguments. Returns an array.
+    - `getPageNumbers().map(callback)`: Iterates visible pages to mount numeric buttons. Argument is a callback function mapping page numbers. Returns an array of button elements.
+    - `Math.min(val1, val2)`: Restricts the next page selection pointer to not exceed totalPages. Arguments are `page + 1` and `totalPages`. Returns the smaller number.

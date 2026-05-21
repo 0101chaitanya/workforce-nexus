@@ -32,13 +32,49 @@ Exposes the following endpoint handlers:
 - **Lines 1-3 (Imports)**:
   - **Basic Function**: Import dependencies.
   - **Detailed Explanation**: Imports `Attendance` model for db queries, `mongoose` for object IDs, and the Winston `logger` wrapper for logging errors.
+  - **Key Function Calls**:
+    - `require(path)`: Imports external modules or files (`../models/Attendance`, `mongoose`, `../utils/logger`). Returns the exported module contents.
 - **Lines 5-52 (clockIn)**:
   - **Basic Function**: Create a clock-in record for the current day.
   - **Detailed Explanation**: Fetches user and company ID. Normalizes `today` to midnight. Checks if an attendance record exists for the user and company dated today or later. If found, returns a `400 Bad Request`. Otherwise, instantiates a new `Attendance` document with the current timestamp as `date` and `checkInTime`, and sets status to `"present"`. Saves to database and returns the record with `201 Created`. Catches errors, logs them, and returns `500 Internal Server Error`.
+  - **Key Function Calls**:
+    - `new Date()`: Instantiates new Date objects to reference today's date boundary or check-in time. Returns a Date object.
+    - `today.setHours(0, 0, 0, 0)`: Normalizes the date's time fields to midnight. Returns the millisecond representation of that midnight timestamp.
+    - `Attendance.findOne(query)`: Queries the database for an attendance record that starts on or after today's midnight. Returns a Mongoose Query.
+    - `res.status(statusCode)`: Sets the HTTP status code on the response object. Returns the Express response object.
+    - `res.json(body)`: Returns a JSON response with the message and metadata. Returns the Express response object.
+    - `new Date().toISOString()`: Generates current date timestamp in ISO format. Returns a string.
+    - `new Attendance(properties)`: Instantiates a new Mongoose Attendance document. Returns the document instance.
+    - `attendance.save()`: Persists the new attendance record to the database. Returns a Promise.
+    - `logger.error(message, meta)`: Logs errors during clock-in. Returns undefined.
 - **Lines 54-106 (clockOut)**:
   - **Basic Function**: Update a clock-in record with check-out time and calculate duration.
   - **Detailed Explanation**: Retrieves today's midnight timestamp. Queries the database for the active user's attendance record for today. Returns `404 Not Found` if no check-in record is found. Returns `400 Bad Request` if the user is already clocked out. Sets the check-out time to the current date, computes the difference in milliseconds, divides by 3.6 million to calculate total hours worked, formats to two decimal places, saves, and returns the modified attendance document.
+  - **Key Function Calls**:
+    - `new Date()`: Instantiates new Date objects to reference the check-out or reference times. Returns a Date object.
+    - `today.setHours(0, 0, 0, 0)`: Standardizes the date to midnight. Returns a millisecond timestamp.
+    - `Attendance.findOne(query)`: Queries the database for the employee's clock-in record for today. Returns a Mongoose Query.
+    - `res.status(statusCode)`: Sets the response HTTP status. Returns the Express response object.
+    - `res.json(body)`: Returns a JSON response. Returns the Express response object.
+    - `new Date().toISOString()`: Generates current date timestamp in ISO format. Returns a string.
+    - `number.toFixed(fractionDigits)`: Converts the calculated working hours float to a string with exactly 2 decimal places. Returns a string.
+    - `parseFloat(string)`: Parses the decimal hour string to a floating-point number. Returns a number.
+    - `attendance.save()`: Updates and saves the attendance record with check-out details. Returns a Promise.
+    - `logger.error(message, meta)`: Logs errors during clock-out. Returns undefined.
 - **Lines 108-171 (getAttendanceHistory)**:
   - **Basic Function**: Retrieve log history with optional filters and pagination.
   - **Detailed Explanation**: Extracts `targetUserId`, `page`, and `limit` from queries. Restricts queries to the company. If the user is an owner, they can query all logs or filter by `targetUserId`. Employees can only view their own logs. If `page` and `limit` are supplied, performs a Mongoose `.skip()` and `.limit()` query to return a paginated object. Otherwise, returns the complete set of logs. Projections and populated user details are returned.
+  - **Key Function Calls**:
+    - `parseInt(string)`: Parses the page/limit string query parameters to base-10 integers. Returns an integer or `NaN`.
+    - `Attendance.countDocuments(query)`: Returns the total number of attendance records matching query criteria. Returns a Promise resolving to a number.
+    - `Attendance.find(query)`: Searches database for attendance logs. Returns a Mongoose Query.
+    - `query.populate(path, select)`: Populates referenced user info with specified fields (`fullName`, `email`, `position`, `identity`). Returns a Mongoose Query.
+    - `query.sort(sortOption)`: Sorts attendance logs descending by date (`{ date: -1 }`). Returns a Mongoose Query.
+    - `query.skip(skip)`: Sets pagination offset. Returns a Mongoose Query.
+    - `query.limit(limitNum)`: Restricts pagination limit size. Returns a Mongoose Query.
+    - `Math.ceil(number)`: Rounds total page calculation division upward to the nearest integer. Returns a number.
+    - `res.status(statusCode)`: Sets response HTTP status. Returns the Express response object.
+    - `res.json(body)`: Returns JSON payload. Returns the Express response object.
+    - `logger.error(message, meta)`: Logs errors during retrieval. Returns undefined.
+    - `new Date().toISOString()`: Generates error timestamp. Returns a string.
 

@@ -63,9 +63,13 @@ This frontend component maps to the following backend elements:
   - Imports custom axios client `api` for authenticated HTTP requests.
   - Imports Redux action `setAuthSuccess` from `authSlice` to update global authentication state.
   - Imports graphical icon components (`User`, `Mail`, etc.) from the `lucide-react` package.
+  - **Key Function Calls**: None.
 - **Lines 10-13 (Component Definition & Redux hooks)**:
   - Defines default function `EmployeeProfile`.
   - Instantiates `dispatch` function and destructures the currently logged-in `user` object from Redux `state.auth`.
+  - **Key Function Calls**:
+    - `useDispatch()`: Fetches the Redux dispatch function from the store.
+    - `useSelector((state) => state.auth)`: Accesses the global Redux state to retrieve the `user` object.
 - **Lines 15-20 (State Hooks)**:
   - `profile`: Stores the detailed profile object retrieved from the database.
   - `loading`: Tracks loading state during database lookup (default `true`).
@@ -73,17 +77,33 @@ This frontend component maps to the following backend elements:
   - `passwordLoading`: Tracks status of password update requests (default `false`).
   - `error`: Holds error message string to display (default `null`).
   - `successMessage`: Holds success notification message string (default `null`).
+  - **Key Function Calls**:
+    - `useState(initialValue)`: Used multiple times to define and initialize component-level state variables (`profile`, `loading`, `saveLoading`, `passwordLoading`, `error`, `successMessage`).
 - **Lines 23-29 (profileForm State)**:
   - Initializes state for the profile update fields, setting them to empty string values initially.
+  - **Key Function Calls**:
+    - `useState(initialValue)`: Initializes `profileForm` state with an object containing fields: `fullName`, `phone`, `address`, `dateOfBirth`, and `bankAccount`.
 - **Lines 31-35 (passwordForm State)**:
   - Initializes state for password inputs: `oldPassword`, `newPassword`, and `confirmPassword`.
+  - **Key Function Calls**:
+    - `useState(initialValue)`: Initializes `passwordForm` state with fields: `oldPassword`, `newPassword`, and `confirmPassword`.
 - **Lines 38-59 (fetchProfileDetails function)**:
   - An asynchronous function that queries `GET /api/users/info/${user._id}` using the custom interceptors instance.
   - Populates the detailed `profile` record state.
   - Prefills the `profileForm` fields with returned values, using `split('T')[0]` on date elements to transform date strings into the compatible `yyyy-MM-dd` layout for input pickers.
   - Catches failures to log a descriptive message using `setError`.
+  - **Key Function Calls**:
+    - `setLoading(true / false)`: Controls the spinner visibility state before and after the API call.
+    - `setError(message / null)`: Resets the error state at start, or sets it to error messages upon failure.
+    - `api.get(url)`: Performs an asynchronous HTTP GET request to retrieve profile details using user's ID.
+    - `setProfile(details)`: Stores retrieved profile details in the state.
+    - `setProfileForm(details)`: Pre-populates the input form fields with retrieved values.
+    - `split('T')`: Truncates ISO date strings at 'T' to retrieve only the date portion (e.g. `YYYY-MM-DD`).
 - **Lines 61-65 (useEffect Hook)**:
   - Triggers a call to `fetchProfileDetails()` automatically upon component mount once the user ID becomes available.
+  - **Key Function Calls**:
+    - `useEffect(callback, dependencies)`: Triggers side-effects when dependencies (`user?._id`) update.
+    - `fetchProfileDetails()`: Initiates the fetch process to retrieve user details from the backend.
 - **Lines 68-97 (handleProfileSubmit handler)**:
   - Event handler for the profile changes form.
   - Prevents standard page reloading via `e.preventDefault()`.
@@ -91,22 +111,53 @@ This frontend component maps to the following backend elements:
   - Puts updates to `/api/users/profile`.
   - On successful response, merges existing Redux user values with updated payload properties and dispatches `setAuthSuccess` to sync global state.
   - Re-triggers details retrieval to refresh the UI text.
+  - **Key Function Calls**:
+    - `e.preventDefault()`: Prevents standard form submission and page reloading.
+    - `setSaveLoading(true / false)`: Controls visual loading spinner on the submit button.
+    - `setError(message / null)`: Resets error state or sets the error feedback when updates fail.
+    - `setSuccessMessage(message / null)`: Manages success feedback banners.
+    - `new Date(dateString)`: Instantiates a Date object representing selected birthdate.
+    - `toISOString()`: Converts date object to ISO format for Mongoose schema compatibility.
+    - `api.put(url, payload)`: Executes HTTP PUT request to update profile details.
+    - `localStorage.getItem('token')`: Retrieves JWT token from client storage to pass into dispatch.
+    - `setAuthSuccess(payload)`: Action creator to prepare the state sync action.
+    - `dispatch(action)`: Dispatches `setAuthSuccess` to synchronize user auth slice in the Redux store.
+    - `fetchProfileDetails()`: Refresh local component state with newly updated values.
 - **Lines 100-135 (handlePasswordSubmit handler)**:
   - Event handler for changing the login password.
   - Validates that new passwords match and are at least 6 characters.
   - Dispatches `PUT /api/users/change-password` containing old password and new password parameters.
   - Clears password forms and prints success messages on success.
+  - **Key Function Calls**:
+    - `e.preventDefault()`: Prevents default browser form submissions.
+    - `setError(message / null)`: Manages error state validations (matching check, length limit, API errors).
+    - `setSuccessMessage(message / null)`: Clears and displays password success notifications.
+    - `setPasswordLoading(true / false)`: Updates loader states for button submissions.
+    - `api.put(url, payload)`: Issues HTTP PUT request to modify passwords.
+    - `setPasswordForm(fields)`: Clears input values within state variables upon success.
 - **Lines 137-162 (Conditional State UI Returns)**:
   - Lines 137-144: Returns full page loading spinner UI when state is loading.
   - Lines 146-153: Returns error alert callout box if an error state is active.
   - Lines 155-162: Returns success alert callout box if a success message exists.
+  - **Key Function Calls**: None.
 - **Line 164 (initials calculation)**:
   - Takes the full name, splits it by space, takes the first letters of first and last names, converts them to uppercase, and grabs up to 2 letters for the user's avatar initial badge.
+  - **Key Function Calls**:
+    - `split(' ')`: Breaks up full name into components by space characters.
+    - `map(callback)`: Pulls out the first character of each word component.
+    - `join('')`: Compiles array characters back to a single initials string.
+    - `toUpperCase()`: Converts characters to capital letters.
+    - `substring(0, 2)`: Grabs first 2 characters from result.
 - **Lines 166-384 (Main Component Layout Render)**:
   - Lines 170-180: Outer banner displaying page titles.
   - Lines 186-205: Profile Card (displays calculated avatar initials, full name, position, and account verification status badge).
   - Lines 207-235: Corporate info panel showing employee identification token, email address, job role, branch assignment, and company joining date.
   - Lines 241-317: Edit Personal Details form container rendering text inputs mapped to `profileForm` variables (Full Name, Contact, DOB, Bank account, Address text-area) and the submit button.
   - Lines 320-376: Security Credentials form container rendering password inputs mapped to `passwordForm` variables (Current Password, New Password, Confirm Password) and the submit button.
+  - **Key Function Calls**:
+    - `new Date(dateString)`: Instantiates a Date object representing user joining date.
+    - `toLocaleDateString()`: Converts joining date object to localized date format string.
+    - `setProfileForm(value)`: Triggers updates to profile form fields when values change.
+    - `setPasswordForm(value)`: Triggers updates to password form fields when values change.
 
 

@@ -32,12 +32,20 @@
 - **Lines 1-2 (Imports)**:
   - **Basic Function**: Import JSON Web Token module.
   - **Detailed Explanation**: Imports `jsonwebtoken` (Line 1) to enable token signing and verification.
+  - **Key Function Calls**:
+    - `require("jsonwebtoken")`: Loads the `jsonwebtoken` module. It is called to load JWT signature generation tools. It takes the module name string `"jsonwebtoken"` as an argument and returns the `jwt` library object.
 - **Lines 3-17 (Access Token Generation - generateAccessToken)**:
   - **Basic Function**: Construct and sign a short-lived access JWT.
   - **Detailed Explanation**: Defines `generateAccessToken` (Line 3). It compiles `payload` (Lines 4-15) containing user ID, email, role, and fullName alongside company ID and name. It signs this payload (Line 16) with the secret `process.env.JWT_TOKEN` and specifies a `15m` expiration lifetime.
+  - **Key Function Calls**:
+    - `jwt.sign(payload, secretOrPrivateKey, [options, callback])`: Signs a token payload. It is called to generate a cryptographically signed access JSON Web Token. It takes a payload object, a secret key string (`process.env.JWT_TOKEN`), and an options configuration object `{ expiresIn: "15m" }` as arguments, and returns the signed token string.
 - **Lines 20-33 (Refresh Token Generation - generateRefreshToken)**:
   - **Basic Function**: Construct and sign a long-lived refresh JWT.
   - **Detailed Explanation**: Defines `generateRefreshToken` (Line 20). It compiles a lighter `payload` (Lines 21-31) containing user ID, email, and role, alongside company ID and name. It signs this payload (Line 32) using the secret `process.env.JWT_REFRESH_TOKEN` and sets an expiration lifetime of `7d`.
+  - **Key Function Calls**:
+    - `jwt.sign(payload, secretOrPrivateKey, [options, callback])`: Signs a token payload. It is called to generate a cryptographically signed refresh JSON Web Token. It takes a payload object, a secret key string (`process.env.JWT_REFRESH_TOKEN`), and an options configuration object `{ expiresIn: "7d" }` as arguments, and returns the signed token string.
 - **Line 35 (Module Exports)**:
   - **Basic Function**: Export token utilities.
   - **Detailed Explanation**: Exports `generateAccessToken` and `generateRefreshToken` (Line 35) as CommonJS modules.
+  - **Key Function Calls**: None
+

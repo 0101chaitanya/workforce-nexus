@@ -23,9 +23,15 @@
 - **Lines 1-1 (Navigate Storage Variable)**:
   - **Basic Function**: Holds the reference to React Router's navigation function.
   - **Detailed Explanation**: Declares a mutable let-bound variable `navigateFn` and initializes it to `null`.
+  - **Key Function Calls**:
+    - None.
 - **Lines 3-5 (Navigation Setter)**:
   - **Basic Function**: Binds the navigation function from React context to our outer reference.
   - **Detailed Explanation**: Defines and exports `setNavigate` which receives a function `fn` (usually returned by `useNavigate()`) and assigns it to `navigateFn`.
+  - **Key Function Calls**:
+    - None.
 - **Lines 7-13 (Trigger Navigation Helper)**:
   - **Basic Function**: Triggers redirection/navigation to a new route path.
   - **Detailed Explanation**: Defines and exports `navigate` which takes a path `to` and transition `options`. If `navigateFn` is set, it executes it with the parameters. Otherwise, it changes the window's current location directly via `window.location.href = to`.
+  - **Key Function Calls**:
+    - `navigateFn(to, options)`: Invokes the stored React Router navigation callback (which is registered when App.jsx calls `setNavigate(useNavigate())`) to execute client-side navigation. It accepts target path `to` and routing `options`.

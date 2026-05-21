@@ -30,6 +30,9 @@
 - **Lines 1-2 (Imports)**:
   - **Basic Function**: Import dependencies.
   - **Detailed Explanation**: Imports `z` namespace from `zod` (Line 1) and imports standard properties from the local shared schemas helper `common` (Line 2).
+  - **Key Function Calls**:
+    - `require("zod")`: Loads the Zod validation library module. Called to obtain the `z` schema definition object. Parameters: `"zod"` (the package name). Returns the exported `zod` module namespace.
+    - `require("./common")`: Loads the shared common schemas definition module. Called to obtain the shared schema primitives. Parameters: `"./common"` (the relative path to the common schemas module). Returns the exported `common` object dictionary.
 - **Lines 4-35 (Auth Validation Schemas)**:
   - **Basic Function**: Structure field-level validation schemas for all auth routes.
   - **Detailed Explanation**: Declares `authSchemas` container object (Line 4). It configures:
@@ -39,6 +42,9 @@
     - `login` schema checking email/identity and password fields (Lines 21-24).
     - `forgotPasswordOtp` schema requiring email or identity string (Lines 26-28).
     - `resetPassword` schema checking email/identity, OTP, and the newPassword complexity (Lines 30-34).
+  - **Key Function Calls**:
+    - `z.object(shape)`: Creates a Zod object schema validating the shape of an object against specified field schemas. Parameters: `shape` (an object mapping keys to Zod schema types). Returns a `ZodObject` validation schema instance.
 - **Line 37 (Module Exports)**:
   - **Basic Function**: Export schemas.
   - **Detailed Explanation**: Exports the compiled `authSchemas` object (Line 37) to validate incoming request bodies.
+  - **Key Function Calls**: None.

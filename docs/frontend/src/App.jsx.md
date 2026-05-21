@@ -38,15 +38,24 @@
 - **Lines 1-10 (Core Imports)**:
   - **Basic Function**: Imports foundational React features, Router utilities, navigation helpers, and immediate components.
   - **Detailed Explanation**: Statically imports `lazy`, `Suspense`, `useEffect` from `react`; router components from `react-router-dom`; and auth views (`Login`, `Register`), layout (`MainLayout`), and guards (`ProtectedRoute`).
+  - **Key Function Calls**: None.
 - **Lines 12-23 (Lazy-Loaded Route Components)**:
   - **Basic Function**: Lazy loads non-critical, authenticated-only modules.
   - **Detailed Explanation**: Employs `lazy()` and dynamic `import()` to defer loading employee/owner attendance, leaves, payroll, dashboard, profile, and organization files, along with the `UnauthorizedPage`.
+  - **Key Function Calls**:
+    - `lazy(factory)`: A React function that allows you to render a dynamic import as a regular component. It takes a factory function as an argument and returns a React component.
+    - `import(path)`: Dynamic ES module import that requests the specified JavaScript/JSX file asynchronously. It takes the file path string as an argument and returns a Promise that resolves to the module.
 - **Lines 25-29 (Loading Spinner Utility)**:
   - **Basic Function**: Declares a spinning circular loading spinner.
   - **Detailed Explanation**: Creates `LoadingSpinner`, returning a full-screen flex container containing an spinning Indigo border circle.
+  - **Key Function Calls**: None.
 - **Lines 31-37 (Navigation Setter Component)**:
   - **Basic Function**: Extracts the router's navigate handle and saves it globally.
   - **Detailed Explanation**: Declares `NavigationSetter` which hooks into `useNavigate()` and invokes `setNavigate(navigate)` inside a `useEffect` loop. Returns `null` as it yields no markup.
+  - **Key Function Calls**:
+    - `useNavigate()`: A React Router hook that returns the `navigate` function to programmatically control navigation. It accepts no parameters.
+    - `useEffect(effect, dependencies)`: A React hook to execute side effects. It accepts a callback function and a dependency array (`[navigate]`).
+    - `setNavigate(navigate)`: A custom utility function from `./app/navigation.js` that registers the `navigate` function globally, enabling navigation from non-component modules (such as Axios interceptors). It accepts the `navigate` function as an argument and has the side effect of saving it in a mutable module-level variable.
 - **Lines 39-167 (Main App Routing Configuration)**:
   - **Basic Function**: Renders the application routes, protecting sub-paths using role parameters.
   - **Detailed Explanation**:
@@ -56,3 +65,4 @@
     - Nest-routes `/owner` paths inside a `<ProtectedRoute allowedRoles={['owner']}>` guard, mounting components wrapped in `<Suspense fallback={<LoadingSpinner />}>`.
     - Nest-routes `/employee` paths inside a `<ProtectedRoute allowedRoles={['employee']}>` guard.
     - Captures any unmapped paths using `path="*"` to render `UnauthorizedPage`.
+  - **Key Function Calls**: None (returns a declarative JSX configuration tree for React Router and contains no direct hook calls or helper function invocations within its body).

@@ -23,6 +23,11 @@
 - **Lines 1-3 (Module Imports)**:
   - **Basic Function**: Imports compiler config and compiler extension plugins.
   - **Detailed Explanation**: Imports `defineConfig` from Vite to provide type definitions/autocomplete, `@vitejs/plugin-react` to enable Fast Refresh and JSX translation, and `@tailwindcss/vite` for Tailwind CSS processing.
+  - **Key Function Calls**: None.
 - **Lines 5-9 (Vite Configuration Object)**:
   - **Basic Function**: Declares and exports the configuration object.
   - **Detailed Explanation**: Uses `defineConfig()` to export the configuration. Registers `react()` and `tailwindcss()` inside the `plugins` array to enable React JSX rendering/Fast Refresh and Tailwind compilation.
+  - **Key Function Calls**:
+    - `defineConfig(config)`: Combines and type-checks the Vite configuration object, exporting it to be consumed by Vite during development and building. It receives a configuration object containing a `plugins` array. Returns the configuration object.
+    - `react()`: Initializes and returns the React plugin instance for Vite, enabling support for JSX transpilation, React fast refresh, and automatic runtime imports. No arguments are passed.
+    - `tailwindcss()`: Initializes and returns the Tailwind CSS plugin instance for Vite, enabling compilation of Tailwind directives and classes. No arguments are passed.

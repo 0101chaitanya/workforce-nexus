@@ -32,9 +32,14 @@
 - **Lines 1-13 (Imports & Local Storage Check)**:
   - **Basic Function**: Imports Redux Toolkit's slice builder and retrieves cached user session data.
   - **Detailed Explanation**: Imports `createSlice` from `@reduxjs/toolkit`. Inspects `localStorage` for keys `token` and `user`. Wraps the parsing of `savedUser` in a `try-catch` block, removing the invalid key from local storage if a JSON parsing error occurs.
+  - **Key Function Calls**:
+    - `localStorage.getItem(key)`: Invoked twice to query local storage for cached `'token'` and `'user'` keys.
+    - `JSON.parse(jsonString)`: Parses the serialized user string back into a JavaScript object.
+    - `localStorage.removeItem(key)`: Deletes the `'user'` key from local storage if it is malformed or throws parsing errors.
 - **Lines 15-21 (initialState Definition)**:
   - **Basic Function**: Sets up default auth state values.
   - **Detailed Explanation**: Defines `initialState` properties: `user` (default `parsedUser`), `token` (default `savedToken` or null), `role` (default `parsedUser?.role` or null), `loading` (default `false`), and `error` (default `null`).
+  - **Key Function Calls**: None.
 - **Lines 23-57 (authSlice Definition & Reducers)**:
   - **Basic Function**: Defines slice name, initial state, and reducers to handle auth actions.
   - **Detailed Explanation**: Uses `createSlice` with name `auth`. Declares 5 reducer functions:
@@ -43,7 +48,14 @@
     - `setAuthFailed` (Lines 41-44): Sets `loading` to false and updates `error` state.
     - `clearError` (Lines 45-47): Resets the `error` state back to `null`.
     - `logout` (Lines 48-55): Resets state credentials (`user`, `token`, `role`, `error`) and clears authentication keys from `localStorage`.
+  - **Key Function Calls**:
+    - `createSlice(options)`: Configures and constructs the Redux state slice containing state, reducers, and action creators.
+    - `localStorage.setItem(key, value)`: Invoked inside `setAuthSuccess` to write the active JWT token string.
+    - `JSON.stringify(object)`: Serializes user records into a JSON string representation.
+    - `localStorage.setItem(key, stringifiedValue)`: Invoked inside `setAuthSuccess` to cache the stringified user object.
+    - `localStorage.removeItem(key)`: Invoked twice in `logout` to delete the `'token'` and `'user'` properties from storage.
 - **Lines 59-60 (Exports)**:
   - **Basic Function**: Exports action creators and the reducer.
   - **Detailed Explanation**: Destructures and exports action functions `setLoading`, `setAuthSuccess`, `setAuthFailed`, `clearError`, and `logout` from `authSlice.actions`, and exports `authSlice.reducer` as the default export.
+  - **Key Function Calls**: None.
 
