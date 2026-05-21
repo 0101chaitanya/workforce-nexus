@@ -1,5 +1,6 @@
-import React, { lazy, Suspense } from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import React, { lazy, Suspense, useEffect } from 'react';
+import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
+import { setNavigate } from './app/navigation.js';
 
 // Core Auth & Layout (Statically loaded for immediate initial render optimization)
 import Login from './features/auth/Login.jsx';
@@ -27,9 +28,18 @@ const LoadingSpinner = () => (
   </div>
 );
 
+function NavigationSetter() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    setNavigate(navigate);
+  }, [navigate]);
+  return null;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
+      <NavigationSetter />
       <Routes>
         {/* Core Auth & Landing Access Points */}
         <Route path="/" element={<Navigate to="/login" replace />} />

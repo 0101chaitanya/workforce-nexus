@@ -2,13 +2,13 @@ const { z } = require("zod");
 
 const validate = (schema) => async (req, res, next) => {
     try {
-        await schema.parseAsync(req.body);
+        req.body = await schema.parseAsync(req.body);
         next();
     } catch (error) {
         if (error instanceof z.ZodError) {
             return res.status(400).json({
                 message: "Validation failed",
-                errors: error.errors.map((e) => ({
+                errors: (error.issues || []).map((e) => ({
                     field: e.path.join("."),
                     message: e.message,
                 })),
@@ -33,7 +33,7 @@ const validateQuery = (schema) => async (req, res, next) => {
         if (error instanceof z.ZodError) {
             return res.status(400).json({
                 message: "Query validation failed",
-                errors: error.errors.map((e) => ({
+                errors: (error.issues || []).map((e) => ({
                     field: e.path.join("."),
                     message: e.message,
                 })),

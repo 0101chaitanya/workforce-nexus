@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axiosInterceptors from '../../app/axiosInterceptors';
 import { setLoading, setAuthFailed, clearError } from './authSlice';
 import { ShieldCheck, Mail, Lock, Building, User, CheckCircle, Briefcase } from 'lucide-react';
 
 const Register = () => {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const { loading, error } = useSelector((state) => state.auth);
 
     const [formData, setFormData] = useState({
@@ -103,7 +104,7 @@ const Register = () => {
             });
             setSuccessMessage("Company created successfully! Redirecting to login view...");
             setTimeout(() => {
-                window.location.href = '/login';
+                navigate('/login');
             }, 2000);
         } catch (err) {
             dispatch(setAuthFailed(err.response?.data?.message || "Registration sequence failed."));

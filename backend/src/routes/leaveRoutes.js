@@ -1,6 +1,6 @@
 const express = require("express");
 const { protect, isAuthorized } = require("../middleware/authMiddleware");
-const { validate } = require("../middleware/validationMiddleware");
+const { validate, validateQuery } = require("../middleware/validationMiddleware");
 const leaveSchemas = require("../schemas/leaveSchemas");
 const leaveController = require("../controllers/leaveController");
 
@@ -10,7 +10,7 @@ router.use(protect); // All leave routes are protected
 
 // Employee & Owner routes
 router.post("/apply", validate(leaveSchemas.applyLeave), leaveController.applyLeave);
-router.get("/history", leaveController.getLeaveHistory);
+router.get("/history", validateQuery(leaveSchemas.historyQuery), leaveController.getLeaveHistory);
 
 // Owner only routes
 router.put("/:leaveId/status", isAuthorized(), validate(leaveSchemas.updateLeaveStatus), leaveController.updateLeaveStatus);

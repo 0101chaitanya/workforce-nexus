@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../app/axiosInterceptors';
+import Pagination from '../../components/common/Pagination';
 import {
   CreditCard, Download, Loader2, AlertCircle, FileText, Calendar, DollarSign
 } from 'lucide-react';
@@ -10,13 +11,34 @@ export default function EmployeePayroll() {
   const [downloadingId, setDownloadingId] = useState(null);
   const [error, setError] = useState(null);
 
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [paginationInfo, setPaginationInfo] = useState({
+    total: 0,
+    totalPages: 1,
+    hasNext: false,
+    hasPrev: false
+  });
+
   const fetchPayroll = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await api.get('/payroll/history');
+      const response = await api.get('/payroll/history', {
+        params: { page, limit }
+      });
       if (response.data?.success) {
-        setPayrolls(response.data.data);
+        setPayrolls(response.data.data || []);
+        if (response.data.pagination) {
+          setPaginationInfo(response.data.pagination);
+        } else {
+          setPaginationInfo({
+            total: (response.data.data || []).length,
+            totalPages: 1,
+            hasNext: false,
+            hasPrev: false
+          });
+        }
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load payroll records.');
@@ -27,7 +49,7 @@ export default function EmployeePayroll() {
 
   useEffect(() => {
     fetchPayroll();
-  }, []);
+  }, [page, limit]);
 
   const handleDownload = async (payrollId, filename) => {
     setDownloadingId(payrollId);
@@ -152,6 +174,21 @@ export default function EmployeePayroll() {
             </table>
           </div>
         )}
+        <div className="px-6 pb-6">
+          <Pagination
+            page={page}
+            limit={limit}
+            total={paginationInfo.total}
+            totalPages={paginationInfo.totalPages}
+            hasNext={paginationInfo.hasNext}
+            hasPrev={paginationInfo.hasPrev}
+            onPageChange={setPage}
+            onLimitChange={(newLimit) => {
+              setLimit(newLimit);
+              setPage(1);
+            }}
+          />
+        </div>
       </div>
 
     </div>

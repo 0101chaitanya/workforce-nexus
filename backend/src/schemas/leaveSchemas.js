@@ -11,6 +11,11 @@ const leaveSchemas = {
     updateLeaveStatus: z.object({
         status: common.approvalStatus,
         remarks: common.optionalMediumText
+    }),
+    historyQuery: z.object({
+        targetUserId: common.objectId.optional(),
+        page: z.coerce.number().int().positive().optional(),
+        limit: z.coerce.number().int().positive().max(1000).optional()
     })
 };
 

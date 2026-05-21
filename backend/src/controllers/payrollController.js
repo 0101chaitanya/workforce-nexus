@@ -6,7 +6,7 @@ const logger = require("../utils/logger");
 
 exports.getPayrollHistory = async (req, res) => {
     try {
-        const { targetUserId } = req.query;
+        const { targetUserId, page, limit } = req.query;
         const companyId = req.company._id;
 
         let query = { company: companyId };
@@ -20,15 +20,44 @@ exports.getPayrollHistory = async (req, res) => {
             query.user = req.user._id;
         }
 
-        const payrollHistory = await Payroll.find(query)
-            .populate('user', 'fullName email position')
-            .sort({ year: -1, month: -1 });
+        if (page !== undefined && limit !== undefined) {
+            const pageNum = parseInt(page) || 1;
+            const limitNum = parseInt(limit) || 10;
+            const skip = (pageNum - 1) * limitNum;
 
-        return res.status(200).json({
-            message: "Payroll history fetched successfully",
-            success: true,
-            data: payrollHistory
-        });
+            const total = await Payroll.countDocuments(query);
+            const payrollHistory = await Payroll.find(query)
+                .populate('user', 'fullName email position')
+                .sort({ year: -1, month: -1 })
+                .skip(skip)
+                .limit(limitNum);
+
+            const totalPages = Math.ceil(total / limitNum);
+
+            return res.status(200).json({
+                message: "Payroll history fetched successfully",
+                success: true,
+                data: payrollHistory,
+                pagination: {
+                    page: pageNum,
+                    limit: limitNum,
+                    total,
+                    totalPages,
+                    hasNext: pageNum < totalPages,
+                    hasPrev: pageNum > 1
+                }
+            });
+        } else {
+            const payrollHistory = await Payroll.find(query)
+                .populate('user', 'fullName email position')
+                .sort({ year: -1, month: -1 });
+
+            return res.status(200).json({
+                message: "Payroll history fetched successfully",
+                success: true,
+                data: payrollHistory
+            });
+        }
 
     } catch (err) {
         logger.error(`Error in getPayrollHistory: ${err.message || err}`, { stack: err.stack });

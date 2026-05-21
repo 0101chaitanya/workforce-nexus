@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../app/axiosInterceptors';
+import Pagination from '../../components/common/Pagination';
 import { Loader2, User, FileSpreadsheet, CheckCircle2, XCircle, RefreshCcw, MessageSquare } from 'lucide-react';
 
 const OwnerLeaves = () => {
@@ -9,6 +10,15 @@ const OwnerLeaves = () => {
   const [loading, setLoading] = useState(true);
   const [actionPending, setActionPending] = useState(null);
   const [error, setError] = useState(null);
+
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [paginationInfo, setPaginationInfo] = useState({
+    total: 0,
+    totalPages: 1,
+    hasNext: false,
+    hasPrev: false
+  });
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -30,9 +40,23 @@ const OwnerLeaves = () => {
     setError(null);
     try {
       const response = await api.get('/leaves/history', {
-        params: targetUserId ? { targetUserId } : {}
+        params: {
+          ...(targetUserId ? { targetUserId } : {}),
+          page,
+          limit
+        }
       });
       setLeaves(response.data.data || []);
+      if (response.data.pagination) {
+        setPaginationInfo(response.data.pagination);
+      } else {
+        setPaginationInfo({
+          total: (response.data.data || []).length,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false
+        });
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Unable to load leave requests.');
     } finally {
@@ -46,7 +70,7 @@ const OwnerLeaves = () => {
 
   useEffect(() => {
     fetchLeaves();
-  }, [targetUserId]);
+  }, [targetUserId, page, limit]);
 
   const updateLeave = async (leaveId, status) => {
     setSelectedLeave(leaveId);
@@ -98,7 +122,10 @@ const OwnerLeaves = () => {
             <label className="block text-sm font-semibold text-slate-600">Filter by employee</label>
             <select
               value={targetUserId}
-              onChange={(e) => setTargetUserId(e.target.value)}
+              onChange={(e) => {
+                setTargetUserId(e.target.value);
+                setPage(1);
+              }}
               className="mt-2 w-full max-w-xs rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
             >
               <option value="">All employees</option>
@@ -184,6 +211,19 @@ const OwnerLeaves = () => {
             </table>
           </div>
         )}
+        <Pagination
+          page={page}
+          limit={limit}
+          total={paginationInfo.total}
+          totalPages={paginationInfo.totalPages}
+          hasNext={paginationInfo.hasNext}
+          hasPrev={paginationInfo.hasPrev}
+          onPageChange={setPage}
+          onLimitChange={(newLimit) => {
+            setLimit(newLimit);
+            setPage(1);
+          }}
+        />
       </div>
 
       {/* Modal for approve/reject with remarks */}

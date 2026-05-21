@@ -1,4 +1,7 @@
 import axios from 'axios';
+import store from './store.js';
+import { logout } from '../features/auth/authSlice.js';
+import { navigate } from './navigation.js';
 
 const axiosInterceptors = axios.create({
   baseURL: import.meta.env.VITE_BACKEND_URL,
@@ -35,8 +38,8 @@ axiosInterceptors.interceptors.response.use(
             catch (err) {
                 // log the user out
                 console.log('user log out from axios instance 🏁 ')
-                localStorage.removeItem("token")
-                window.location.href = "/login";
+                store.dispatch(logout());
+                navigate("/login");
             }
 
         }

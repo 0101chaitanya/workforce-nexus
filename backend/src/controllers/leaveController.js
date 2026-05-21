@@ -45,7 +45,7 @@ exports.applyLeave = async (req, res) => {
 
 exports.getLeaveHistory = async (req, res) => {
     try {
-        const { targetUserId } = req.query;
+        const { targetUserId, page, limit } = req.query;
         const companyId = req.company._id;
         let query = { company: companyId };
 
@@ -59,15 +59,55 @@ exports.getLeaveHistory = async (req, res) => {
             query.user = req.user._id;
         }
 
-        const leaves = await Leave.find(query)
-            .populate('user', 'fullName email position')
-            .sort({ createdAt: -1 }); // Most recent first
+        const pendingCount = await Leave.countDocuments({ ...query, status: 'pending' });
+        const approvedCount = await Leave.countDocuments({ ...query, status: 'approved' });
+        const rejectedCount = await Leave.countDocuments({ ...query, status: 'rejected' });
+        const stats = {
+            pending: pendingCount,
+            approved: approvedCount,
+            rejected: rejectedCount
+        };
 
-        return res.status(200).json({
-            message: "Leave history fetched successfully",
-            success: true,
-            data: leaves
-        });
+        if (page !== undefined && limit !== undefined) {
+            const pageNum = parseInt(page) || 1;
+            const limitNum = parseInt(limit) || 10;
+            const skip = (pageNum - 1) * limitNum;
+
+            const total = await Leave.countDocuments(query);
+            const leaves = await Leave.find(query)
+                .populate('user', 'fullName email position')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limitNum);
+
+            const totalPages = Math.ceil(total / limitNum);
+
+            return res.status(200).json({
+                message: "Leave history fetched successfully",
+                success: true,
+                data: leaves,
+                pagination: {
+                    page: pageNum,
+                    limit: limitNum,
+                    total,
+                    totalPages,
+                    hasNext: pageNum < totalPages,
+                    hasPrev: pageNum > 1
+                },
+                stats
+            });
+        } else {
+            const leaves = await Leave.find(query)
+                .populate('user', 'fullName email position')
+                .sort({ createdAt: -1 }); // Most recent first
+
+            return res.status(200).json({
+                message: "Leave history fetched successfully",
+                success: true,
+                data: leaves,
+                stats
+            });
+        }
     } catch (err) {
         logger.error(`Error in getLeaveHistory: ${err.message || err}`, { stack: err.stack });
         return res.status(500).json({

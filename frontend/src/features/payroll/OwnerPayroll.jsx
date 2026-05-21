@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../app/axiosInterceptors';
+import Pagination from '../../components/common/Pagination';
 import { Loader2, CreditCard, Download, Users, ArrowUpRight, AlertTriangle } from 'lucide-react';
 
 const OwnerPayroll = () => {
@@ -11,6 +12,15 @@ const OwnerPayroll = () => {
   const [downloadLoading, setDownloadLoading] = useState('');
   const [error, setError] = useState(null);
   const [message, setMessage] = useState(null);
+
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [paginationInfo, setPaginationInfo] = useState({
+    total: 0,
+    totalPages: 1,
+    hasNext: false,
+    hasPrev: false
+  });
 
   const fetchUsers = async () => {
     try {
@@ -27,9 +37,23 @@ const OwnerPayroll = () => {
     setMessage(null);
     try {
       const response = await api.get('/payroll/history', {
-        params: targetUserId ? { targetUserId } : {}
+        params: {
+          ...(targetUserId ? { targetUserId } : {}),
+          page,
+          limit
+        }
       });
       setPayrolls(response.data.data || []);
+      if (response.data.pagination) {
+        setPaginationInfo(response.data.pagination);
+      } else {
+        setPaginationInfo({
+          total: (response.data.data || []).length,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false
+        });
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Unable to fetch payroll history.');
     } finally {
@@ -43,7 +67,7 @@ const OwnerPayroll = () => {
 
   useEffect(() => {
     fetchPayrolls();
-  }, [targetUserId]);
+  }, [targetUserId, page, limit]);
 
   const handleGeneratePayroll = async () => {
     setGenerating(true);
@@ -52,7 +76,11 @@ const OwnerPayroll = () => {
     try {
       const response = await api.post('/payroll/generate');
       setMessage(response.data.message || 'Payroll generated successfully.');
-      await fetchPayrolls();
+      if (page === 1) {
+        fetchPayrolls();
+      } else {
+        setPage(1);
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Payroll generation failed.');
     } finally {
@@ -106,7 +134,10 @@ const OwnerPayroll = () => {
             <label className="block text-sm font-semibold text-slate-600">Filter by employee</label>
             <select
               value={targetUserId}
-              onChange={(e) => setTargetUserId(e.target.value)}
+              onChange={(e) => {
+                setTargetUserId(e.target.value);
+                setPage(1);
+              }}
               className="mt-2 w-full max-w-xs rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
             >
               <option value="">All employees</option>
@@ -165,6 +196,19 @@ const OwnerPayroll = () => {
             </table>
           </div>
         )}
+        <Pagination
+          page={page}
+          limit={limit}
+          total={paginationInfo.total}
+          totalPages={paginationInfo.totalPages}
+          hasNext={paginationInfo.hasNext}
+          hasPrev={paginationInfo.hasPrev}
+          onPageChange={setPage}
+          onLimitChange={(newLimit) => {
+            setLimit(newLimit);
+            setPage(1);
+          }}
+        />
       </div>
     </div>
   );
