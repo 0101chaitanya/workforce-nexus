@@ -29,6 +29,15 @@ const Register = () => {
         dispatch(clearError());
     }, [dispatch]);
 
+    useEffect(() => {
+        if (successMessage) {
+            const timer = setTimeout(() => {
+                setSuccessMessage('');
+            }, 10000);
+            return () => clearTimeout(timer);
+        }
+    }, [successMessage]);
+
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };

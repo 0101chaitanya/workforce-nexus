@@ -62,6 +62,15 @@ export default function EmployeeProfile() {
     }
   }, [user?._id]);
 
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        dispatch(setSuccessMessage(null));
+      }, 10000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage, dispatch]);
+
   // Submit Profile update
   const handleProfileSubmit = async (e) => {
     e.preventDefault();

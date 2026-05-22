@@ -25,6 +25,15 @@ const Login = () => {
     dispatch(clearError());
   }, [dispatch, isForgotMode]);
 
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage('');
+      }, 10000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
+
   const handleInputChange = (e) => {
     setLoginData({ ...loginData, [e.target.name]: e.target.value });
   };

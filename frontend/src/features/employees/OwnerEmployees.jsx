@@ -55,6 +55,15 @@ export default function OwnerEmployees() {
     fetchEmployees();
   }, [fetchEmployees]);
 
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        dispatch(setSuccessMessage(null));
+      }, 10000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage, dispatch]);
+
   // Debounced search effect
   useEffect(() => {
     const debounceTimer = setTimeout(() => {

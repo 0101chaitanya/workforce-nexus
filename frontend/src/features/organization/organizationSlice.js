@@ -5,7 +5,12 @@ const initialState = {
   loading: true,
   error: null,
   successMessage: null,
-  saving: false
+  saving: false,
+  ownerProfile: null,
+  ownerLoading: false,
+  ownerSaving: false,
+  ownerError: null,
+  ownerSuccessMessage: null
 };
 
 const organizationSlice = createSlice({
@@ -26,6 +31,21 @@ const organizationSlice = createSlice({
     },
     setSaving: (state, action) => {
       state.saving = action.payload;
+    },
+    setOwnerProfile: (state, action) => {
+      state.ownerProfile = action.payload;
+    },
+    setOwnerLoading: (state, action) => {
+      state.ownerLoading = action.payload;
+    },
+    setOwnerSaving: (state, action) => {
+      state.ownerSaving = action.payload;
+    },
+    setOwnerError: (state, action) => {
+      state.ownerError = action.payload;
+    },
+    setOwnerSuccessMessage: (state, action) => {
+      state.ownerSuccessMessage = action.payload;
     }
   }
 });
@@ -35,7 +55,12 @@ export const {
   setLoading,
   setError,
   setSuccessMessage,
-  setSaving
+  setSaving,
+  setOwnerProfile,
+  setOwnerLoading,
+  setOwnerSaving,
+  setOwnerError,
+  setOwnerSuccessMessage
 } = organizationSlice.actions;
 
 export default organizationSlice.reducer;
