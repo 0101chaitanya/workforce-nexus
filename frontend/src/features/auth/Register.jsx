@@ -121,7 +121,7 @@ const Register = () => {
     };
 
     return (
-        <div className="min-h-screen flex bg-slate-900 selection:bg-indigo-500 selection:text-white">
+        <div className="min-h-screen flex bg-slate-900 selection:bg-indigo-500 selection:text-white cursor-default">
             {/* Left Design Sidebar */}
             <div className="hidden lg:flex lg:w-5/12 bg-indigo-600 relative overflow-hidden flex-col justify-between p-12">
                 <div className="absolute inset-0 bg-linear-to-br from-indigo-500 to-indigo-800 opacity-90 z-0" />

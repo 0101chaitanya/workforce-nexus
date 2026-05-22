@@ -190,7 +190,7 @@ const Login = () => {
                 </div>
 
                 <button type="submit" disabled={loading}
-                  className="w-full py-3.5 bg-indigo-600 text-white font-bold text-sm rounded-2xl shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition transform active:scale-98 disabled:bg-slate-300 disabled:shadow-none cursor-not-allowed mt-2">
+                  className="w-full py-3.5 bg-indigo-600 text-white font-bold text-sm rounded-2xl shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition transform active:scale-98 disabled:bg-slate-300 disabled:shadow-none mt-2">
                   {loading ? 'Authorizing Connection...' : 'Enter Workspace'}
                 </button>
 
@@ -234,7 +234,7 @@ const Login = () => {
                   </div>
 
                   <button type="submit" disabled={loading || !recoveryEmail}
-                    className="w-full py-3.5 bg-indigo-600 text-white font-bold text-sm rounded-2xl shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition transform active:scale-98 disabled:bg-slate-300 disabled:shadow-none cursor-not-allowed mt-2">
+                    className="w-full py-3.5 bg-indigo-600 text-white font-bold text-sm rounded-2xl shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition transform active:scale-98 disabled:bg-slate-300 disabled:shadow-none mt-2">
                     {loading ? 'Transmitting Token...' : 'Send Recovery Link'}
                   </button>
 
@@ -263,7 +263,7 @@ const Login = () => {
                   </div>
 
                   <button type="submit" disabled={loading || !otp || !newPassword}
-                    className="w-full py-3.5 bg-indigo-600 text-white font-bold text-sm rounded-2xl shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition transform active:scale-98 disabled:bg-slate-300 disabled:shadow-none cursor-not-allowed mt-2">
+                    className="w-full py-3.5 bg-indigo-600 text-white font-bold text-sm rounded-2xl shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition transform active:scale-98 disabled:bg-slate-300 disabled:shadow-none mt-2">
                     {loading ? 'Resetting Password...' : 'Reset Password'}
                   </button>
 

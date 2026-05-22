@@ -1,12 +1,25 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
 import { ShieldOff, FileQuestion } from 'lucide-react';
+import { logout } from '../../features/auth/authSlice';
 
 const UnauthorizedPage = () => {
   const location = useLocation();
-  const { token, role } = useSelector((state) => state.auth);
-  const is404 = location.state?.is404 ?? !location.pathname.includes('unauthorized');
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { role } = useSelector((state) => state.auth);
+  const is404 = !location.pathname.includes('unauthorized');
+
+  const handleNavigation = () => {
+    if (role === 'owner') {
+      navigate('/owner');
+    } else if (role === 'employee') {
+      navigate('/employee');
+    } else {
+      dispatch(logout());
+      navigate('/login');
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
@@ -27,21 +40,12 @@ const UnauthorizedPage = () => {
           }
         </p>
 
-        {token && role && (role === 'owner' || role === 'employee') ? (
-          <Link
-            to={role === 'owner' ? '/owner' : '/employee'}
-            className="mt-8 inline-block rounded-2xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white hover:bg-indigo-700 transition shadow-md shadow-indigo-100"
-          >
-            Go to Dashboard
-          </Link>
-        ) : (
-          <Link
-            to="/login"
-            className="mt-8 inline-block rounded-2xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white hover:bg-indigo-700 transition shadow-md shadow-indigo-100"
-          >
-            {is404 ? 'Go to Login' : 'Return to Login'}
-          </Link>
-        )}
+        <button
+          onClick={handleNavigation}
+          className="mt-8 inline-block rounded-2xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white hover:bg-indigo-700 transition shadow-md shadow-indigo-100"
+        >
+          {role === 'owner' || role === 'employee' ? 'Go to Dashboard' : (is404 ? 'Go to Login' : 'Return to Login')}
+        </button>
       </div>
     </div>
   );

@@ -328,19 +328,26 @@ exports.regenerateAccessToken = catchAsync(async (req, res) => {
     const { refreshToken } = req.cookies;
     if (!refreshToken) return res.status(401).json({ message: "No refresh token provided", success: false, occurredAt: new Date().toISOString() });
 
-    // catchAsync wrapper will handle JWT verify errors and send 401
-    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN);
+    let decoded;
+    try {
+        decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN);
+    } catch (err) {
+        res.clearCookie("refreshToken");
+        return res.status(401).json({ message: "Invalid or expired token", success: false, occurredAt: new Date().toISOString() });
+    }
 
     const user = await User.findById(decoded.user._id).populate({
         path: "company",
         populate: { path: "owner", select: "fullName email" }
     });
+    const company = await Company.findById(decoded.company._id).populate("owner", "fullName email");
 
-    if (!user || user.refreshToken !== refreshToken) {
+    if (!user || !company || user.refreshToken !== refreshToken) {
+        res.clearCookie("refreshToken");
         return res.status(401).json({ message: "Invalid or revoked refresh token", success: false, occurredAt: new Date().toISOString() });
     }
 
-    const accessToken = generateAccessToken(user, user.company);
+    const accessToken = generateAccessToken(user, company);
     return res.status(200).json({ accessToken, message: "Token refreshed successfully", success: true });
 });
 
