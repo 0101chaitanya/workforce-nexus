@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
 import { setAuthSuccess } from '../auth/authSlice';
@@ -7,7 +7,8 @@ import {
 } from './profileSlice';
 import {
   User, Mail, Briefcase, Building2, Calendar, Phone, CreditCard,
-  MapPin, Cake, Lock, Loader2, Save, Key, UserCheck, AlertCircle
+  MapPin, Loader2, Save, Key, UserCheck, AlertCircle,
+  Edit2, X
 } from 'lucide-react';
 
 export default function EmployeeProfile() {
@@ -16,6 +17,8 @@ export default function EmployeeProfile() {
 
   // Selector
   const { profile, loading, saveLoading, passwordLoading, error, successMessage } = useSelector((state) => state.profile);
+
+  const [isEditing, setIsEditing] = useState(false);
 
   // Forms
   const [profileForm, setProfileForm] = useState({
@@ -33,8 +36,8 @@ export default function EmployeeProfile() {
   });
 
   // Fetch full details
-  const fetchProfileDetails = async () => {
-    dispatch(setLoading(true));
+  const fetchProfileDetails = useCallback(async (silent = false) => {
+    if (!silent) dispatch(setLoading(true));
     dispatch(setError(null));
     try {
       const response = await api.get(`/users/info/${user._id}`);
@@ -52,15 +55,15 @@ export default function EmployeeProfile() {
     } catch (err) {
       dispatch(setError(err.response?.data?.message || 'Failed to fetch profile info.'));
     } finally {
-      dispatch(setLoading(false));
+      if (!silent) dispatch(setLoading(false));
     }
-  };
+  }, [user, dispatch]);
 
   useEffect(() => {
     if (user?._id) {
       fetchProfileDetails();
     }
-  }, [user?._id]);
+  }, [user?._id, fetchProfileDetails]);
 
   useEffect(() => {
     if (successMessage) {
@@ -70,6 +73,23 @@ export default function EmployeeProfile() {
       return () => clearTimeout(timer);
     }
   }, [successMessage, dispatch]);
+
+  const handleEdit = () => {
+    setIsEditing(true);
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    if (profile) {
+      setProfileForm({
+        fullName: profile.fullName || '',
+        phone: profile.phone || '',
+        address: profile.address || '',
+        dateOfBirth: profile.dateOfBirth ? profile.dateOfBirth.split('T')[0] : '',
+        bankAccount: profile.bankAccount || ''
+      });
+    }
+  };
 
   // Submit Profile update
   const handleProfileSubmit = async (e) => {
@@ -92,9 +112,10 @@ export default function EmployeeProfile() {
 
         // Sync Redux state with updated user
         const updatedUser = { ...user, ...response.data.data };
-        dispatch(setAuthSuccess({ user: updatedUser, token: localStorage.getItem('token') }));
+        dispatch(setAuthSuccess({ user: updatedUser, accessToken: localStorage.getItem('token') }));
 
-        fetchProfileDetails();
+        await fetchProfileDetails(true);
+        setIsEditing(false);
       }
     } catch (err) {
       dispatch(setError(err.response?.data?.message || 'Failed to save profile changes.'));
@@ -150,24 +171,6 @@ export default function EmployeeProfile() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="flex items-center gap-3 p-5 bg-rose-50 text-rose-700 rounded-2xl border border-rose-100/50">
-        <AlertCircle size={20} className="shrink-0" />
-        <div className="text-xs font-bold">{error}</div>
-      </div>
-    );
-  }
-
-  if (successMessage) {
-    return (
-      <div className="flex items-center gap-3 p-5 bg-emerald-50 text-emerald-700 rounded-2xl border border-emerald-100/50">
-        <AlertCircle size={20} className="shrink-0" />
-        <div className="text-xs font-bold">{successMessage}</div>
-      </div>
-    );
-  }
-
   const initials = profile?.fullName ? profile.fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : '?';
 
   return (
@@ -185,6 +188,20 @@ export default function EmployeeProfile() {
           </p>
         </div>
       </div>
+
+      {error && (
+        <div className="flex items-center gap-3 p-5 bg-rose-50 text-rose-700 rounded-2xl border border-rose-100/50 text-xs font-bold">
+          <AlertCircle size={20} className="shrink-0" />
+          {error}
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="flex items-center gap-3 p-5 bg-emerald-50 text-emerald-700 rounded-2xl border border-emerald-100/50 text-xs font-bold">
+          <AlertCircle size={20} className="shrink-0" />
+          {successMessage}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
@@ -246,81 +263,144 @@ export default function EmployeeProfile() {
 
           {/* Edit Details */}
           <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-6">
-            <div>
-              <h3 className="font-black text-slate-800 text-base tracking-tight">Personal & Contact Details</h3>
-              <p className="text-xs text-slate-400 mt-1">Keep your bank details, phone contact, and address updated for payroll compliance.</p>
-            </div>
+            {!isEditing ? (
+              <>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-black text-slate-800 text-base tracking-tight">Personal & Contact Details</h3>
+                    <p className="text-xs text-slate-400 mt-1">Keep your bank details, phone contact, and address updated for payroll compliance.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleEdit}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition"
+                  >
+                    <Edit2 size={14} /> Edit
+                  </button>
+                </div>
 
-            <form onSubmit={handleProfileSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Full Name *</label>
-                  <input
-                    type="text"
-                    required
-                    value={profileForm.fullName}
-                    onChange={(e) => setProfileForm({ ...profileForm, fullName: e.target.value })}
-                    className="w-full mt-1.5 px-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-medium text-slate-700 transition"
-                  />
+                <div className="space-y-4 text-slate-600 text-sm">
+                  <div className="flex items-center gap-3">
+                    <span className="text-indigo-600"><User size={18} /></span>
+                    <div>
+                      <p className="font-semibold text-slate-900">{profile?.fullName || 'N/A'}</p>
+                      <p className="text-slate-500 text-xs">Full name</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-slate-500"><Phone size={18} /></span>
+                    <div>
+                      <p className="font-semibold text-slate-900">{profile?.phone || 'Not set'}</p>
+                      <p className="text-slate-500 text-xs">Phone number</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-slate-500"><Calendar size={18} /></span>
+                    <div>
+                      <p className="font-semibold text-slate-900">{profile?.dateOfBirth ? new Date(profile.dateOfBirth).toLocaleDateString() : 'Not set'}</p>
+                      <p className="text-slate-500 text-xs">Date of birth</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-slate-500"><CreditCard size={18} /></span>
+                    <div>
+                      <p className="font-semibold text-slate-900">{profile?.bankAccount || 'Not set'}</p>
+                      <p className="text-slate-500 text-xs">Bank account details</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <span className="mt-1 text-slate-500"><MapPin size={18} /></span>
+                    <div>
+                      <p className="font-semibold text-slate-900">{profile?.address || 'Not set'}</p>
+                      <p className="text-slate-500 text-xs">Residential address</p>
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <form onSubmit={handleProfileSubmit} className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-black text-slate-800 text-base tracking-tight">Personal & Contact Details</h3>
+                    <p className="text-xs text-slate-400 mt-1">Keep your bank details, phone contact, and address updated for payroll compliance.</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleCancel}
+                      className="flex items-center gap-2 px-3 py-1.5 bg-slate-200 text-slate-700 text-xs font-bold rounded-lg hover:bg-slate-300 transition"
+                    >
+                      <X size={14} /> Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={saveLoading}
+                      className="flex items-center gap-2 px-3 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700 transition disabled:bg-emerald-400"
+                    >
+                      <Save size={14} /> {saveLoading ? 'Saving...' : 'Save'}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Full Name *</label>
+                    <input
+                      type="text"
+                      required
+                      value={profileForm.fullName}
+                      onChange={(e) => setProfileForm({ ...profileForm, fullName: e.target.value })}
+                      className="w-full mt-1.5 px-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-medium text-slate-700 transition"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Contact Number</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. +919876543210"
+                      value={profileForm.phone}
+                      onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                      className="w-full mt-1.5 px-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-medium text-slate-700 transition"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Date of Birth</label>
+                    <input
+                      type="date"
+                      value={profileForm.dateOfBirth}
+                      onChange={(e) => setProfileForm({ ...profileForm, dateOfBirth: e.target.value })}
+                      className="w-full mt-1.5 px-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-medium text-slate-700 transition"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Bank Account Details</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Account Number / IFSC"
+                      value={profileForm.bankAccount}
+                      onChange={(e) => setProfileForm({ ...profileForm, bankAccount: e.target.value })}
+                      className="w-full mt-1.5 px-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-medium text-slate-700 transition"
+                    />
+                  </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Contact Number</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. +919876543210"
-                    value={profileForm.phone}
-                    onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
-                    className="w-full mt-1.5 px-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-medium text-slate-700 transition"
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Residential Address</label>
+                  <textarea
+                    rows="2"
+                    placeholder="Street details, City, Pin code"
+                    value={profileForm.address}
+                    onChange={(e) => setProfileForm({ ...profileForm, address: e.target.value })}
+                    className="w-full mt-1.5 px-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-medium text-slate-700 transition resize-none"
                   />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Date of Birth</label>
-                  <input
-                    type="date"
-                    value={profileForm.dateOfBirth}
-                    onChange={(e) => setProfileForm({ ...profileForm, dateOfBirth: e.target.value })}
-                    className="w-full mt-1.5 px-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-medium text-slate-700 transition"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Bank Account Details</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Account Number / IFSC"
-                    value={profileForm.bankAccount}
-                    onChange={(e) => setProfileForm({ ...profileForm, bankAccount: e.target.value })}
-                    className="w-full mt-1.5 px-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-medium text-slate-700 transition"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Residential Address</label>
-                <textarea
-                  rows="2"
-                  placeholder="Street details, City, Pin code"
-                  value={profileForm.address}
-                  onChange={(e) => setProfileForm({ ...profileForm, address: e.target.value })}
-                  className="w-full mt-1.5 px-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-medium text-slate-700 transition resize-none"
-                />
-              </div>
-
-              <div className="pt-2 flex justify-end">
-                <button
-                  type="submit"
-                  disabled={saveLoading}
-                  className="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm shadow-md hover:shadow-indigo-200 transition flex justify-center items-center gap-2 transform active:scale-98 disabled:opacity-50"
-                >
-                  {saveLoading ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
-                  Save Profile Changes
-                </button>
-              </div>
-            </form>
+              </form>
+            )}
           </div>
 
           {/* Change Password */}

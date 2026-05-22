@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { NavLink, useNavigate, Outlet } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { NavLink, useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../../features/auth/authSlice';
 import api from '../../app/axiosInterceptors';
@@ -13,6 +13,11 @@ const MainLayout = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const location = useLocation();
+
+  useEffect(() => {
+    dispatch({ type: 'common/clearStatusMessages' });
+  }, [location.pathname, dispatch]);
 
   // Extract authentication variables directly from Redux Store state
   const { user, role } = useSelector((state) => state.auth);
