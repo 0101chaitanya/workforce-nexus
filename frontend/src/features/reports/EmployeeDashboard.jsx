@@ -1,37 +1,47 @@
-import React, { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
+import { setStats, setLoading, setError } from './dashboardSlice';
 import {
   BarChart3, Loader2, AlertCircle, Calendar, Briefcase, FileText, CheckCircle, Clock, PieChart, Users
 } from 'lucide-react';
 
 export default function EmployeeDashboard() {
+  const dispatch = useDispatch();
   const { role } = useSelector((state) => state.auth);
   const isOwner = role?.toLowerCase() === 'owner';
 
-  const [stats, setStats] = useState(
-    isOwner 
-      ? { totalEmployees: 0, todayAttendance: 0, employeesOnLeave: 0, recentPayrollAmount: 0, recentPayrollMonth: '', recentPayrollYear: '' }
-      : { attendanceCount: 0, averageHours: 0, leavesApplied: 0, leavesApproved: 0, payrollCount: 0 }
-  );
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { stats: reduxStats, loading, error } = useSelector((state) => state.dashboard);
+  const stats = {
+    totalEmployees: 0,
+    todayAttendance: 0,
+    employeesOnLeave: 0,
+    recentPayrollAmount: 0,
+    recentPayrollMonth: '',
+    recentPayrollYear: '',
+    attendanceCount: 0,
+    averageHours: 0,
+    leavesApplied: 0,
+    leavesApproved: 0,
+    payrollCount: 0,
+    ...reduxStats
+  };
 
   const fetchStats = async () => {
-    setLoading(true);
-    setError(null);
+    dispatch(setLoading(true));
+    dispatch(setError(null));
     try {
       if (isOwner) {
         const res = await api.get('/dashboard/stats');
         const data = res.data?.data || {};
-        setStats({
+        dispatch(setStats({
           totalEmployees: data.totalEmployees || 0,
           todayAttendance: data.todayAttendance || 0,
           employeesOnLeave: data.employeesOnLeave || 0,
           recentPayrollAmount: data.recentPayroll?.amount || 0,
           recentPayrollMonth: data.recentPayroll?.month || '',
           recentPayrollYear: data.recentPayroll?.year || ''
-        });
+        }));
       } else {
         // Parallel fetches for history logs
         const [attRes, leaveRes, payRes] = await Promise.all([
@@ -47,18 +57,18 @@ export default function EmployeeDashboard() {
         const totalHours = attendanceData.reduce((acc, curr) => acc + (curr.totalHours || 0), 0);
         const avgHrs = attendanceData.length > 0 ? (totalHours / attendanceData.length).toFixed(1) : 0;
 
-        setStats({
+        dispatch(setStats({
           attendanceCount: attendanceData.length,
           averageHours: avgHrs,
           leavesApplied: leavesData.length,
           leavesApproved: leavesData.filter(l => l.status === 'approved').length,
           payrollCount: payrollData.length
-        });
+        }));
       }
     } catch (err) {
-      setError('Some report components could not be fully aggregated.');
+      dispatch(setError('Some report components could not be fully aggregated.'));
     } finally {
-      setLoading(false);
+      dispatch(setLoading(false));
     }
   };
 

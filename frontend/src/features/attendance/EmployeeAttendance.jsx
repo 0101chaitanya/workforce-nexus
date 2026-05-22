@@ -1,63 +1,71 @@
-import React, { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
 import Pagination from '../../components/common/Pagination';
 import {
   CalendarCheck, Clock, LogIn, LogOut, Loader2,
   AlertCircle, History, Play, Square, CheckCircle, Coffee
 } from 'lucide-react';
+import {
+  setEmployeeHistory,
+  setEmployeeLoading,
+  setEmployeeActionLoading,
+  setEmployeeError,
+  setEmployeeSuccessMessage,
+  setEmployeeTodayRecord,
+  setEmployeePage,
+  setEmployeeLimit,
+  setEmployeePaginationInfo
+} from './attendanceSlice';
 
 export default function EmployeeAttendance() {
+  const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
-  const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [successMessage, setSuccessMessage] = useState(null);
-  const [todayRecord, setTodayRecord] = useState(null);
-
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const [paginationInfo, setPaginationInfo] = useState({
-    total: 0,
-    totalPages: 1,
-    hasNext: false,
-    hasPrev: false
-  });
+  const {
+    history,
+    loading,
+    actionLoading,
+    error,
+    successMessage,
+    todayRecord,
+    page,
+    limit,
+    paginationInfo
+  } = useSelector((state) => state.attendance.employee);
 
   const fetchAttendance = async () => {
-    setLoading(true);
-    setError(null);
+    dispatch(setEmployeeLoading(true));
+    dispatch(setEmployeeError(null));
     try {
       const response = await api.get('/attendance/history', {
         params: { page, limit }
       });
       if (response.data?.success) {
         const data = response.data.data || [];
-        setHistory(data);
+        dispatch(setEmployeeHistory(data));
 
         if (response.data.pagination) {
-          setPaginationInfo(response.data.pagination);
+          dispatch(setEmployeePaginationInfo(response.data.pagination));
         } else {
-          setPaginationInfo({
+          dispatch(setEmployeePaginationInfo({
             total: data.length,
             totalPages: 1,
             hasNext: false,
             hasPrev: false
-          });
+          }));
         }
 
         // Only check today's record from page 1 data
         if (page === 1) {
           const todayStr = new Date().toDateString();
           const todayRec = data.find(rec => new Date(rec.date).toDateString() === todayStr);
-          setTodayRecord(todayRec || null);
+          dispatch(setEmployeeTodayRecord(todayRec || null));
         }
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load attendance history.');
+      dispatch(setEmployeeError(err.response?.data?.message || 'Failed to load attendance history.'));
     } finally {
-      setLoading(false);
+      dispatch(setEmployeeLoading(false));
     }
   };
 
@@ -66,44 +74,44 @@ export default function EmployeeAttendance() {
   }, [page, limit]);
 
   const handleClockIn = async () => {
-    setActionLoading(true);
-    setError(null);
-    setSuccessMessage(null);
+    dispatch(setEmployeeActionLoading(true));
+    dispatch(setEmployeeError(null));
+    dispatch(setEmployeeSuccessMessage(null));
     try {
       const response = await api.post('/attendance/clock-in');
       if (response.data?.success) {
-        setSuccessMessage('Clocked in successfully! Have a great day at work.');
+        dispatch(setEmployeeSuccessMessage('Clocked in successfully! Have a great day at work.'));
         if (page === 1) {
           fetchAttendance();
         } else {
-          setPage(1);
+          dispatch(setEmployeePage(1));
         }
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Clock-in failed.');
+      dispatch(setEmployeeError(err.response?.data?.message || 'Clock-in failed.'));
     } finally {
-      setActionLoading(false);
+      dispatch(setEmployeeActionLoading(false));
     }
   };
 
   const handleClockOut = async () => {
-    setActionLoading(true);
-    setError(null);
-    setSuccessMessage(null);
+    dispatch(setEmployeeActionLoading(true));
+    dispatch(setEmployeeError(null));
+    dispatch(setEmployeeSuccessMessage(null));
     try {
       const response = await api.put('/attendance/clock-out');
       if (response.data?.success) {
-        setSuccessMessage('Clocked out successfully! Thank you for your work.');
+        dispatch(setEmployeeSuccessMessage('Clocked out successfully! Thank you for your work.'));
         if (page === 1) {
           fetchAttendance();
         } else {
-          setPage(1);
+          dispatch(setEmployeePage(1));
         }
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Clock-out failed.');
+      dispatch(setEmployeeError(err.response?.data?.message || 'Clock-out failed.'));
     } finally {
-      setActionLoading(false);
+      dispatch(setEmployeeActionLoading(false));
     }
   };
 
@@ -311,10 +319,10 @@ export default function EmployeeAttendance() {
             totalPages={paginationInfo.totalPages}
             hasNext={paginationInfo.hasNext}
             hasPrev={paginationInfo.hasPrev}
-            onPageChange={setPage}
+            onPageChange={(p) => dispatch(setEmployeePage(p))}
             onLimitChange={(newLimit) => {
-              setLimit(newLimit);
-              setPage(1);
+              dispatch(setEmployeeLimit(newLimit));
+              dispatch(setEmployeePage(1));
             }}
           />
         </div>

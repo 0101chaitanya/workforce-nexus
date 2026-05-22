@@ -1,40 +1,51 @@
 import React, { useEffect, useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
 import Pagination from '../../components/common/Pagination';
 import { Loader2, User, FileSpreadsheet, CheckCircle2, XCircle, RefreshCcw, MessageSquare, Search, X } from 'lucide-react';
+import {
+  setOwnerLeaves,
+  setOwnerTargetUserId,
+  setOwnerLoading,
+  setOwnerActionPending,
+  setOwnerError,
+  setOwnerPage,
+  setOwnerLimit,
+  setOwnerPaginationInfo,
+  setOwnerSearchQuery,
+  setOwnerSearchResults,
+  setOwnerSelectedUserObj,
+  setOwnerShowDropdown,
+  setOwnerSearchLoading
+} from './leavesSlice';
 
 const OwnerLeaves = () => {
-  const [leaves, setLeaves] = useState([]);
-  const [targetUserId, setTargetUserId] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [actionPending, setActionPending] = useState(null);
-  const [error, setError] = useState(null);
+  const dispatch = useDispatch();
+  const {
+    leaves,
+    targetUserId,
+    loading,
+    actionPending,
+    error,
+    page,
+    limit,
+    paginationInfo,
+    searchQuery,
+    searchResults,
+    selectedUserObj,
+    showDropdown,
+    searchLoading
+  } = useSelector((state) => state.leaves.owner);
 
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const [paginationInfo, setPaginationInfo] = useState({
-    total: 0,
-    totalPages: 1,
-    hasNext: false,
-    hasPrev: false
-  });
-
-  // Modal state
+  // Modal state (local UI state)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedLeave, setSelectedLeave] = useState(null);
   const [actionType, setActionType] = useState(null);
   const [remarks, setRemarks] = useState('');
 
-  // Search states
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [selectedUserObj, setSelectedUserObj] = useState(null);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [searchLoading, setSearchLoading] = useState(false);
-
   const fetchLeaves = async () => {
-    setLoading(true);
-    setError(null);
+    dispatch(setOwnerLoading(true));
+    dispatch(setOwnerError(null));
     try {
       const response = await api.get('/leaves/history', {
         params: {
@@ -43,21 +54,21 @@ const OwnerLeaves = () => {
           limit
         }
       });
-      setLeaves(response.data.data || []);
+      dispatch(setOwnerLeaves(response.data.data || []));
       if (response.data.pagination) {
-        setPaginationInfo(response.data.pagination);
+        dispatch(setOwnerPaginationInfo(response.data.pagination));
       } else {
-        setPaginationInfo({
+        dispatch(setOwnerPaginationInfo({
           total: (response.data.data || []).length,
           totalPages: 1,
           hasNext: false,
           hasPrev: false
-        });
+        }));
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Unable to load leave requests.');
+      dispatch(setOwnerError(err.response?.data?.message || 'Unable to load leave requests.'));
     } finally {
-      setLoading(false);
+      dispatch(setOwnerLoading(false));
     }
   };
 
@@ -68,8 +79,8 @@ const OwnerLeaves = () => {
   // Search user autocomplete effect
   useEffect(() => {
     if (searchQuery.trim().length < 2) {
-      setSearchResults([]);
-      setShowDropdown(false);
+      dispatch(setOwnerSearchResults([]));
+      dispatch(setOwnerShowDropdown(false));
       return;
     }
 
@@ -83,17 +94,17 @@ const OwnerLeaves = () => {
     }
 
     const timer = setTimeout(async () => {
-      setSearchLoading(true);
+      dispatch(setOwnerSearchLoading(true));
       try {
         const response = await api.get('/users/all', {
           params: { query: searchQuery }
         });
-        setSearchResults(response.data.data || []);
-        setShowDropdown(true);
+        dispatch(setOwnerSearchResults(response.data.data || []));
+        dispatch(setOwnerShowDropdown(true));
       } catch (err) {
         console.error(err);
       } finally {
-        setSearchLoading(false);
+        dispatch(setOwnerSearchLoading(false));
       }
     }, 300);
 
@@ -101,24 +112,24 @@ const OwnerLeaves = () => {
   }, [searchQuery, selectedUserObj]);
 
   const handleSelectUser = (user) => {
-    setTargetUserId(user._id);
-    setSelectedUserObj(user);
-    setSearchQuery(user.identity || user.fullName || user.email);
-    setShowDropdown(false);
-    setPage(1);
+    dispatch(setOwnerTargetUserId(user._id));
+    dispatch(setOwnerSelectedUserObj(user));
+    dispatch(setOwnerSearchQuery(user.identity || user.fullName || user.email));
+    dispatch(setOwnerShowDropdown(false));
+    dispatch(setOwnerPage(1));
   };
 
   const handleClearSearch = () => {
-    setSearchQuery('');
-    setTargetUserId('');
-    setSelectedUserObj(null);
-    setSearchResults([]);
-    setShowDropdown(false);
-    setPage(1);
+    dispatch(setOwnerSearchQuery(''));
+    dispatch(setOwnerTargetUserId(''));
+    dispatch(setOwnerSelectedUserObj(null));
+    dispatch(setOwnerSearchResults([]));
+    dispatch(setOwnerShowDropdown(false));
+    dispatch(setOwnerPage(1));
   };
 
   const handleSearchChange = (val) => {
-    setSearchQuery(val);
+    dispatch(setOwnerSearchQuery(val));
     if (val === '') {
       handleClearSearch();
     } else {
@@ -126,8 +137,8 @@ const OwnerLeaves = () => {
           val !== selectedUserObj.fullName &&
           val !== selectedUserObj.email &&
           val !== selectedUserObj.identity) {
-        setTargetUserId('');
-        setSelectedUserObj(null);
+        dispatch(setOwnerTargetUserId(''));
+        dispatch(setOwnerSelectedUserObj(null));
       }
     }
   };
@@ -140,7 +151,7 @@ const OwnerLeaves = () => {
   };
 
   const handleConfirmAction = async () => {
-    setActionPending(selectedLeave);
+    dispatch(setOwnerActionPending(selectedLeave));
     try {
       await api.put(`/leaves/${selectedLeave}/status`, { status: actionType, remarks });
       await fetchLeaves();
@@ -149,9 +160,9 @@ const OwnerLeaves = () => {
       setActionType(null);
       setRemarks('');
     } catch (err) {
-      setError(err.response?.data?.message || 'Could not update leave status.');
+      dispatch(setOwnerError(err.response?.data?.message || 'Could not update leave status.'));
     } finally {
-      setActionPending(null);
+      dispatch(setOwnerActionPending(null));
     }
   };
 
@@ -331,10 +342,10 @@ const OwnerLeaves = () => {
           totalPages={paginationInfo.totalPages}
           hasNext={paginationInfo.hasNext}
           hasPrev={paginationInfo.hasPrev}
-          onPageChange={setPage}
+          onPageChange={(p) => dispatch(setOwnerPage(p))}
           onLimitChange={(newLimit) => {
-            setLimit(newLimit);
-            setPage(1);
+            dispatch(setOwnerLimit(newLimit));
+            dispatch(setOwnerPage(1));
           }}
         />
       </div>

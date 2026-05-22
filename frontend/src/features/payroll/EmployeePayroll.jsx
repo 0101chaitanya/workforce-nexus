@@ -1,50 +1,58 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
 import Pagination from '../../components/common/Pagination';
 import {
   CreditCard, Download, Loader2, AlertCircle, FileText, Calendar, DollarSign
 } from 'lucide-react';
+import {
+  setEmployeePayrolls,
+  setEmployeeLoading,
+  setEmployeeDownloadingId,
+  setEmployeeTenureDownloading,
+  setEmployeeError,
+  setEmployeePage,
+  setEmployeeLimit,
+  setEmployeePaginationInfo
+} from './payrollSlice';
 
 export default function EmployeePayroll() {
-  const [payrolls, setPayrolls] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [downloadingId, setDownloadingId] = useState(null);
-  const [tenureDownloading, setTenureDownloading] = useState(false);
-  const [error, setError] = useState(null);
-
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const [paginationInfo, setPaginationInfo] = useState({
-    total: 0,
-    totalPages: 1,
-    hasNext: false,
-    hasPrev: false
-  });
+  const dispatch = useDispatch();
+  const {
+    payrolls,
+    loading,
+    downloadingId,
+    tenureDownloading,
+    error,
+    page,
+    limit,
+    paginationInfo
+  } = useSelector((state) => state.payroll.employee);
 
   const fetchPayroll = async () => {
-    setLoading(true);
-    setError(null);
+    dispatch(setEmployeeLoading(true));
+    dispatch(setEmployeeError(null));
     try {
       const response = await api.get('/payroll/history', {
         params: { page, limit }
       });
       if (response.data?.success) {
-        setPayrolls(response.data.data || []);
+        dispatch(setEmployeePayrolls(response.data.data || []));
         if (response.data.pagination) {
-          setPaginationInfo(response.data.pagination);
+          dispatch(setEmployeePaginationInfo(response.data.pagination));
         } else {
-          setPaginationInfo({
+          dispatch(setEmployeePaginationInfo({
             total: (response.data.data || []).length,
             totalPages: 1,
             hasNext: false,
             hasPrev: false
-          });
+          }));
         }
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load payroll records.');
+      dispatch(setEmployeeError(err.response?.data?.message || 'Failed to load payroll records.'));
     } finally {
-      setLoading(false);
+      dispatch(setEmployeeLoading(false));
     }
   };
 
@@ -53,8 +61,8 @@ export default function EmployeePayroll() {
   }, [page, limit]);
 
   const handleDownload = async (payrollId, filename) => {
-    setDownloadingId(payrollId);
-    setError(null);
+    dispatch(setEmployeeDownloadingId(payrollId));
+    dispatch(setEmployeeError(null));
     try {
       const response = await api.get(`/payroll/${payrollId}/download`, {
         responseType: 'blob'
@@ -70,15 +78,15 @@ export default function EmployeePayroll() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      setError('Failed to download payslip. Please try again.');
+      dispatch(setEmployeeError('Failed to download payslip. Please try again.'));
     } finally {
-      setDownloadingId(null);
+      dispatch(setEmployeeDownloadingId(null));
     }
   };
 
   const handleDownloadTenure = async () => {
-    setTenureDownloading(true);
-    setError(null);
+    dispatch(setEmployeeTenureDownloading(true));
+    dispatch(setEmployeeError(null));
     try {
       const response = await api.get('/payroll/tenure/download', {
         responseType: 'blob'
@@ -93,9 +101,9 @@ export default function EmployeePayroll() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      setError('Failed to download consolidated payslip. Please try again.');
+      dispatch(setEmployeeError('Failed to download consolidated payslip. Please try again.'));
     } finally {
-      setTenureDownloading(false);
+      dispatch(setEmployeeTenureDownloading(false));
     }
   };
 
@@ -224,10 +232,10 @@ export default function EmployeePayroll() {
             totalPages={paginationInfo.totalPages}
             hasNext={paginationInfo.hasNext}
             hasPrev={paginationInfo.hasPrev}
-            onPageChange={setPage}
+            onPageChange={(p) => dispatch(setEmployeePage(p))}
             onLimitChange={(newLimit) => {
-              setLimit(newLimit);
-              setPage(1);
+              dispatch(setEmployeeLimit(newLimit));
+              dispatch(setEmployeePage(1));
             }}
           />
         </div>

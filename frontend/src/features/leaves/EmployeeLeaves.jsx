@@ -1,18 +1,37 @@
 import React, { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
 import Pagination from '../../components/common/Pagination';
 import {
   FileSpreadsheet, Send, History, Loader2, AlertCircle, Plus, Calendar, Type, FileText, CheckCircle, Clock, XCircle
 } from 'lucide-react';
+import {
+  setEmployeeLeaves,
+  setEmployeeLoading,
+  setEmployeeSubmitLoading,
+  setEmployeeError,
+  setEmployeeSuccessMessage,
+  setEmployeePage,
+  setEmployeeLimit,
+  setEmployeePaginationInfo,
+  setEmployeeLeaveStats
+} from './leavesSlice';
 
 export default function EmployeeLeaves() {
-  const [leaves, setLeaves] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [submitLoading, setSubmitLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [successMessage, setSuccessMessage] = useState(null);
-  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+  const dispatch = useDispatch();
+  const {
+    leaves,
+    loading,
+    submitLoading,
+    error,
+    successMessage,
+    page,
+    limit,
+    paginationInfo,
+    leaveStats
+  } = useSelector((state) => state.leaves.employee);
 
+  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [form, setForm] = useState({
     type: 'sick',
     startDate: '',
@@ -20,54 +39,40 @@ export default function EmployeeLeaves() {
     reason: ''
   });
 
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const [paginationInfo, setPaginationInfo] = useState({
-    total: 0,
-    totalPages: 1,
-    hasNext: false,
-    hasPrev: false
-  });
-  const [leaveStats, setLeaveStats] = useState({
-    pending: 0,
-    approved: 0,
-    rejected: 0
-  });
-
   const fetchLeaves = async () => {
-    setLoading(true);
-    setError(null);
+    dispatch(setEmployeeLoading(true));
+    dispatch(setEmployeeError(null));
     try {
       const response = await api.get('/leaves/history', {
         params: { page, limit }
       });
       if (response.data?.success) {
         const data = response.data.data || [];
-        setLeaves(data);
+        dispatch(setEmployeeLeaves(data));
         if (response.data.pagination) {
-          setPaginationInfo(response.data.pagination);
+          dispatch(setEmployeePaginationInfo(response.data.pagination));
         } else {
-          setPaginationInfo({
+          dispatch(setEmployeePaginationInfo({
             total: data.length,
             totalPages: 1,
             hasNext: false,
             hasPrev: false
-          });
+          }));
         }
         if (response.data.stats) {
-          setLeaveStats(response.data.stats);
+          dispatch(setEmployeeLeaveStats(response.data.stats));
         } else {
-          setLeaveStats({
+          dispatch(setEmployeeLeaveStats({
             pending: data.filter(l => l.status === 'pending').length,
             approved: data.filter(l => l.status === 'approved').length,
             rejected: data.filter(l => l.status === 'rejected').length
-          });
+          }));
         }
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load leave history.');
+      dispatch(setEmployeeError(err.response?.data?.message || 'Failed to load leave history.'));
     } finally {
-      setLoading(false);
+      dispatch(setEmployeeLoading(false));
     }
   };
 
@@ -77,20 +82,20 @@ export default function EmployeeLeaves() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
-    setSuccessMessage(null);
+    dispatch(setEmployeeError(null));
+    dispatch(setEmployeeSuccessMessage(null));
 
     if (new Date(form.startDate) > new Date(form.endDate)) {
-      setError('Start date cannot be after end date.');
+      dispatch(setEmployeeError('Start date cannot be after end date.'));
       return;
     }
 
     if (form.reason.trim().length < 5) {
-      setError('Reason must be at least 5 characters long.');
+      dispatch(setEmployeeError('Reason must be at least 5 characters long.'));
       return;
     }
 
-    setSubmitLoading(true);
+    dispatch(setEmployeeSubmitLoading(true));
     try {
       const response = await api.post('/leaves/apply', {
         type: form.type,
@@ -100,7 +105,7 @@ export default function EmployeeLeaves() {
       });
 
       if (response.data?.success) {
-        setSuccessMessage('Leave application submitted successfully!');
+        dispatch(setEmployeeSuccessMessage('Leave application submitted successfully!'));
         setForm({
           type: 'sick',
           startDate: '',
@@ -111,13 +116,13 @@ export default function EmployeeLeaves() {
         if (page === 1) {
           fetchLeaves();
         } else {
-          setPage(1);
+          dispatch(setEmployeePage(1));
         }
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to apply for leave.');
+      dispatch(setEmployeeError(err.response?.data?.message || 'Failed to apply for leave.'));
     } finally {
-      setSubmitLoading(false);
+      dispatch(setEmployeeSubmitLoading(false));
     }
   };
 
@@ -271,10 +276,10 @@ export default function EmployeeLeaves() {
             totalPages={paginationInfo.totalPages}
             hasNext={paginationInfo.hasNext}
             hasPrev={paginationInfo.hasPrev}
-            onPageChange={setPage}
+            onPageChange={(p) => dispatch(setEmployeePage(p))}
             onLimitChange={(newLimit) => {
-              setLimit(newLimit);
-              setPage(1);
+              dispatch(setEmployeeLimit(newLimit));
+              dispatch(setEmployeePage(1));
             }}
           />
         </div>

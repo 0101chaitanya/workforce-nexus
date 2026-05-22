@@ -1,40 +1,54 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { Search, UserPlus, Edit2, Shield, Loader2, AlertCircle, Phone, MapPin, Briefcase } from 'lucide-react';
 import api from '../../app/axiosInterceptors';
+import {
+  setEmployees,
+  setLoading,
+  setError,
+  setSuccessMessage,
+  setSearchQuery,
+  setSelectedUser,
+  setModalLoading,
+  setValidationErrors
+} from './employeesSlice';
 
 export default function OwnerEmployees() {
-  const [employees, setEmployees] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [successMessage, setSuccessMessage] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const dispatch = useDispatch();
+  const {
+    employees,
+    loading,
+    error,
+    successMessage,
+    searchQuery,
+    selectedUser,
+    modalLoading,
+    validationErrors
+  } = useSelector((state) => state.employees);
 
-  // Modals
+  // Modals (local UI states)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [modalLoading, setModalLoading] = useState(false);
 
-  // Form Data
-  const [validationErrors, setValidationErrors] = useState({});
+  // Form Data (local UI states)
   const [addForm, setAddForm] = useState({ fullName: '', email: '', salary: '', branch: '', position: '' });
   const [editForm, setEditForm] = useState({ fullName: '', role: 'employee', salary: '', branch: '', position: '', phone: '', address: '' });
 
   const fetchEmployees = useCallback(async (query = '') => {
-    setLoading(true);
+    dispatch(setLoading(true));
     try {
       // For initial load (empty query), fetch all users without pagination limit
       // For search, use pagination
       const params = query ? { query, page: 1, limit: 10 } : { query };
       const res = await api.get('/users/all', { params });
-      setEmployees(res.data?.data || []);
-      setError(null);
+      dispatch(setEmployees(res.data?.data || []));
+      dispatch(setError(null));
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to fetch directory');
+      dispatch(setError(err.response?.data?.message || 'Failed to fetch directory'));
     } finally {
-      setLoading(false);
+      dispatch(setLoading(false));
     }
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     // Initial fetch
@@ -55,15 +69,15 @@ export default function OwnerEmployees() {
 
   const handleAddSubmit = async (e) => {
     e.preventDefault();
-    setModalLoading(true);
-    setError(null);
-    setSuccessMessage(null);
-    setValidationErrors({});
+    dispatch(setModalLoading(true));
+    dispatch(setError(null));
+    dispatch(setSuccessMessage(null));
+    dispatch(setValidationErrors({}));
     try {
       const payload = { ...addForm, role: 'employee' };
       if (payload.salary) payload.salary = Number(payload.salary);
       await api.post('/users/add', payload);
-      setSuccessMessage('Employee added successfully. An email with temporary password has been sent.');
+      dispatch(setSuccessMessage('Employee added successfully. An email with temporary password has been sent.'));
       setIsAddModalOpen(false);
       setAddForm({ fullName: '', email: '', salary: '', branch: '', position: '' });
       fetchEmployees();
@@ -73,18 +87,18 @@ export default function OwnerEmployees() {
         err.response.data.errors.forEach(e => {
           errorsObj[e.field] = e.message;
         });
-        setValidationErrors(errorsObj);
-        setError(err.response.data.message || 'Validation failed');
+        dispatch(setValidationErrors(errorsObj));
+        dispatch(setError(err.response.data.message || 'Validation failed'));
       } else {
-        setError(err.response?.data?.message || 'Failed to add employee');
+        dispatch(setError(err.response?.data?.message || 'Failed to add employee'));
       }
     } finally {
-      setModalLoading(false);
+      dispatch(setModalLoading(false));
     }
   };
 
   const handleEditClick = (user) => {
-    setSelectedUser(user);
+    dispatch(setSelectedUser(user));
     setEditForm({
       fullName: user.fullName || '',
       role: user.role || 'employee',
@@ -94,22 +108,22 @@ export default function OwnerEmployees() {
       phone: user.phone || '',
       address: user.address || ''
     });
-    setValidationErrors({});
-    setError(null);
+    dispatch(setValidationErrors({}));
+    dispatch(setError(null));
     setIsEditModalOpen(true);
   };
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
-    setModalLoading(true);
-    setError(null);
-    setSuccessMessage(null);
-    setValidationErrors({});
+    dispatch(setModalLoading(true));
+    dispatch(setError(null));
+    dispatch(setSuccessMessage(null));
+    dispatch(setValidationErrors({}));
     try {
       const payload = { ...editForm };
       if (payload.salary) payload.salary = Number(payload.salary);
       await api.put(`/users/admin-update/${selectedUser._id}`, payload);
-      setSuccessMessage('Employee updated successfully.');
+      dispatch(setSuccessMessage('Employee updated successfully.'));
       setIsEditModalOpen(false);
       fetchEmployees();
     } catch (err) {
@@ -118,13 +132,13 @@ export default function OwnerEmployees() {
         err.response.data.errors.forEach(e => {
           errorsObj[e.field] = e.message;
         });
-        setValidationErrors(errorsObj);
-        setError(err.response.data.message || 'Validation failed');
+        dispatch(setValidationErrors(errorsObj));
+        dispatch(setError(err.response.data.message || 'Validation failed'));
       } else {
-        setError(err.response?.data?.message || 'Failed to update employee');
+        dispatch(setError(err.response?.data?.message || 'Failed to update employee'));
       }
     } finally {
-      setModalLoading(false);
+      dispatch(setModalLoading(false));
     }
   };
 
@@ -175,7 +189,7 @@ export default function OwnerEmployees() {
           type="text"
           placeholder="Search by name, email or ID (min. 2 characters)..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => dispatch(setSearchQuery(e.target.value))}
           className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200/80 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-sm font-medium text-slate-700"
         />
       </div>

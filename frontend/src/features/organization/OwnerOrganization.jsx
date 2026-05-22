@@ -1,32 +1,37 @@
 import React, { useEffect, useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
 import { Building2, MapPin, Phone, Mail, ShieldCheck, Loader2, AlertCircle, UserCircle, Edit2, Save, X } from 'lucide-react';
+import {
+    setCompany,
+    setLoading,
+    setError,
+    setSuccessMessage,
+    setSaving
+} from './organizationSlice';
 
 const OwnerOrganization = () => {
-    const [company, setCompany] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [successMessage, setSuccessMessage] = useState(null);
+    const dispatch = useDispatch();
+    const { company, loading, error, successMessage, saving } = useSelector((state) => state.organization);
     const [isEditing, setIsEditing] = useState(false);
     const [editForm, setEditForm] = useState({ companyName: '', address: '', phone: '' });
-    const [saving, setSaving] = useState(false);
 
     const fetchCompany = async () => {
-        setLoading(true);
-        setError(null);
+        dispatch(setLoading(true));
+        dispatch(setError(null));
 
         try {
             const response = await api.get('/company/protected');
-            setCompany(response.data.data);
+            dispatch(setCompany(response.data.data));
             setEditForm({
                 companyName: response.data.data.companyName || '',
                 address: response.data.data.address || '',
                 phone: response.data.data.phone || ''
             });
         } catch (err) {
-            setError(err.response?.data?.message || 'Unable to fetch organization details.');
+            dispatch(setError(err.response?.data?.message || 'Unable to fetch organization details.'));
         } finally {
-            setLoading(false);
+            dispatch(setLoading(false));
         }
     };
 
@@ -45,18 +50,18 @@ const OwnerOrganization = () => {
 
     const handleSave = async (e) => {
         e.preventDefault();
-        setSaving(true);
-        setError(null);
-        setSuccessMessage(null);
+        dispatch(setSaving(true));
+        dispatch(setError(null));
+        dispatch(setSuccessMessage(null));
         try {
             await api.put('/company/update', editForm);
             await fetchCompany();
             setIsEditing(false);
-            setSuccessMessage('Organization details updated successfully.');
+            dispatch(setSuccessMessage('Organization details updated successfully.'));
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to update organization details.');
+            dispatch(setError(err.response?.data?.message || 'Failed to update organization details.'));
         } finally {
-            setSaving(false);
+            dispatch(setSaving(false));
         }
     };
 

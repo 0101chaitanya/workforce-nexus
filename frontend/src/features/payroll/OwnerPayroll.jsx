@@ -1,39 +1,54 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
 import Pagination from '../../components/common/Pagination';
 import { Loader2, CreditCard, Download, Users, ArrowUpRight, AlertTriangle, Search, X } from 'lucide-react';
+import {
+  setOwnerPayrolls,
+  setOwnerTargetUserId,
+  setOwnerLoading,
+  setOwnerGenerating,
+  setOwnerDownloadLoading,
+  setOwnerTenureDownloading,
+  setOwnerRowTenureDownloading,
+  setOwnerError,
+  setOwnerMessage,
+  setOwnerPage,
+  setOwnerLimit,
+  setOwnerPaginationInfo,
+  setOwnerSearchQuery,
+  setOwnerSearchResults,
+  setOwnerSelectedUserObj,
+  setOwnerShowDropdown,
+  setOwnerSearchLoading
+} from './payrollSlice';
 
 const OwnerPayroll = () => {
-  const [payrolls, setPayrolls] = useState([]);
-  const [targetUserId, setTargetUserId] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState(false);
-  const [downloadLoading, setDownloadLoading] = useState('');
-  const [tenureDownloading, setTenureDownloading] = useState(false);
-  const [rowTenureDownloading, setRowTenureDownloading] = useState('');
-  const [error, setError] = useState(null);
-  const [message, setMessage] = useState(null);
-
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const [paginationInfo, setPaginationInfo] = useState({
-    total: 0,
-    totalPages: 1,
-    hasNext: false,
-    hasPrev: false
-  });
-
-  // Search states
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [selectedUserObj, setSelectedUserObj] = useState(null);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [searchLoading, setSearchLoading] = useState(false);
+  const dispatch = useDispatch();
+  const {
+    payrolls,
+    targetUserId,
+    loading,
+    generating,
+    downloadLoading,
+    tenureDownloading,
+    rowTenureDownloading,
+    error,
+    message,
+    page,
+    limit,
+    paginationInfo,
+    searchQuery,
+    searchResults,
+    selectedUserObj,
+    showDropdown,
+    searchLoading
+  } = useSelector((state) => state.payroll.owner);
 
   const fetchPayrolls = async () => {
-    setLoading(true);
-    setError(null);
-    setMessage(null);
+    dispatch(setOwnerLoading(true));
+    dispatch(setOwnerError(null));
+    dispatch(setOwnerMessage(null));
     try {
       const response = await api.get('/payroll/history', {
         params: {
@@ -42,21 +57,21 @@ const OwnerPayroll = () => {
           limit
         }
       });
-      setPayrolls(response.data.data || []);
+      dispatch(setOwnerPayrolls(response.data.data || []));
       if (response.data.pagination) {
-        setPaginationInfo(response.data.pagination);
+        dispatch(setOwnerPaginationInfo(response.data.pagination));
       } else {
-        setPaginationInfo({
+        dispatch(setOwnerPaginationInfo({
           total: (response.data.data || []).length,
           totalPages: 1,
           hasNext: false,
           hasPrev: false
-        });
+        }));
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Unable to fetch payroll history.');
+      dispatch(setOwnerError(err.response?.data?.message || 'Unable to fetch payroll history.'));
     } finally {
-      setLoading(false);
+      dispatch(setOwnerLoading(false));
     }
   };
 
@@ -67,8 +82,8 @@ const OwnerPayroll = () => {
   // Search user autocomplete effect
   useEffect(() => {
     if (searchQuery.trim().length < 2) {
-      setSearchResults([]);
-      setShowDropdown(false);
+      dispatch(setOwnerSearchResults([]));
+      dispatch(setOwnerShowDropdown(false));
       return;
     }
 
@@ -82,17 +97,17 @@ const OwnerPayroll = () => {
     }
 
     const timer = setTimeout(async () => {
-      setSearchLoading(true);
+      dispatch(setOwnerSearchLoading(true));
       try {
         const response = await api.get('/users/all', {
           params: { query: searchQuery }
         });
-        setSearchResults(response.data.data || []);
-        setShowDropdown(true);
+        dispatch(setOwnerSearchResults(response.data.data || []));
+        dispatch(setOwnerShowDropdown(true));
       } catch (err) {
         console.error(err);
       } finally {
-        setSearchLoading(false);
+        dispatch(setOwnerSearchLoading(false));
       }
     }, 300);
 
@@ -100,24 +115,24 @@ const OwnerPayroll = () => {
   }, [searchQuery, selectedUserObj]);
 
   const handleSelectUser = (user) => {
-    setTargetUserId(user._id);
-    setSelectedUserObj(user);
-    setSearchQuery(user.identity || user.fullName || user.email);
-    setShowDropdown(false);
-    setPage(1);
+    dispatch(setOwnerTargetUserId(user._id));
+    dispatch(setOwnerSelectedUserObj(user));
+    dispatch(setOwnerSearchQuery(user.identity || user.fullName || user.email));
+    dispatch(setOwnerShowDropdown(false));
+    dispatch(setOwnerPage(1));
   };
 
   const handleClearSearch = () => {
-    setSearchQuery('');
-    setTargetUserId('');
-    setSelectedUserObj(null);
-    setSearchResults([]);
-    setShowDropdown(false);
-    setPage(1);
+    dispatch(setOwnerSearchQuery(''));
+    dispatch(setOwnerTargetUserId(''));
+    dispatch(setOwnerSelectedUserObj(null));
+    dispatch(setOwnerSearchResults([]));
+    dispatch(setOwnerShowDropdown(false));
+    dispatch(setOwnerPage(1));
   };
 
   const handleSearchChange = (val) => {
-    setSearchQuery(val);
+    dispatch(setOwnerSearchQuery(val));
     if (val === '') {
       handleClearSearch();
     } else {
@@ -125,33 +140,33 @@ const OwnerPayroll = () => {
           val !== selectedUserObj.fullName &&
           val !== selectedUserObj.email &&
           val !== selectedUserObj.identity) {
-        setTargetUserId('');
-        setSelectedUserObj(null);
+        dispatch(setOwnerTargetUserId(''));
+        dispatch(setOwnerSelectedUserObj(null));
       }
     }
   };
 
   const handleGeneratePayroll = async () => {
-    setGenerating(true);
-    setError(null);
-    setMessage(null);
+    dispatch(setOwnerGenerating(true));
+    dispatch(setOwnerError(null));
+    dispatch(setOwnerMessage(null));
     try {
       const response = await api.post('/payroll/generate');
-      setMessage(response.data.message || 'Payroll generated successfully.');
+      dispatch(setOwnerMessage(response.data.message || 'Payroll generated successfully.'));
       if (page === 1) {
         fetchPayrolls();
       } else {
-        setPage(1);
+        dispatch(setOwnerPage(1));
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Payroll generation failed.');
+      dispatch(setOwnerError(err.response?.data?.message || 'Payroll generation failed.'));
     } finally {
-      setGenerating(false);
+      dispatch(setOwnerGenerating(false));
     }
   };
 
   const handleDownload = async (id) => {
-    setDownloadLoading(id);
+    dispatch(setOwnerDownloadLoading(id));
     try {
       const response = await api.get(`/payroll/${id}/download`, {
         responseType: 'blob'
@@ -165,16 +180,16 @@ const OwnerPayroll = () => {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      setError(err.response?.data?.message || 'Could not download payslip.');
+      dispatch(setOwnerError(err.response?.data?.message || 'Could not download payslip.'));
     } finally {
-      setDownloadLoading('');
+      dispatch(setOwnerDownloadLoading(''));
     }
   };
 
   const handleDownloadTenure = async () => {
     if (!targetUserId) return;
-    setTenureDownloading(true);
-    setError(null);
+    dispatch(setOwnerTenureDownloading(true));
+    dispatch(setOwnerError(null));
     try {
       const response = await api.get('/payroll/tenure/download', {
         params: { targetUserId },
@@ -190,16 +205,16 @@ const OwnerPayroll = () => {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      setError('Could not download consolidated payslip.');
+      dispatch(setOwnerError('Could not download consolidated payslip.'));
     } finally {
-      setTenureDownloading(false);
+      dispatch(setOwnerTenureDownloading(false));
     }
   };
 
   const handleDownloadRowTenure = async (userId, fullName) => {
     if (!userId) return;
-    setRowTenureDownloading(userId);
-    setError(null);
+    dispatch(setOwnerRowTenureDownloading(userId));
+    dispatch(setOwnerError(null));
     try {
       const response = await api.get('/payroll/tenure/download', {
         params: { targetUserId: userId },
@@ -215,9 +230,9 @@ const OwnerPayroll = () => {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      setError('Could not download consolidated payslip.');
+      dispatch(setOwnerError('Could not download consolidated payslip.'));
     } finally {
-      setRowTenureDownloading('');
+      dispatch(setOwnerRowTenureDownloading(''));
     }
   };
 
@@ -401,10 +416,10 @@ const OwnerPayroll = () => {
           totalPages={paginationInfo.totalPages}
           hasNext={paginationInfo.hasNext}
           hasPrev={paginationInfo.hasPrev}
-          onPageChange={setPage}
+          onPageChange={(p) => dispatch(setOwnerPage(p))}
           onLimitChange={(newLimit) => {
-            setLimit(newLimit);
-            setPage(1);
+            dispatch(setOwnerLimit(newLimit));
+            dispatch(setOwnerPage(1));
           }}
         />
       </div>

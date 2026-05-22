@@ -1,0 +1,142 @@
+
+> vite-project@0.0.0 lint
+> eslint .
+
+
+/Users/0101chaitanya/EmployeeManagementSystem/EmployeeManagementSystem/frontend/src/App.jsx
+  1:8  error  'React' is defined but never used  no-unused-vars
+
+/Users/0101chaitanya/EmployeeManagementSystem/EmployeeManagementSystem/frontend/src/app/axiosInterceptors.js
+  38:20  error  'err' is defined but never used  no-unused-vars
+
+/Users/0101chaitanya/EmployeeManagementSystem/EmployeeManagementSystem/frontend/src/app/routes/ProtectedRoute.jsx
+  1:8  error  'React' is defined but never used  no-unused-vars
+
+/Users/0101chaitanya/EmployeeManagementSystem/EmployeeManagementSystem/frontend/src/app/routes/UnauthorizedPage.jsx
+  1:8  error  'React' is defined but never used  no-unused-vars
+
+/Users/0101chaitanya/EmployeeManagementSystem/EmployeeManagementSystem/frontend/src/components/common/Pagination.jsx
+  1:8  error  'React' is defined but never used  no-unused-vars
+
+/Users/0101chaitanya/EmployeeManagementSystem/EmployeeManagementSystem/frontend/src/components/layout/MainLayout.jsx
+  8:32  error  'BarChart3' is defined but never used  no-unused-vars
+
+/Users/0101chaitanya/EmployeeManagementSystem/EmployeeManagementSystem/frontend/src/features/attendance/EmployeeAttendance.jsx
+   1:8   error    'React' is defined but never used                                                                                   no-unused-vars
+   6:25  error    'LogIn' is defined but never used                                                                                   no-unused-vars
+   6:32  error    'LogOut' is defined but never used                                                                                  no-unused-vars
+  23:11  error    'user' is assigned a value but never used                                                                           no-unused-vars
+  74:6   warning  React Hook useEffect has a missing dependency: 'fetchAttendance'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/0101chaitanya/EmployeeManagementSystem/EmployeeManagementSystem/frontend/src/features/attendance/OwnerAttendance.jsx
+    1:8  error    'React' is defined but never used                                                                                   no-unused-vars
+   69:6  warning  React Hook useEffect has a missing dependency: 'fetchAttendance'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  104:6  warning  React Hook useEffect has a missing dependency: 'dispatch'. Either include it or remove the dependency array         react-hooks/exhaustive-deps
+
+/Users/0101chaitanya/EmployeeManagementSystem/EmployeeManagementSystem/frontend/src/features/auth/Register.jsx
+   1:8   error  'React' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         no-unused-vars
+  82:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  80 |     useEffect(() => {
+  81 |         if (formData.confirmPassword && formData.password !== formData.confirmPassword) {
+> 82 |             setPasswordError('Passwords do not match');
+     |             ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  83 |         } else {
+  84 |             setPasswordError('');
+  85 |         }  react-hooks/set-state-in-effect
+
+/Users/0101chaitanya/EmployeeManagementSystem/EmployeeManagementSystem/frontend/src/features/auth/authSlice.js
+  10:12  error  'e' is defined but never used  no-unused-vars
+
+/Users/0101chaitanya/EmployeeManagementSystem/EmployeeManagementSystem/frontend/src/features/employees/OwnerEmployees.jsx
+  1:8   error  'React' is defined but never used   no-unused-vars
+  3:72  error  'MapPin' is defined but never used  no-unused-vars
+
+/Users/0101chaitanya/EmployeeManagementSystem/EmployeeManagementSystem/frontend/src/features/leaves/EmployeeLeaves.jsx
+   1:8   error    'React' is defined but never used                                                                               no-unused-vars
+   6:20  error    'Send' is defined but never used                                                                                no-unused-vars
+   6:63  error    'Calendar' is defined but never used                                                                            no-unused-vars
+   6:73  error    'Type' is defined but never used                                                                                no-unused-vars
+   6:79  error    'FileText' is defined but never used                                                                            no-unused-vars
+  81:6   warning  React Hook useEffect has a missing dependency: 'fetchLeaves'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/0101chaitanya/EmployeeManagementSystem/EmployeeManagementSystem/frontend/src/features/leaves/OwnerLeaves.jsx
+    1:8   error    'React' is defined but never used                                                                               no-unused-vars
+    5:19  error    'User' is defined but never used                                                                                no-unused-vars
+   77:6   warning  React Hook useEffect has a missing dependency: 'fetchLeaves'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  112:6   warning  React Hook useEffect has a missing dependency: 'dispatch'. Either include it or remove the dependency array     react-hooks/exhaustive-deps
+
+/Users/0101chaitanya/EmployeeManagementSystem/EmployeeManagementSystem/frontend/src/features/organization/OwnerOrganization.jsx
+   1:8  error    'React' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         no-unused-vars
+  69:9  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  67 |
+  68 |     useEffect(() => {
+> 69 |         fetchCompany();
+     |         ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  70 |     }, []);
+  71 |
+  72 |     if (loading) {  react-hooks/set-state-in-effect
+  70:8  warning  React Hook useEffect has a missing dependency: 'fetchCompany'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           react-hooks/exhaustive-deps
+
+/Users/0101chaitanya/EmployeeManagementSystem/EmployeeManagementSystem/frontend/src/features/payroll/EmployeePayroll.jsx
+    1:8   error    'React' is defined but never used                                                                                no-unused-vars
+    6:34  error    'AlertCircle' is defined but never used                                                                          no-unused-vars
+    6:67  error    'DollarSign' is defined but never used                                                                           no-unused-vars
+   61:6   warning  React Hook useEffect has a missing dependency: 'fetchPayroll'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   80:14  error    'err' is defined but never used                                                                                  no-unused-vars
+  103:14  error    'err' is defined but never used                                                                                  no-unused-vars
+
+/Users/0101chaitanya/EmployeeManagementSystem/EmployeeManagementSystem/frontend/src/features/payroll/OwnerPayroll.jsx
+    1:8   error    'React' is defined but never used                                                                                 no-unused-vars
+    5:41  error    'Users' is defined but never used                                                                                 no-unused-vars
+    5:62  error    'AlertTriangle' is defined but never used                                                                         no-unused-vars
+   80:6   warning  React Hook useEffect has a missing dependency: 'fetchPayrolls'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  115:6   warning  React Hook useEffect has a missing dependency: 'dispatch'. Either include it or remove the dependency array       react-hooks/exhaustive-deps
+  207:14  error    'err' is defined but never used                                                                                   no-unused-vars
+  232:14  error    'err' is defined but never used                                                                                   no-unused-vars
+
+/Users/0101chaitanya/EmployeeManagementSystem/EmployeeManagementSystem/frontend/src/features/profile/EmployeeProfile.jsx
+   1:8   error    'React' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                no-unused-vars
+   9:47  error    'Phone' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                no-unused-vars
+   9:54  error    'CreditCard' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           no-unused-vars
+  10:3   error    'MapPin' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               no-unused-vars
+  10:11  error    'Cake' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 no-unused-vars
+  10:17  error    'Lock' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 no-unused-vars
+  61:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  59 |   useEffect(() => {
+  60 |     if (user?._id) {
+> 61 |       fetchProfileDetails();
+     |       ^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  62 |     }
+  63 |   }, [user?._id]);
+  64 |  react-hooks/set-state-in-effect
+  63:6   warning  React Hook useEffect has a missing dependency: 'fetchProfileDetails'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           react-hooks/exhaustive-deps
+
+/Users/0101chaitanya/EmployeeManagementSystem/EmployeeManagementSystem/frontend/src/features/reports/EmployeeDashboard.jsx
+   1:8   error    'React' is defined but never used                                                                              no-unused-vars
+   6:46  error    'Briefcase' is defined but never used                                                                          no-unused-vars
+  68:14  error    'err' is defined but never used                                                                                no-unused-vars
+  77:6   warning  React Hook useEffect has a missing dependency: 'fetchStats'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+✖ 57 problems (45 errors, 12 warnings)
+

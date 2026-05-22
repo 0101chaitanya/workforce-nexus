@@ -3,6 +3,9 @@ import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
 import { setAuthSuccess } from '../auth/authSlice';
 import {
+  setProfile, setLoading, setSaveLoading, setPasswordLoading, setError, setSuccessMessage
+} from './profileSlice';
+import {
   User, Mail, Briefcase, Building2, Calendar, Phone, CreditCard,
   MapPin, Cake, Lock, Loader2, Save, Key, UserCheck, AlertCircle
 } from 'lucide-react';
@@ -11,13 +14,8 @@ export default function EmployeeProfile() {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
 
-  // States
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [saveLoading, setSaveLoading] = useState(false);
-  const [passwordLoading, setPasswordLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [successMessage, setSuccessMessage] = useState(null);
+  // Selector
+  const { profile, loading, saveLoading, passwordLoading, error, successMessage } = useSelector((state) => state.profile);
 
   // Forms
   const [profileForm, setProfileForm] = useState({
@@ -36,13 +34,13 @@ export default function EmployeeProfile() {
 
   // Fetch full details
   const fetchProfileDetails = async () => {
-    setLoading(true);
-    setError(null);
+    dispatch(setLoading(true));
+    dispatch(setError(null));
     try {
       const response = await api.get(`/users/info/${user._id}`);
       if (response.data?.success) {
         const details = response.data.data;
-        setProfile(details);
+        dispatch(setProfile(details));
         setProfileForm({
           fullName: details.fullName || '',
           phone: details.phone || '',
@@ -52,9 +50,9 @@ export default function EmployeeProfile() {
         });
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to fetch profile info.');
+      dispatch(setError(err.response?.data?.message || 'Failed to fetch profile info.'));
     } finally {
-      setLoading(false);
+      dispatch(setLoading(false));
     }
   };
 
@@ -67,9 +65,9 @@ export default function EmployeeProfile() {
   // Submit Profile update
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
-    setSaveLoading(true);
-    setError(null);
-    setSuccessMessage(null);
+    dispatch(setSaveLoading(true));
+    dispatch(setError(null));
+    dispatch(setSuccessMessage(null));
     try {
       const payload = {
         fullName: profileForm.fullName || undefined,
@@ -81,7 +79,7 @@ export default function EmployeeProfile() {
 
       const response = await api.put('/users/profile', payload);
       if (response.data?.success) {
-        setSuccessMessage('Profile details updated successfully!');
+        dispatch(setSuccessMessage('Profile details updated successfully!'));
 
         // Sync Redux state with updated user
         const updatedUser = { ...user, ...response.data.data };
@@ -90,29 +88,29 @@ export default function EmployeeProfile() {
         fetchProfileDetails();
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to save profile changes.');
+      dispatch(setError(err.response?.data?.message || 'Failed to save profile changes.'));
     } finally {
-      setSaveLoading(false);
+      dispatch(setSaveLoading(false));
     }
   };
 
   // Submit Password update
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
-    setSuccessMessage(null);
+    dispatch(setError(null));
+    dispatch(setSuccessMessage(null));
 
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setError("New password and confirmation password do not match.");
+      dispatch(setError("New password and confirmation password do not match."));
       return;
     }
 
     if (passwordForm.newPassword.length < 6) {
-      setError("New password must be at least 6 characters.");
+      dispatch(setError("New password must be at least 6 characters."));
       return;
     }
 
-    setPasswordLoading(true);
+    dispatch(setPasswordLoading(true));
     try {
       const response = await api.put('/users/change-password', {
         oldPassword: passwordForm.oldPassword,
@@ -120,7 +118,7 @@ export default function EmployeeProfile() {
       });
 
       if (response.data?.success) {
-        setSuccessMessage('Password changed successfully!');
+        dispatch(setSuccessMessage('Password changed successfully!'));
         setPasswordForm({
           oldPassword: '',
           newPassword: '',
@@ -128,9 +126,9 @@ export default function EmployeeProfile() {
         });
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to change password.');
+      dispatch(setError(err.response?.data?.message || 'Failed to change password.'));
     } finally {
-      setPasswordLoading(false);
+      dispatch(setPasswordLoading(false));
     }
   };
 

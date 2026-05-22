@@ -1,32 +1,43 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
 import Pagination from '../../components/common/Pagination';
 import { Loader2, CalendarCheck, Search, X } from 'lucide-react';
+import {
+  setOwnerAttendance,
+  setOwnerLoading,
+  setOwnerError,
+  setOwnerPage,
+  setOwnerLimit,
+  setOwnerPaginationInfo,
+  setOwnerSearchQuery,
+  setOwnerSearchResults,
+  setOwnerTargetUserId,
+  setOwnerSelectedUserObj,
+  setOwnerShowDropdown,
+  setOwnerSearchLoading
+} from './attendanceSlice';
 
 const OwnerAttendance = () => {
-  const [attendance, setAttendance] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const [paginationInfo, setPaginationInfo] = useState({
-    total: 0,
-    totalPages: 1,
-    hasNext: false,
-    hasPrev: false
-  });
-
-  // Search states
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [targetUserId, setTargetUserId] = useState('');
-  const [selectedUserObj, setSelectedUserObj] = useState(null);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [searchLoading, setSearchLoading] = useState(false);
+  const dispatch = useDispatch();
+  const {
+    attendance,
+    loading,
+    error,
+    page,
+    limit,
+    paginationInfo,
+    searchQuery,
+    searchResults,
+    targetUserId,
+    selectedUserObj,
+    showDropdown,
+    searchLoading
+  } = useSelector((state) => state.attendance.owner);
 
   const fetchAttendance = async () => {
-    setLoading(true);
-    setError(null);
+    dispatch(setOwnerLoading(true));
+    dispatch(setOwnerError(null));
     try {
       const response = await api.get('/attendance/history', {
         params: {
@@ -35,21 +46,21 @@ const OwnerAttendance = () => {
           limit
         }
       });
-      setAttendance(response.data.data || []);
+      dispatch(setOwnerAttendance(response.data.data || []));
       if (response.data.pagination) {
-        setPaginationInfo(response.data.pagination);
+        dispatch(setOwnerPaginationInfo(response.data.pagination));
       } else {
-        setPaginationInfo({
+        dispatch(setOwnerPaginationInfo({
           total: (response.data.data || []).length,
           totalPages: 1,
           hasNext: false,
           hasPrev: false
-        });
+        }));
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Could not fetch attendance history.');
+      dispatch(setOwnerError(err.response?.data?.message || 'Could not fetch attendance history.'));
     } finally {
-      setLoading(false);
+      dispatch(setOwnerLoading(false));
     }
   };
 
@@ -60,8 +71,8 @@ const OwnerAttendance = () => {
   // Search user autocomplete effect
   useEffect(() => {
     if (searchQuery.trim().length < 2) {
-      setSearchResults([]);
-      setShowDropdown(false);
+      dispatch(setOwnerSearchResults([]));
+      dispatch(setOwnerShowDropdown(false));
       return;
     }
 
@@ -75,17 +86,17 @@ const OwnerAttendance = () => {
     }
 
     const timer = setTimeout(async () => {
-      setSearchLoading(true);
+      dispatch(setOwnerSearchLoading(true));
       try {
         const response = await api.get('/users/all', {
           params: { query: searchQuery }
         });
-        setSearchResults(response.data.data || []);
-        setShowDropdown(true);
+        dispatch(setOwnerSearchResults(response.data.data || []));
+        dispatch(setOwnerShowDropdown(true));
       } catch (err) {
         console.error(err);
       } finally {
-        setSearchLoading(false);
+        dispatch(setOwnerSearchLoading(false));
       }
     }, 300);
 
@@ -93,24 +104,24 @@ const OwnerAttendance = () => {
   }, [searchQuery, selectedUserObj]);
 
   const handleSelectUser = (user) => {
-    setTargetUserId(user._id);
-    setSelectedUserObj(user);
-    setSearchQuery(user.identity || user.fullName || user.email);
-    setShowDropdown(false);
-    setPage(1);
+    dispatch(setOwnerTargetUserId(user._id));
+    dispatch(setOwnerSelectedUserObj(user));
+    dispatch(setOwnerSearchQuery(user.identity || user.fullName || user.email));
+    dispatch(setOwnerShowDropdown(false));
+    dispatch(setOwnerPage(1));
   };
 
   const handleClearSearch = () => {
-    setSearchQuery('');
-    setTargetUserId('');
-    setSelectedUserObj(null);
-    setSearchResults([]);
-    setShowDropdown(false);
-    setPage(1);
+    dispatch(setOwnerSearchQuery(''));
+    dispatch(setOwnerTargetUserId(''));
+    dispatch(setOwnerSelectedUserObj(null));
+    dispatch(setOwnerSearchResults([]));
+    dispatch(setOwnerShowDropdown(false));
+    dispatch(setOwnerPage(1));
   };
 
   const handleSearchChange = (val) => {
-    setSearchQuery(val);
+    dispatch(setOwnerSearchQuery(val));
     if (val === '') {
       handleClearSearch();
     } else {
@@ -118,8 +129,8 @@ const OwnerAttendance = () => {
           val !== selectedUserObj.fullName &&
           val !== selectedUserObj.email &&
           val !== selectedUserObj.identity) {
-        setTargetUserId('');
-        setSelectedUserObj(null);
+        dispatch(setOwnerTargetUserId(''));
+        dispatch(setOwnerSelectedUserObj(null));
       }
     }
   };
@@ -255,10 +266,10 @@ const OwnerAttendance = () => {
               totalPages={paginationInfo.totalPages}
               hasNext={paginationInfo.hasNext}
               hasPrev={paginationInfo.hasPrev}
-              onPageChange={setPage}
+              onPageChange={(p) => dispatch(setOwnerPage(p))}
               onLimitChange={(newLimit) => {
-                setLimit(newLimit);
-                setPage(1);
+                dispatch(setOwnerLimit(newLimit));
+                dispatch(setOwnerPage(1));
               }}
             />
           </>
