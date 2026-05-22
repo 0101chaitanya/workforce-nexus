@@ -19,7 +19,10 @@ const ownerSchemas = {
   updateCompany: z.object({
     companyName: common.name.optional(),
     address: z.string().trim().max(500).optional(),
-    phone: z.string().trim().optional()
+    phone: z.string().trim().optional(),
+    latitude: z.preprocess((val) => (val === '' || val === null || val === undefined) ? null : Number(val), z.number().min(-90).max(90).nullable()).optional(),
+    longitude: z.preprocess((val) => (val === '' || val === null || val === undefined) ? null : Number(val), z.number().min(-180).max(180).nullable()).optional(),
+    proximityRadius: z.preprocess((val) => (val === '' || val === null || val === undefined) ? null : Number(val), z.number().nonnegative().nullable()).optional()
   }),
 
   historyQuery: z.object({

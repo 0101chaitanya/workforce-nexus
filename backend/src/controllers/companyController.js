@@ -42,7 +42,7 @@ exports.getProtectedCompanyInfo = catchAsync(async (req, res) => {
 
 exports.updateCompanyInfo = catchAsync(async (req, res) => {
     const companyId = req.company._id;
-    const { companyName, address, phone } = req.body;
+    const { companyName, address, phone, latitude, longitude, proximityRadius } = req.body;
 
     const company = await Company.findById(companyId);
 
@@ -53,6 +53,9 @@ exports.updateCompanyInfo = catchAsync(async (req, res) => {
     if (companyName !== undefined) company.companyName = companyName;
     if (address !== undefined) company.address = address;
     if (phone !== undefined) company.phone = phone;
+    if (latitude !== undefined) company.latitude = latitude;
+    if (longitude !== undefined) company.longitude = longitude;
+    if (proximityRadius !== undefined) company.proximityRadius = proximityRadius;
 
     await company.save();
 

@@ -77,20 +77,43 @@ export default function EmployeeAttendance() {
     dispatch(setEmployeeActionLoading(true));
     dispatch(setEmployeeError(null));
     dispatch(setEmployeeSuccessMessage(null));
-    try {
-      const response = await api.post('/attendance/clock-in');
-      if (response.data?.success) {
-        dispatch(setEmployeeSuccessMessage('Clocked in successfully! Have a great day at work.'));
-        if (page === 1) {
-          fetchAttendance();
-        } else {
-          dispatch(setEmployeePage(1));
+
+    const performClockIn = async (coords = null) => {
+      try {
+        const payload = coords ? { latitude: coords.latitude, longitude: coords.longitude } : {};
+        const response = await api.post('/attendance/clock-in', payload);
+        if (response.data?.success) {
+          dispatch(setEmployeeSuccessMessage('Clocked in successfully! Have a great day at work.'));
+          if (page === 1) {
+            await fetchAttendance();
+          } else {
+            dispatch(setEmployeePage(1));
+          }
         }
+      } catch (err) {
+        dispatch(setEmployeeError(err.response?.data?.message || 'Clock-in failed.'));
+      } finally {
+        dispatch(setEmployeeActionLoading(false));
       }
-    } catch (err) {
-      dispatch(setEmployeeError(err.response?.data?.message || 'Clock-in failed.'));
-    } finally {
-      dispatch(setEmployeeActionLoading(false));
+    };
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          performClockIn({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          });
+        },
+        (error) => {
+          // If browser location fails, still call performClockIn without coords.
+          // The backend will check if proximity coordinates are configured, and if they are, it will fail gracefully and prompt the user.
+          performClockIn(null);
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    } else {
+      performClockIn(null);
     }
   };
 
@@ -288,7 +311,14 @@ export default function EmployeeAttendance() {
                       {record.checkInTime ? new Date(record.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}
                     </td>
                     <td className="px-6 py-4">
-                      {record.checkOutTime ? new Date(record.checkOutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                      <div>
+                        {record.checkOutTime ? new Date(record.checkOutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                        {record.remarks && (
+                          <div className="text-[10px] text-rose-500 font-semibold mt-1 leading-normal max-w-[180px]" title={record.remarks}>
+                            {record.remarks}
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 font-bold text-slate-700">
                       {record.totalHours !== undefined ? `${record.totalHours} hrs` : '--'}
