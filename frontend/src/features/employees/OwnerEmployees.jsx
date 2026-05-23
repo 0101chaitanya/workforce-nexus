@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Search, UserPlus, Edit2, Shield, Loader2, AlertCircle, Phone, MapPin, Briefcase } from 'lucide-react';
 import api from '../../app/axiosInterceptors';
+import { toast } from 'react-toastify';
 import {
   setEmployees,
   setLoading,
@@ -57,12 +58,17 @@ export default function OwnerEmployees() {
 
   useEffect(() => {
     if (successMessage) {
-      const timer = setTimeout(() => {
-        dispatch(setSuccessMessage(null));
-      }, 10000);
-      return () => clearTimeout(timer);
+      toast.success(successMessage);
+      dispatch(setSuccessMessage(null));
     }
   }, [successMessage, dispatch]);
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+      dispatch(setError(null));
+    }
+  }, [error, dispatch]);
 
   // Debounced search effect
   useEffect(() => {
@@ -177,20 +183,6 @@ export default function OwnerEmployees() {
         </button>
       </div>
 
-      {error && (
-        <div className="flex items-center gap-3 p-5 bg-rose-50 text-rose-700 rounded-2xl border border-rose-100/50 text-xs font-bold">
-          <AlertCircle size={20} className="shrink-0" />
-          {error}
-        </div>
-      )}
-
-      {successMessage && (
-        <div className="flex items-center gap-3 p-5 bg-emerald-50 text-emerald-700 rounded-2xl border border-emerald-100/50 text-xs font-bold">
-          <AlertCircle size={20} className="shrink-0" />
-          {successMessage}
-        </div>
-      )}
-
       {/* Search Bar */}
       <div className="relative">
         <Search className="absolute left-4 top-3 text-slate-400" size={20} />
@@ -258,10 +250,7 @@ export default function OwnerEmployees() {
             <form onSubmit={handleAddSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
-                  <div className="flex justify-between items-center">
-                    <label className="text-xs font-bold text-slate-500 uppercase">Full Name</label>
-                    <span className="text-[10px] text-slate-400 font-semibold tracking-wide">6-70 chars • Required</span>
-                  </div>
+                  <label className="text-xs font-bold text-slate-500 uppercase">Full Name</label>
                   <input
                     required
                     type="text"
@@ -279,10 +268,7 @@ export default function OwnerEmployees() {
                 </div>
 
                 <div className="col-span-2">
-                  <div className="flex justify-between items-center">
-                    <label className="text-xs font-bold text-slate-500 uppercase">Email Address</label>
-                    <span className="text-[10px] text-slate-400 font-semibold tracking-wide">Valid email format • Required</span>
-                  </div>
+                  <label className="text-xs font-bold text-slate-500 uppercase">Email Address</label>
                   <input
                     required
                     type="email"
@@ -300,10 +286,7 @@ export default function OwnerEmployees() {
                 </div>
 
                 <div>
-                  <div className="flex justify-between items-center">
-                    <label className="text-xs font-bold text-slate-500 uppercase">Salary Base</label>
-                    <span className="text-[10px] text-slate-400 font-semibold tracking-wide">Positive up to 100M • Optional</span>
-                  </div>
+                  <label className="text-xs font-bold text-slate-500 uppercase">Salary Base</label>
                   <input
                     type="number"
                     min="0"
@@ -321,10 +304,7 @@ export default function OwnerEmployees() {
                 </div>
 
                 <div>
-                  <div className="flex justify-between items-center">
-                    <label className="text-xs font-bold text-slate-500 uppercase">Branch</label>
-                    <span className="text-[10px] text-slate-400 font-semibold tracking-wide">2-100 chars • Optional</span>
-                  </div>
+                  <label className="text-xs font-bold text-slate-500 uppercase">Branch</label>
                   <input
                     type="text"
                     value={addForm.branch}
@@ -341,10 +321,7 @@ export default function OwnerEmployees() {
                 </div>
 
                 <div className="col-span-2">
-                  <div className="flex justify-between items-center">
-                    <label className="text-xs font-bold text-slate-500 uppercase">Position</label>
-                    <span className="text-[10px] text-slate-400 font-semibold tracking-wide">2-100 chars • Optional</span>
-                  </div>
+                  <label className="text-xs font-bold text-slate-500 uppercase">Position</label>
                   <input
                     type="text"
                     value={addForm.position}

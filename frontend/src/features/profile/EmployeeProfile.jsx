@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
 import { setAuthSuccess } from '../auth/authSlice';
+import { toast } from 'react-toastify';
 import {
   setProfile, setLoading, setSaveLoading, setPasswordLoading, setError, setSuccessMessage
 } from './profileSlice';
@@ -67,12 +68,17 @@ export default function EmployeeProfile() {
 
   useEffect(() => {
     if (successMessage) {
-      const timer = setTimeout(() => {
-        dispatch(setSuccessMessage(null));
-      }, 10000);
-      return () => clearTimeout(timer);
+      toast.success(successMessage);
+      dispatch(setSuccessMessage(null));
     }
   }, [successMessage, dispatch]);
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+      dispatch(setError(null));
+    }
+  }, [error, dispatch]);
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -188,20 +194,6 @@ export default function EmployeeProfile() {
           </p>
         </div>
       </div>
-
-      {error && (
-        <div className="flex items-center gap-3 p-5 bg-rose-50 text-rose-700 rounded-2xl border border-rose-100/50 text-xs font-bold">
-          <AlertCircle size={20} className="shrink-0" />
-          {error}
-        </div>
-      )}
-
-      {successMessage && (
-        <div className="flex items-center gap-3 p-5 bg-emerald-50 text-emerald-700 rounded-2xl border border-emerald-100/50 text-xs font-bold">
-          <AlertCircle size={20} className="shrink-0" />
-          {successMessage}
-        </div>
-      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 

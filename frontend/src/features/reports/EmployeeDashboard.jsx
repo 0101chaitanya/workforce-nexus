@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
 import { setStats, setLoading, setError } from './dashboardSlice';
+import { toast } from 'react-toastify';
 import {
   BarChart3, Loader2, AlertCircle, Calendar, Briefcase, FileText, CheckCircle, Clock, PieChart, Users
 } from 'lucide-react';
@@ -76,6 +77,13 @@ export default function EmployeeDashboard() {
     fetchStats();
   }, []);
 
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+      dispatch(setError(null));
+    }
+  }, [error, dispatch]);
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center p-20 space-y-3 bg-white rounded-2xl border">
@@ -100,13 +108,6 @@ export default function EmployeeDashboard() {
           </p>
         </div>
       </div>
-
-      {error && (
-        <div className="flex items-center gap-3 p-5 bg-rose-50 text-rose-700 rounded-2xl border border-rose-100/50 text-xs font-bold">
-          <AlertCircle size={20} className="shrink-0" />
-          {error}
-        </div>
-      )}
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

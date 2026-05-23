@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
 import { Building2, MapPin, Phone, Mail, ShieldCheck, Loader2, AlertCircle, UserCircle, Edit2, Save, X, Calendar, CreditCard, Navigation } from 'lucide-react';
+import { toast } from 'react-toastify';
 import {
     setCompany,
     setLoading,
@@ -264,21 +265,31 @@ const OwnerOrganization = () => {
 
     useEffect(() => {
         if (successMessage) {
-            const timer = setTimeout(() => {
-                dispatch(setSuccessMessage(null));
-            }, 10000);
-            return () => clearTimeout(timer);
+            toast.success(successMessage);
+            dispatch(setSuccessMessage(null));
         }
     }, [successMessage, dispatch]);
 
     useEffect(() => {
         if (ownerSuccessMessage) {
-            const timer = setTimeout(() => {
-                dispatch(setOwnerSuccessMessage(null));
-            }, 10000);
-            return () => clearTimeout(timer);
+            toast.success(ownerSuccessMessage);
+            dispatch(setOwnerSuccessMessage(null));
         }
     }, [ownerSuccessMessage, dispatch]);
+
+    useEffect(() => {
+        if (error) {
+            toast.error(error);
+            dispatch(setError(null));
+        }
+    }, [error, dispatch]);
+
+    useEffect(() => {
+        if (ownerError) {
+            toast.error(ownerError);
+            dispatch(setOwnerError(null));
+        }
+    }, [ownerError, dispatch]);
 
     if (loading) {
         return (
@@ -317,20 +328,6 @@ const OwnerOrganization = () => {
                     </div>
                 </div>
             </div>
-
-            {error && (
-                <div className="flex items-center gap-3 p-5 bg-rose-50 text-rose-700 rounded-2xl border border-rose-100/50 text-xs font-bold">
-                    <AlertCircle size={20} className="shrink-0" />
-                    {error}
-                </div>
-            )}
-
-            {successMessage && (
-                <div className="flex items-center gap-3 p-5 bg-emerald-50 text-emerald-700 rounded-2xl border border-emerald-100/50 text-xs font-bold">
-                    <AlertCircle size={20} className="shrink-0" />
-                    {successMessage}
-                </div>
-            )}
 
             <div className="grid gap-6 lg:grid-cols-2">
                 {/* Company Information Card */}
@@ -532,13 +529,6 @@ const OwnerOrganization = () => {
                                         </div>
                                     </div>
 
-                                    {ownerError && (
-                                        <div className="flex items-center gap-3 p-4 bg-rose-50 text-rose-700 rounded-2xl border border-rose-100/50 text-xs font-bold">
-                                            <AlertCircle size={16} />
-                                            {ownerError}
-                                        </div>
-                                    )}
-
                                     <div className="space-y-4">
                                         <div>
                                             <label className="text-xs font-bold text-slate-500 uppercase">Full Name *</label>
@@ -598,20 +588,6 @@ const OwnerOrganization = () => {
                                             <Edit2 size={14} /> Edit
                                         </button>
                                     </div>
-
-                                    {ownerSuccessMessage && (
-                                        <div className="flex items-center gap-3 p-4 bg-emerald-50 text-emerald-700 rounded-2xl border border-emerald-100/50 text-xs font-bold">
-                                            <AlertCircle size={16} />
-                                            {ownerSuccessMessage}
-                                        </div>
-                                    )}
-
-                                    {ownerError && (
-                                        <div className="flex items-center gap-3 p-4 bg-rose-50 text-rose-700 rounded-2xl border border-rose-100/50 text-xs font-bold">
-                                            <AlertCircle size={16} />
-                                            {ownerError}
-                                        </div>
-                                    )}
 
                                     <div className="space-y-3 text-slate-600 text-sm">
                                         <div className="flex items-center gap-3">

@@ -1,6 +1,8 @@
 import React, { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 import { setNavigate } from './app/navigation.js';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // Core Auth & Layout (Statically loaded for immediate initial render optimization)
 import Login from './features/auth/Login.jsx';
@@ -40,6 +42,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <NavigationSetter />
+      <ToastContainer autoClose={7000} theme="colored" position="top-right" />
       <Routes>
         {/* Core Auth & Landing Access Points */}
         <Route path="/" element={<Navigate to="/login" replace />} />

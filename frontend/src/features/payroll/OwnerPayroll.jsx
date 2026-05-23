@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
 import Pagination from '../../components/common/Pagination';
+import { toast } from 'react-toastify';
 import { Loader2, CreditCard, Download, Users, ArrowUpRight, AlertTriangle, Search, X } from 'lucide-react';
 import {
   setOwnerPayrolls,
@@ -78,6 +79,20 @@ const OwnerPayroll = () => {
   useEffect(() => {
     fetchPayrolls();
   }, [targetUserId, page, limit]);
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+      dispatch(setOwnerError(null));
+    }
+  }, [error, dispatch]);
+
+  useEffect(() => {
+    if (message) {
+      toast.success(message);
+      dispatch(setOwnerMessage(null));
+    }
+  }, [message, dispatch]);
 
   // Search user autocomplete effect
   useEffect(() => {
@@ -328,7 +343,6 @@ const OwnerPayroll = () => {
                 Tenure Payslip
               </button>
             )}
-            {message && <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</p>}
           </div>
         </div>
 
@@ -337,8 +351,6 @@ const OwnerPayroll = () => {
             <Loader2 className="mx-auto animate-spin text-indigo-600" size={36} />
             <p className="mt-4">Loading payroll history...</p>
           </div>
-        ) : error ? (
-          <div className="rounded-3xl border border-rose-200 bg-rose-50 p-6 text-rose-700">{error}</div>
         ) : payrolls.length === 0 ? (
           <div className="rounded-3xl border border-slate-200 p-10 text-center text-slate-500">
             <CreditCard size={32} className="mx-auto text-indigo-600" />

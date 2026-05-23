@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
 import Pagination from '../../components/common/Pagination';
+import { toast } from 'react-toastify';
 import {
   FileSpreadsheet, Send, History, Loader2, AlertCircle, Plus, Calendar, Type, FileText, CheckCircle, Clock, XCircle
 } from 'lucide-react';
@@ -80,6 +81,20 @@ export default function EmployeeLeaves() {
     fetchLeaves();
   }, [page, limit]);
 
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+      dispatch(setEmployeeError(null));
+    }
+  }, [error, dispatch]);
+
+  useEffect(() => {
+    if (successMessage) {
+      toast.success(successMessage);
+      dispatch(setEmployeeSuccessMessage(null));
+    }
+  }, [successMessage, dispatch]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     dispatch(setEmployeeError(null));
@@ -148,20 +163,6 @@ export default function EmployeeLeaves() {
           Apply for Leave
         </button>
       </div>
-
-      {error && (
-        <div className="flex items-center gap-3 p-5 bg-rose-50 text-rose-700 rounded-2xl border border-rose-100/50 text-xs font-bold">
-          <AlertCircle size={20} className="shrink-0" />
-          {error}
-        </div>
-      )}
-
-      {successMessage && (
-        <div className="flex items-center gap-3 p-5 bg-emerald-50 text-emerald-700 rounded-2xl border border-emerald-100/50 text-xs font-bold">
-          <AlertCircle size={20} className="shrink-0" />
-          {successMessage}
-        </div>
-      )}
 
       {/* Leave Summary Widgets */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
 import Pagination from '../../components/common/Pagination';
+import { toast } from 'react-toastify';
 import { Loader2, User, FileSpreadsheet, CheckCircle2, XCircle, RefreshCcw, MessageSquare, Search, X } from 'lucide-react';
 import {
   setOwnerLeaves,
@@ -75,6 +76,13 @@ const OwnerLeaves = () => {
   useEffect(() => {
     fetchLeaves();
   }, [targetUserId, page, limit]);
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+      dispatch(setOwnerError(null));
+    }
+  }, [error, dispatch]);
 
   // Search user autocomplete effect
   useEffect(() => {
@@ -244,7 +252,7 @@ const OwnerLeaves = () => {
               </div>
             )}
           </div>
-          {error && <p className="text-sm text-rose-600 self-end mb-2">{error}</p>}
+          {/* Lookup Search Box */}
         </div>
 
         {loading ? (

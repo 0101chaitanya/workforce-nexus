@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
 import Pagination from '../../components/common/Pagination';
+import { toast } from 'react-toastify';
 import {
   CreditCard, Download, Loader2, AlertCircle, FileText, Calendar, DollarSign
 } from 'lucide-react';
@@ -59,6 +60,13 @@ export default function EmployeePayroll() {
   useEffect(() => {
     fetchPayroll();
   }, [page, limit]);
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+      dispatch(setEmployeeError(null));
+    }
+  }, [error, dispatch]);
 
   const handleDownload = async (payrollId, filename) => {
     dispatch(setEmployeeDownloadingId(payrollId));
@@ -154,8 +162,6 @@ export default function EmployeePayroll() {
             <Loader2 className="animate-spin text-indigo-600" size={24} />
             <span className="text-slate-400 text-xs font-bold">Syncing records...</span>
           </div>
-        ) : error ? (
-          <div className="p-6 text-center text-xs font-bold text-rose-500">{error}</div>
         ) : payrolls.length === 0 ? (
           <div className="p-12 text-center space-y-2">
             <p className="text-sm font-bold text-slate-800">No Payroll Statements</p>

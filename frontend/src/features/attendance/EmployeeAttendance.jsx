@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
 import Pagination from '../../components/common/Pagination';
+import { toast } from 'react-toastify';
 import {
   CalendarCheck, Clock, LogIn, LogOut, Loader2,
   AlertCircle, History, Play, Square, CheckCircle, Coffee
@@ -72,6 +73,20 @@ export default function EmployeeAttendance() {
   useEffect(() => {
     fetchAttendance();
   }, [page, limit]);
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+      dispatch(setEmployeeError(null));
+    }
+  }, [error, dispatch]);
+
+  useEffect(() => {
+    if (successMessage) {
+      toast.success(successMessage);
+      dispatch(setEmployeeSuccessMessage(null));
+    }
+  }, [successMessage, dispatch]);
 
   const handleClockIn = async () => {
     dispatch(setEmployeeActionLoading(true));
@@ -255,20 +270,6 @@ export default function EmployeeAttendance() {
           </div>
         </div>
       </div>
-
-      {error && (
-        <div className="flex items-center gap-3 p-5 bg-rose-50 text-rose-700 rounded-2xl border border-rose-100/50 text-xs font-bold">
-          <AlertCircle size={20} className="shrink-0" />
-          {error}
-        </div>
-      )}
-
-      {successMessage && (
-        <div className="flex items-center gap-3 p-5 bg-emerald-50 text-emerald-700 rounded-2xl border border-emerald-100/50 text-xs font-bold">
-          <AlertCircle size={20} className="shrink-0" />
-          {successMessage}
-        </div>
-      )}
 
       {/* History Log */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">

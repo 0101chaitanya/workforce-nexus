@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import axiosInterceptors from '../../app/axiosInterceptors';
 import { setAuthSuccess, setAuthFailed, clearError } from './authSlice';
 import { Mail, Lock, Briefcase } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -26,11 +27,16 @@ const Login = () => {
   }, [dispatch, isForgotMode]);
 
   useEffect(() => {
+    if (error) {
+      toast.error(error);
+      dispatch(clearError());
+    }
+  }, [error, dispatch]);
+
+  useEffect(() => {
     if (successMessage) {
-      const timer = setTimeout(() => {
-        setSuccessMessage('');
-      }, 10000);
-      return () => clearTimeout(timer);
+      toast.success(successMessage);
+      setSuccessMessage('');
     }
   }, [successMessage]);
 
@@ -149,18 +155,6 @@ const Login = () => {
                 <p className="text-slate-400 mt-1.5 font-medium text-sm">Provide your user credentials to access your session</p>
               </div>
 
-              {error && (
-                <div className="mb-5 p-4 bg-rose-50 text-rose-600 rounded-2xl text-xs font-bold border border-rose-100/50 flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 bg-rose-500 rounded-full shrink-0" /> {error}
-                </div>
-              )}
-
-              {successMessage && (
-                <div className="mb-5 p-4 bg-emerald-50 text-emerald-600 rounded-2xl text-xs font-bold border border-emerald-100/50 flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full shrink-0" /> {successMessage}
-                </div>
-              )}
-
               <form onSubmit={handleAuthSubmit} className="space-y-4">
                 <div>
                   <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -209,18 +203,6 @@ const Login = () => {
                 <h2 className="text-3xl font-black text-slate-800 tracking-tight">Account Recovery</h2>
                 <p className="text-slate-400 mt-1.5 font-medium text-sm">Provide your registered system email to dispatch reset instructions</p>
               </div>
-
-              {error && (
-                <div className="mb-5 p-4 bg-rose-50 text-rose-600 rounded-2xl text-xs font-bold border border-rose-100/50 flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 bg-rose-500 rounded-full shrink-0" /> {error}
-                </div>
-              )}
-
-              {successMessage && (
-                <div className="mb-5 p-4 bg-emerald-50 text-emerald-600 rounded-2xl text-xs font-bold border border-emerald-100/50 flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full shrink-0" /> {successMessage}
-                </div>
-              )}
 
               {!isOtpMode ? (
                 <form onSubmit={handleRecoverySubmit} className="space-y-4">

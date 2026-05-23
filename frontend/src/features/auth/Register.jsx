@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import axiosInterceptors from '../../app/axiosInterceptors';
 import { setLoading, setAuthFailed, clearError } from './authSlice';
 import { ShieldCheck, Mail, Lock, Building, User, CheckCircle, Briefcase } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 const Register = () => {
     const dispatch = useDispatch();
@@ -30,11 +31,16 @@ const Register = () => {
     }, [dispatch]);
 
     useEffect(() => {
+        if (error) {
+            toast.error(error);
+            dispatch(clearError());
+        }
+    }, [error, dispatch]);
+
+    useEffect(() => {
         if (successMessage) {
-            const timer = setTimeout(() => {
-                setSuccessMessage('');
-            }, 10000);
-            return () => clearTimeout(timer);
+            toast.success(successMessage);
+            setSuccessMessage('');
         }
     }, [successMessage]);
 
@@ -156,18 +162,6 @@ const Register = () => {
                         <h2 className="text-3xl font-black text-slate-800 tracking-tight">Create Organization</h2>
                         <p className="text-slate-400 mt-1.5 font-medium text-sm">Register your enterprise environment to begin initialization</p>
                     </div>
-
-                    {error && (
-                        <div className="mb-6 p-4 bg-rose-50 text-rose-600 rounded-2xl text-xs font-bold border border-rose-100/50 flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 bg-rose-500 rounded-full shrink-0" /> {error}
-                        </div>
-                    )}
-
-                    {successMessage && (
-                        <div className="mb-6 p-4 bg-emerald-50 text-emerald-600 rounded-2xl text-xs font-bold border border-emerald-100/50 flex items-center gap-2">
-                            <CheckCircle size={16} className="shrink-0" /> {successMessage}
-                        </div>
-                    )}
 
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div className="grid grid-cols-2 md:grid-cols-2 gap-4">

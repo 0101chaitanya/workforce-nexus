@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
 import Pagination from '../../components/common/Pagination';
+import { toast } from 'react-toastify';
 import { Loader2, CalendarCheck, Search, X } from 'lucide-react';
 import {
   setOwnerAttendance,
@@ -67,6 +68,13 @@ const OwnerAttendance = () => {
   useEffect(() => {
     fetchAttendance();
   }, [targetUserId, page, limit]);
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+      dispatch(setOwnerError(null));
+    }
+  }, [error, dispatch]);
 
   // Search user autocomplete effect
   useEffect(() => {
@@ -207,10 +215,6 @@ const OwnerAttendance = () => {
           <div className="rounded-3xl border border-dashed border-slate-200 p-10 text-center text-slate-500">
             <Loader2 className="mx-auto animate-spin text-indigo-600" size={36} />
             <p className="mt-4">Loading attendance history...</p>
-          </div>
-        ) : error ? (
-          <div className="rounded-3xl border border-rose-200 bg-rose-50 p-6 text-rose-700">
-            {error}
           </div>
         ) : attendance.length === 0 ? (
           <div className="rounded-3xl border border-slate-200 p-10 text-center text-slate-500">
