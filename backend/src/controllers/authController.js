@@ -28,9 +28,21 @@ const sanitizeCompany = (company) => ({
 exports.sendOtp = catchAsync(async (req, res) => {
     const { email, companyName } = req.body;
 
+    const existingUser = await User.findOne({ email });
+    const existingCompany = await Company.findOne({ email });
+
+    if (existingUser || existingCompany) {
+        return res.status(409).json({
+            message: "A user or company with this email already exists",
+            success: false,
+            occurredAt: new Date().toISOString()
+        });
+    }
+
+
     // Use early initialization logic to reduce redundant assignments
-    const company = await Company.findOne({ email }) || new Company({ email, companyName });
-    const user = await User.findOne({ email }) || new User({ email, company: company._id, role: "owner" });
+    const company = await new Company({ email, companyName });
+    const user = new User({ email, company: company._id, role: "owner" });
 
     const otp = Math.floor(10000 + Math.random() * 90000); // 5 digits
     user.otp = otp;
