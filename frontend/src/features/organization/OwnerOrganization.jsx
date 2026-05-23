@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
-import { Building2, MapPin, Phone, Mail, ShieldCheck, Loader2, AlertCircle, UserCircle, Edit2, Save, X, Calendar, CreditCard } from 'lucide-react';
+import { Building2, MapPin, Phone, Mail, ShieldCheck, Loader2, AlertCircle, UserCircle, Edit2, Save, X, Calendar, CreditCard, Navigation } from 'lucide-react';
 import {
     setCompany,
     setLoading,
@@ -31,7 +31,7 @@ const OwnerOrganization = () => {
     } = useSelector((state) => state.organization);
 
     const [isEditing, setIsEditing] = useState(false);
-    const [editForm, setEditForm] = useState({ companyName: '', address: '', phone: '' });
+    const [editForm, setEditForm] = useState({ companyName: '', address: '', phone: '', latitude: '', longitude: '', proximityRadius: '' });
 
     const [isEditingOwner, setIsEditingOwner] = useState(false);
     const [ownerForm, setOwnerForm] = useState({ fullName: '', phone: '', address: '', dateOfBirth: '', bankAccount: '' });
@@ -70,7 +70,10 @@ const OwnerOrganization = () => {
             setEditForm({
                 companyName: companyData.companyName || '',
                 address: companyData.address || '',
-                phone: companyData.phone || ''
+                phone: companyData.phone || '',
+                latitude: companyData.latitude !== undefined && companyData.latitude !== null ? companyData.latitude : '',
+                longitude: companyData.longitude !== undefined && companyData.longitude !== null ? companyData.longitude : '',
+                proximityRadius: companyData.proximityRadius !== undefined && companyData.proximityRadius !== null ? companyData.proximityRadius : '200'
             });
 
             if (companyData?.owner?._id) {
@@ -92,8 +95,99 @@ const OwnerOrganization = () => {
         setEditForm({
             companyName: company.companyName || '',
             address: company.address || '',
-            phone: company.phone || ''
+            phone: company.phone || '',
+            latitude: company.latitude !== undefined && company.latitude !== null ? company.latitude : '',
+            longitude: company.longitude !== undefined && company.longitude !== null ? company.longitude : '',
+            proximityRadius: company.proximityRadius !== undefined && company.proximityRadius !== null ? company.proximityRadius : '200'
         });
+    };
+
+    const [gpsLoading, setGpsLoading] = useState(false);
+    const [resolveLoading, setResolveLoading] = useState(false);
+
+    const handleGetCurrentLocation = () => {
+        if (!navigator.geolocation) {
+            alert("Geolocation is not supported by your browser.");
+            return;
+        }
+        setGpsLoading(true);
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                const latStr = lat.toFixed(6);
+                const lonStr = lon.toFixed(6);
+
+                let addressResolved = '';
+                try {
+                    const geoResponse = await fetch(
+                        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`,
+                        {
+                            headers: {
+                                "Accept-Language": "en"
+                            }
+                        }
+                    );
+                    if (geoResponse.ok) {
+                        const geoData = await geoResponse.json();
+                        addressResolved = geoData.display_name || '';
+                    }
+                } catch (err) {
+                    console.error("Reverse geocoding address resolution failed:", err);
+                }
+
+                setEditForm(prev => ({
+                    ...prev,
+                    latitude: latStr,
+                    longitude: lonStr,
+                    address: addressResolved || prev.address
+                }));
+                setGpsLoading(false);
+            },
+            (error) => {
+                alert("Failed to retrieve location: " + error.message);
+                setGpsLoading(false);
+            },
+            { enableHighAccuracy: true }
+        );
+    };
+
+    const handleResolveLocation = async () => {
+        const lat = editForm.latitude;
+        const lon = editForm.longitude;
+        if (lat === '' || lon === '' || lat === null || lon === null || lat === undefined || lon === undefined) {
+            alert("Please enter both Office Latitude and Office Longitude to resolve the address.");
+            return;
+        }
+        setResolveLoading(true);
+        try {
+            const geoResponse = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`,
+                {
+                    headers: {
+                        "Accept-Language": "en"
+                    }
+                }
+            );
+            if (geoResponse.ok) {
+                const geoData = await geoResponse.json();
+                if (geoData.display_name) {
+                    setEditForm(prev => ({
+                        ...prev,
+                        address: geoData.display_name
+                    }));
+                } else {
+                    alert("Could not resolve address for the given coordinates.");
+                }
+            } else {
+                alert("Failed to resolve address. Geocoding service error.");
+            }
+        } catch (err) {
+            console.error("Reverse geocoding address resolution failed:", err);
+            alert("An error occurred while resolving the address.");
+        } finally {
+            setResolveLoading(false);
+        }
     };
 
     const handleSave = async (e) => {
@@ -102,7 +196,15 @@ const OwnerOrganization = () => {
         dispatch(setError(null));
         dispatch(setSuccessMessage(null));
         try {
-            await api.put('/company/update', editForm);
+            const payload = {
+                companyName: editForm.companyName,
+                address: editForm.address,
+                phone: editForm.phone,
+                latitude: editForm.latitude !== '' ? Number(editForm.latitude) : null,
+                longitude: editForm.longitude !== '' ? Number(editForm.longitude) : null,
+                proximityRadius: editForm.proximityRadius !== '' ? Number(editForm.proximityRadius) : 200
+            };
+            await api.put('/company/update', payload);
             await fetchCompany();
             setIsEditing(false);
             dispatch(setSuccessMessage('Organization details updated successfully.'));
@@ -278,6 +380,66 @@ const OwnerOrganization = () => {
                                         rows={3}
                                     />
                                 </div>
+                                <div className="flex flex-col sm:flex-row gap-4 items-end">
+                                    <div className="flex-grow w-full">
+                                        <label className="text-xs font-bold text-slate-500 uppercase">Office Latitude</label>
+                                        <input
+                                            type="number"
+                                            step="0.000001"
+                                            value={editForm.latitude}
+                                            onChange={(e) => setEditForm({ ...editForm, latitude: e.target.value })}
+                                            className="w-full mt-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                                            placeholder="e.g. 37.7749"
+                                        />
+                                    </div>
+                                    <div className="flex-grow w-full">
+                                        <label className="text-xs font-bold text-slate-500 uppercase">Office Longitude</label>
+                                        <input
+                                            type="number"
+                                            step="0.000001"
+                                            value={editForm.longitude}
+                                            onChange={(e) => setEditForm({ ...editForm, longitude: e.target.value })}
+                                            className="w-full mt-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                                            placeholder="e.g. -122.4194"
+                                        />
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={handleResolveLocation}
+                                        disabled={resolveLoading}
+                                        className="w-full sm:w-auto h-11 px-4 bg-slate-50 text-slate-700 font-bold text-xs rounded-xl hover:bg-slate-100 transition border border-slate-200 flex items-center justify-center gap-2 whitespace-nowrap"
+                                    >
+                                        {resolveLoading ? <Loader2 size={14} className="animate-spin" /> : <Navigation size={14} />}
+                                        Resolve
+                                    </button>
+                                </div>
+
+                                <div className="relative flex py-2 items-center">
+                                    <div className="flex-grow border-t border-slate-200"></div>
+                                    <span className="flex-shrink mx-4 text-slate-400 text-xs font-bold tracking-wider uppercase">OR</span>
+                                    <div className="flex-grow border-t border-slate-200"></div>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={handleGetCurrentLocation}
+                                    disabled={gpsLoading}
+                                    className="w-full h-11 px-4 bg-indigo-50 text-indigo-600 font-bold text-xs rounded-xl hover:bg-indigo-100/80 transition border border-indigo-100/50 flex items-center justify-center gap-2"
+                                >
+                                    {gpsLoading ? <Loader2 size={14} className="animate-spin" /> : <MapPin size={14} />}
+                                    Set my location as company location
+                                </button>
+
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 uppercase">Proximity Radius (meters)</label>
+                                    <input
+                                        type="number"
+                                        value={editForm.proximityRadius}
+                                        onChange={(e) => setEditForm({ ...editForm, proximityRadius: e.target.value })}
+                                        className="w-full mt-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                                        placeholder="e.g. 200"
+                                    />
+                                </div>
                             </div>
                         </form>
                     ) : (
@@ -318,6 +480,26 @@ const OwnerOrganization = () => {
                                     <div>
                                         <p className="font-semibold text-slate-900">{company.address || 'Not set'}</p>
                                         <p className="text-slate-500">Business address</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <span className="mt-1 text-indigo-600"><Navigation size={18} /></span>
+                                    <div>
+                                        {company.latitude !== undefined && company.latitude !== null && company.longitude !== undefined && company.longitude !== null ? (
+                                            <>
+                                                <p className="font-semibold text-slate-900">
+                                                    Enabled ({company.proximityRadius || 200}m radius)
+                                                </p>
+                                                <p className="text-xs text-slate-500 mt-0.5">
+                                                    Coordinates: {company.latitude.toFixed(6)}, {company.longitude.toFixed(6)}
+                                                </p>
+                                            </>
+                                        ) : (
+                                            <p className="font-semibold text-slate-500">
+                                                Disabled (Not configured)
+                                            </p>
+                                        )}
+                                        <p className="text-slate-500">Geolocation Proximity</p>
                                     </div>
                                 </div>
                             </div>

@@ -22,6 +22,16 @@ const companySchema = new mongoose.Schema({
     phone: {
         type: String
     },
+    latitude: {
+        type: Number
+    },
+    longitude: {
+        type: Number
+    },
+    proximityRadius: {
+        type: Number,
+        default: 200
+    },
 }, { timestamps: true });
 
 const Company = mongoose.model('Company', companySchema);

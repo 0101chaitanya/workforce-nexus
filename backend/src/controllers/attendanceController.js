@@ -1,11 +1,26 @@
 const Attendance = require("../models/Attendance");
+const Company = require("../models/Company");
 const mongoose = require("mongoose");
 const logger = require("../utils/logger");
+
+// Helper to calculate distance in meters using Haversine formula
+function getDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371000; // Radius of the Earth in meters
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // Distance in meters
+}
 
 exports.clockIn = async (req, res) => {
     try {
         const userId = req.user._id;
         const companyId = req.company._id;
+        const { latitude, longitude } = req.body;
 
         // Check if there's already an attendance record for today
         const today = new Date();
@@ -23,6 +38,30 @@ exports.clockIn = async (req, res) => {
                 success: false,
                 occurredAt: new Date().toISOString()
             });
+        }
+
+        // Fetch company settings to get office coordinates
+        const companyObj = await Company.findById(companyId);
+
+        if (companyObj && companyObj.latitude !== undefined && companyObj.latitude !== null && companyObj.longitude !== undefined && companyObj.longitude !== null) {
+            if (latitude === undefined || latitude === null || longitude === undefined || longitude === null) {
+                return res.status(400).json({
+                    message: "Location access is required to clock-in for this company.",
+                    success: false,
+                    occurredAt: new Date().toISOString()
+                });
+            }
+
+            const distance = getDistance(latitude, longitude, companyObj.latitude, companyObj.longitude);
+            const radius = companyObj.proximityRadius || 200;
+
+            if (distance > radius) {
+                return res.status(400).json({
+                    message: `Cannot clock-in: You are not within the office boundary (Distance: ${Math.round(distance)}m, allowed: ${radius}m).`,
+                    success: false,
+                    occurredAt: new Date().toISOString()
+                });
+            }
         }
 
         const attendance = new Attendance({
@@ -162,6 +201,91 @@ exports.getAttendanceHistory = async (req, res) => {
 
     } catch (err) {
         logger.error(`Error in getAttendanceHistory: ${err.message || err}`, { stack: err.stack });
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            occurredAt: new Date().toISOString()
+        });
+    }
+};
+
+exports.verifyProximity = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const companyId = req.company._id;
+        const { latitude, longitude } = req.body;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const attendance = await Attendance.findOne({
+            user: userId,
+            company: companyId,
+            date: { $gte: today },
+            checkInTime: { $exists: true },
+            checkOutTime: { $exists: false }
+        });
+
+        if (!attendance) {
+            return res.status(200).json({
+                success: true,
+                clockedOut: false,
+                message: "No active clock-in session found for today."
+            });
+        }
+
+        const companyObj = await Company.findById(companyId);
+
+        if (!companyObj || companyObj.latitude === undefined || companyObj.latitude === null || companyObj.longitude === undefined || companyObj.longitude === null) {
+            return res.status(200).json({
+                success: true,
+                clockedOut: false,
+                message: "Company proximity coordinates are not configured."
+            });
+        }
+
+        const radius = companyObj.proximityRadius || 200;
+
+        if (latitude === undefined || latitude === null || longitude === undefined || longitude === null) {
+            attendance.checkOutTime = new Date();
+            const diffMs = attendance.checkOutTime - attendance.checkInTime;
+            attendance.totalHours = parseFloat((diffMs / (1000 * 60 * 60)).toFixed(2));
+            attendance.remarks = "Auto-clocked out: Geolocation permission denied or unavailable.";
+            await attendance.save();
+
+            return res.status(200).json({
+                success: true,
+                clockedOut: true,
+                message: "Location access is required. Automatically clocked out.",
+                data: attendance
+            });
+        }
+
+        const distance = getDistance(latitude, longitude, companyObj.latitude, companyObj.longitude);
+
+        if (distance > radius) {
+            attendance.checkOutTime = new Date();
+            const diffMs = attendance.checkOutTime - attendance.checkInTime;
+            attendance.totalHours = parseFloat((diffMs / (1000 * 60 * 60)).toFixed(2));
+            attendance.remarks = `Auto-clocked out: Left office boundary (Distance: ${Math.round(distance)}m, allowed: ${radius}m).`;
+            await attendance.save();
+
+            return res.status(200).json({
+                success: true,
+                clockedOut: true,
+                message: "Exceeded office boundary. Automatically clocked out.",
+                data: attendance
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            clockedOut: false,
+            message: "Location verified. Within office boundaries."
+        });
+
+    } catch (err) {
+        logger.error(`Error in verifyProximity: ${err.message || err}`, { stack: err.stack });
         return res.status(500).json({
             message: "Internal server error",
             success: false,
