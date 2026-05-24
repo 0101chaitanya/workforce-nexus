@@ -1,6 +1,11 @@
 const jwt = require("jsonwebtoken");
 const logger = require("../utils/logger");
 
+/**
+ * Wrapper to catch **async route handler exceptions** and route them to Express error handlers or standard logger.
+ * @param {Function} fn - Async express middleware/controller function.
+ * @returns {Function} Express middleware wrapper.
+ */
 const catchAsync = (fn) => async (req, res, next) => {
     try {
         await fn(req, res, next);
@@ -15,6 +20,10 @@ const catchAsync = (fn) => async (req, res, next) => {
     }
 };
 
+/**
+ * Verifies authorization bearer **JWT token** in headers and injects user/company payload contexts.
+ * @type {Function} Express middleware.
+ */
 const protect = catchAsync(async (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1];
 
@@ -28,6 +37,11 @@ const protect = catchAsync(async (req, res, next) => {
     next();
 });
 
+/**
+ * Checks if the authenticated user possesses the correct access permissions/roles (e.g., `owner`, `employee`).
+ * @param {...string} roles - Permitted user permission roles.
+ * @returns {Function} Express middleware.
+ */
 const isAuthorized = (...roles) => (req, res, next) => {
     const allowedRoles = roles.length > 0 ? roles : ['owner'];
 
@@ -43,3 +57,4 @@ const isAuthorized = (...roles) => (req, res, next) => {
 };
 
 module.exports = { catchAsync, protect, isAuthorized };
+

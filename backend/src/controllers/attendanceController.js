@@ -3,19 +3,38 @@ const Company = require("../models/Company");
 const mongoose = require("mongoose");
 const logger = require("../utils/logger");
 
-// Helper to calculate distance in meters using Haversine formula
+/**
+ * Calculates the great-circle distance between two points on the Earth's surface
+ * using the **Haversine formula**.
+ * @param {number} lat1 - Latitude of origin.
+ * @param {number} lon1 - Longitude of origin.
+ * @param {number} lat2 - Latitude of destination.
+ * @param {number} lon2 - Longitude of destination.
+ * @returns {number} Distance in meters.
+ */
 function getDistance(lat1, lon1, lat2, lon2) {
     const R = 6371000; // Radius of the Earth in meters
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
+    const a =
         Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
         Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c; // Distance in meters
 }
 
+/**
+ * Clocks in an employee if they are within the allowed proximity boundary of the office.
+ * @route `POST /api/attendance/clock-in`
+ * @param {Object} req
+ * @param {Object} req.user - Active user context.
+ * @param {Object} req.company - Associated company details.
+ * @param {Object} req.body
+ * @param {number} req.body.latitude - Employee's current latitude coordinate.
+ * @param {number} req.body.longitude - Employee's current longitude coordinate.
+ * @returns {Promise<Object>} JSON response containing clock-in record.
+ */
 exports.clockIn = async (req, res) => {
     try {
         const userId = req.user._id;
@@ -83,13 +102,20 @@ exports.clockIn = async (req, res) => {
     } catch (err) {
         logger.error(`Error in clockIn: ${err.message || err}`, { stack: err.stack });
         return res.status(500).json({
-            message: "Internal server error",
+            message: "`Error in clockIn",
             success: false,
             occurredAt: new Date().toISOString()
         });
     }
 };
 
+/**
+ * Clocks out an employee for the day and calculates total hours worked.
+ * @route `POST /api/attendance/clock-out`
+ * @param {Object} req
+ * @param {Object} req.user - Active user context.
+ * @returns {Promise<Object>} JSON response confirming clock-out.
+ */
 exports.clockOut = async (req, res) => {
     try {
         const userId = req.user._id;
@@ -137,13 +163,24 @@ exports.clockOut = async (req, res) => {
     } catch (err) {
         logger.error(`Error in clockOut: ${err.message || err}`, { stack: err.stack });
         return res.status(500).json({
-            message: "Internal server error",
+            message: "Error in clockOut",
             success: false,
             occurredAt: new Date().toISOString()
         });
     }
 };
 
+/**
+ * Retrieves the attendance history logs for a user or target employee (**owner only**).
+ * Supports pagination.
+ * @route `GET /api/attendance/history`
+ * @param {Object} req
+ * @param {Object} req.query
+ * @param {string} [req.query.targetUserId] - Target employee ID to filter (Owner only).
+ * @param {number} [req.query.page] - Current page number.
+ * @param {number} [req.query.limit] - Page limit.
+ * @returns {Promise<Object>} JSON response containing history list.
+ */
 exports.getAttendanceHistory = async (req, res) => {
     try {
         const { targetUserId, page, limit } = req.query;
@@ -209,6 +246,16 @@ exports.getAttendanceHistory = async (req, res) => {
     }
 };
 
+/**
+ * Validates the physical position of a clocked-in employee in real-time.
+ * Automatically clocks out employee if they exit the boundary or refuse location access.
+ * @route `POST /api/attendance/verify-proximity`
+ * @param {Object} req
+ * @param {Object} req.body
+ * @param {number} [req.body.latitude] - Employee's current latitude coordinate.
+ * @param {number} [req.body.longitude] - Employee's current longitude coordinate.
+ * @returns {Promise<Object>} JSON response reflecting current boundary status.
+ */
 exports.verifyProximity = async (req, res) => {
     try {
         const userId = req.user._id;

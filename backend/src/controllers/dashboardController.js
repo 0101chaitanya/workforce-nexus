@@ -4,6 +4,14 @@ const Leave = require("../models/Leave");
 const Attendance = require("../models/Attendance");
 const logger = require("../utils/logger");
 
+/**
+ * Gathers **high-level statistics** (total employees, active leaves, daily attendance, recent payroll totals)
+ * for the company owner's dashboard view.
+ * @route `GET /api/dashboard/stats`
+ * @param {Object} req
+ * @param {Object} req.company - Associated company details.
+ * @returns {Promise<Object>} JSON response containing analytics numbers.
+ */
 exports.getDashboardStats = async (req, res) => {
     try {
         const companyId = req.company._id;

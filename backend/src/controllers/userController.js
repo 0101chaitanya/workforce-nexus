@@ -4,6 +4,23 @@ const { generateSecurePassword } = require("../utils/passwordGenerator");
 const transporter = require("../utils/sendEmail");
 const logger = require("../utils/logger");
 
+/**
+ * Onboards a **new employee**. Generates a secure temporary password and emails credentials.
+ * @route `POST /api/users/add`
+ * @param {Object} req
+ * @param {Object} req.company - Associated company details.
+ * @param {Object} req.body
+ * @param {string} req.body.email - Employee email.
+ * @param {string} req.body.fullName - Employee full name.
+ * @param {string} [req.body.position] - Job title.
+ * @param {string} [req.body.branch] - Location branch.
+ * @param {number} [req.body.salary] - Annual salary package.
+ * @param {string} [req.body.dateOfBirth] - Date of birth.
+ * @param {string} [req.body.phone] - Phone number.
+ * @param {string} [req.body.address] - Physical home address.
+ * @param {string} [req.body.bankAccount] - Bank account details.
+ * @returns {Promise<Object>} JSON response containing the created user and raw temporary password.
+ */
 exports.addUser = async (req, res) => {
     try {
         const { fullName, email, salary, branch, position } = req.body;
@@ -77,6 +94,16 @@ exports.addUser = async (req, res) => {
     }
 };
 
+/**
+ * Updates the password for the active authenticated user context.
+ * @route `PUT /api/users/change-password`
+ * @param {Object} req
+ * @param {Object} req.user - Active user context.
+ * @param {Object} req.body
+ * @param {string} req.body.oldPassword - Present plaintext password.
+ * @param {string} req.body.newPassword - Desired plaintext password.
+ * @returns {Promise<Object>} JSON response confirming success.
+ */
 exports.changePassword = async (req, res) => {
     try {
         const { oldPassword, newPassword } = req.body;
@@ -117,6 +144,18 @@ exports.changePassword = async (req, res) => {
     }
 };
 
+/**
+ * Searches and paginates employees belonging to the company context.
+ * Supports case-insensitive regex filtering on `fullName`, `email`, and `identity`.
+ * @route `GET /api/users/search`
+ * @param {Object} req
+ * @param {Object} req.company - Associated company details.
+ * @param {Object} req.query
+ * @param {string} [req.query.query] - Case-insensitive filter term.
+ * @param {number} [req.query.page] - Target page index.
+ * @param {number} [req.query.limit] - Size of pagination page.
+ * @returns {Promise<Object>} JSON response containing paginated list.
+ */
 exports.searchUsers = async (req, res) => {
     try {
         const { query, page, limit } = req.query;
@@ -185,6 +224,13 @@ exports.searchUsers = async (req, res) => {
     }
 };
 
+/**
+ * Retrieves all company employees (excluding owners) alphabetically.
+ * @route `GET /api/users/all`
+ * @param {Object} req
+ * @param {Object} req.company - Associated company details.
+ * @returns {Promise<Object>} JSON response containing list of all users.
+ */
 exports.getAllCompanyUsers = async (req, res) => {
     try {
         const companyId = req.company._id;
@@ -209,6 +255,14 @@ exports.getAllCompanyUsers = async (req, res) => {
     }
 };
 
+/**
+ * Safe self-service profile updates (e.g., `phone`, `address`, `bankAccount`).
+ * @route `PUT /api/users/profile`
+ * @param {Object} req
+ * @param {Object} req.user - Active user context.
+ * @param {Object} req.body
+ * @returns {Promise<Object>} JSON response containing the updated user.
+ */
 exports.updateProfile = async (req, res) => {
     try {
         const userId = req.user._id;
@@ -250,6 +304,16 @@ exports.updateProfile = async (req, res) => {
     }
 };
 
+/**
+ * Updates administrative fields of an employee (**Owner/Admin restricted**).
+ * @route `PUT /api/users/update/:id`
+ * @param {Object} req
+ * @param {Object} req.company - Associated company details.
+ * @param {Object} req.params
+ * @param {string} req.params.id - Employee User record ID.
+ * @param {Object} req.body
+ * @returns {Promise<Object>} JSON response containing updated employee.
+ */
 exports.updateUserByAdmin = async (req, res) => {
     try {
         const { id } = req.params;
@@ -305,6 +369,17 @@ exports.updateUserByAdmin = async (req, res) => {
     }
 };
 
+/**
+ * Resolves detailed profile data for a specific employee.
+ * Access control restricts employees to their own details; **Owners** can fetch anyone.
+ * @route `GET /api/users/profile/:id`
+ * @param {Object} req
+ * @param {Object} req.user - Active user context.
+ * @param {Object} req.company - Associated company details.
+ * @param {Object} req.params
+ * @param {string} req.params.id - User ID to query.
+ * @returns {Promise<Object>} JSON response containing profile.
+ */
 exports.getUserById = async (req, res) => {
     try {
         const { id } = req.params;

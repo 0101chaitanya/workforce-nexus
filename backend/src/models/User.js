@@ -1,6 +1,30 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 
+/**
+ * @typedef {Object} UserSchema
+ * @property {string} [accessToken] - JWT access token cached on login.
+ * @property {string} [address] - Home address of the user.
+ * @property {string} [bankAccount] - User's bank account number.
+ * @property {string} [branch] - Office branch location (e.g., HQ, Branch A).
+ * @property {mongoose.Types.ObjectId} [company] - Reference to the user's Company.
+ * @property {Date} [dateOfBirth] - User's date of birth.
+ * @property {string} email - Unique, lowercase email address.
+ * @property {string} [fullName] - Full name of the user.
+ * @property {boolean} [isVerified] - OTP email verification status.
+ * @property {Date} [joinDate] - Official employment start date.
+ * @property {number} [otp] - 5-digit verification challenge code.
+ * @property {Date} [otpExpiry] - OTP code expiry timestamp.
+ * @property {string} [password] - Bcrypt hashed password.
+ * @property {string} [phone] - Contact phone number.
+ * @property {mongoose.Types.ObjectId} [photo] - File upload reference for profile photo.
+ * @property {string} [position] - Job role/designation (e.g., Software Developer).
+ * @property {string} [roleDescription] - Extended details about job scope.
+ * @property {string} [refreshToken] - JWT refresh token.
+ * @property {string} role - System permission role (employee or owner).
+ * @property {number} [salary] - Annual salary package.
+ * @property {string} [identity] - Unique corporate ID (EMP-XXXXXX).
+ */
 const userSchema = new mongoose.Schema({
     accessToken: {
         type: String,
@@ -53,7 +77,10 @@ const userSchema = new mongoose.Schema({
     },
 }, { timestamps: true });
 
-// Hash password before saving, and assign unique identity if missing
+/**
+ * Pre-save Mongoose hook to auto-generate a unique EMP-XXXXXX corporate identity
+ * and hash the user password using bcrypt before saving.
+ */
 userSchema.pre('save', async function (next) {
     if (!this.identity) {
         const generateIdentity = () => {
@@ -91,7 +118,11 @@ userSchema.pre('save', async function (next) {
     }
 });
 
-// Method to compare password
+/**
+ * Compares a candidate plain password against the user's hashed password.
+ * @param {string} candidatePassword - Plaintext password candidate.
+ * @returns {Promise<boolean>} True if matching, false otherwise.
+ */
 userSchema.methods.comparePassword = async function (candidatePassword) {
     return bcrypt.compare(candidatePassword, this.password);
 };
@@ -99,3 +130,4 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 const User = mongoose.model('User', userSchema);
 
 module.exports = User;
+

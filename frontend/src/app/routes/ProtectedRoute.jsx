@@ -4,6 +4,15 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { logout } from '../../features/auth/authSlice';
 import api from '../../app/axiosInterceptors';
 
+/**
+ * **Route protection wrapper** component.
+ * Validates active session access tokens and enforces **role-based endpoint filters**.
+ * Redirects to `/login` if unauthenticated, or `/404` (Unauthorized) on role mismatches.
+ * @param {Object} props
+ * @param {React.ReactNode} [props.children] - Target route children components.
+ * @param {Array<string>} [props.allowedRoles] - Permitted role identifiers.
+ * @returns {React.ReactNode} Renderable output.
+ */
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const { token, role } = useSelector((state) => state.auth);
   const dispatch = useDispatch();

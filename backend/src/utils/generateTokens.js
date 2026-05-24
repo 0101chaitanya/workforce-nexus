@@ -1,5 +1,11 @@
 const jwt = require("jsonwebtoken")
 
+/**
+ * Generates a short-lived access JWT token (expiring in **15 minutes**) for a user session.
+ * @param {Object} user - User record object.
+ * @param {Object} company - Company record object.
+ * @returns {string} Signed JWT access token.
+ */
 const generateAccessToken = (user, company) => {
     const payload = {
         user: {
@@ -17,6 +23,12 @@ const generateAccessToken = (user, company) => {
 }
 
 
+/**
+ * Generates a long-lived refresh JWT token (expiring in **7 days**) for session maintenance.
+ * @param {Object} user - User record object.
+ * @param {Object} company - Company record object.
+ * @returns {string} Signed JWT refresh token.
+ */
 const generateRefreshToken = (user, company) => {
     const payload = {
         user: {
@@ -34,3 +46,4 @@ const generateRefreshToken = (user, company) => {
 }
 
 module.exports = { generateAccessToken, generateRefreshToken }
+

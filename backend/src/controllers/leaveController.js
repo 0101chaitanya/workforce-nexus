@@ -1,6 +1,19 @@
 const Leave = require("../models/Leave");
 const logger = require("../utils/logger");
 
+/**
+ * Creates and submits a **new leave request** application.
+ * @route `POST /api/leaves/apply`
+ * @param {Object} req
+ * @param {Object} req.user - Active user context.
+ * @param {Object} req.company - Associated company details.
+ * @param {Object} req.body
+ * @param {string} req.body.type - Leave type (sick, annual, personal, unpaid).
+ * @param {string} req.body.startDate - Leave start date.
+ * @param {string} req.body.endDate - Leave end date.
+ * @param {string} req.body.reason - Purpose details of the leave application.
+ * @returns {Promise<Object>} JSON response containing the created leave entry.
+ */
 exports.applyLeave = async (req, res) => {
     try {
         const { type, startDate, endDate, reason } = req.body;
@@ -43,6 +56,19 @@ exports.applyLeave = async (req, res) => {
     }
 };
 
+/**
+ * Fetches leave application history logs for users.
+ * Employees see their own leaves; **Owners** see all and receive summary statistics.
+ * @route `GET /api/leaves/history`
+ * @param {Object} req
+ * @param {Object} req.user - Active user context.
+ * @param {Object} req.company - Associated company details.
+ * @param {Object} req.query
+ * @param {string} [req.query.targetUserId] - Filter leaves by employee (Owner only).
+ * @param {number} [req.query.page] - Page number.
+ * @param {number} [req.query.limit] - Page limit.
+ * @returns {Promise<Object>} JSON response containing list of leave requests and summary stats.
+ */
 exports.getLeaveHistory = async (req, res) => {
     try {
         const { targetUserId, page, limit } = req.query;
@@ -118,6 +144,18 @@ exports.getLeaveHistory = async (req, res) => {
     }
 };
 
+/**
+ * Updates status of a leave request with reviewer notes (**Owner only**).
+ * @route `PUT /api/leaves/status/:leaveId`
+ * @param {Object} req
+ * @param {Object} req.company - Associated company details.
+ * @param {Object} req.params
+ * @param {string} req.params.leaveId - Leave request ID.
+ * @param {Object} req.body
+ * @param {string} req.body.status - New status (approved or rejected).
+ * @param {string} [req.body.remarks] - Reviewer feedback notes.
+ * @returns {Promise<Object>} JSON response containing the updated leave details.
+ */
 exports.updateLeaveStatus = async (req, res) => {
     try {
         const { leaveId } = req.params;

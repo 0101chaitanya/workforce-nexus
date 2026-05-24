@@ -1,0 +1,383 @@
+{
+  "projectMetadata": {
+    "name": "Employee Management System (EMS)",
+    "version": "1.0.0",
+    "description": "Enterprise-grade employee logistics, attendance tracking, leave management, and payroll execution application.",
+    "architecture": "Client-Server (MERN-adjacent: React, Node, Express, MongoDB)"
+  },
+  "techStack": {
+    "backend": {
+      "runtime": "Node.js (CommonJS)",
+      "framework": "Express.js",
+      "database": "MongoDB via Mongoose ODM",
+      "authentication": "JSON Web Token (JWT) with secure HttpOnly cookie refresh cycle",
+      "validation": "Zod Schemas",
+      "logging": "Winston Logger & Morgan HTTP middleware",
+      "libraries": [
+        "bcrypt (Password Hashing)",
+        "nodemailer (OTP & Onboarding emails)",
+        "pdfkit (Salary slip PDF generation)",
+        "multer (File Uploading)",
+        "dotenv (Environment variables)"
+      ]
+    },
+    "frontend": {
+      "builder": "Vite",
+      "framework": "React 19",
+      "stateManagement": "Redux Toolkit",
+      "routing": "React Router Dom v7",
+      "styling": "Tailwind CSS v4",
+      "utilities": [
+        "Axios (with custom Request/Response interceptors for silent token refreshing)",
+        "Lucide React (Icons)",
+        "React Toastify (Notifications)"
+      ]
+    }
+  },
+  "databaseModels": {
+    "User": {
+      "description": "Represents company employees and administrators.",
+      "schema": {
+        "fullName": { "type": "String", "required": false },
+        "email": { "type": "String", "required": true, "unique": true, "lowercase": true },
+        "password": { "type": "String", "required": false, "details": "Hashed using bcrypt pre-save" },
+        "role": { "type": "String", "enum": ["employee", "owner"], "default": "employee" },
+        "identity": { "type": "String", "unique": true, "details": "Auto-generated prefix 'EMP-' followed by 6 random alphanumeric characters" },
+        "company": { "type": "ObjectId", "ref": "Company" },
+        "isVerified": { "type": "Boolean", "default": false },
+        "otp": { "type": "Number" },
+        "otpExpiry": { "type": "Date" },
+        "refreshToken": { "type": "String" },
+        "position": { "type": "String" },
+        "branch": { "type": "String" },
+        "salary": { "type": "Number" },
+        "dateOfBirth": { "type": "Date" },
+        "joinDate": { "type": "Date", "default": "Current Date" },
+        "phone": { "type": "String" },
+        "address": { "type": "String" },
+        "bankAccount": { "type": "String" }
+      }
+    },
+    "Company": {
+      "description": "Defines corporate workspace profiles and location check-in boundaries.",
+      "schema": {
+        "companyName": { "type": "String", "required": true, "unique": true },
+        "email": { "type": "String", "required": true, "unique": true, "lowercase": true },
+        "isVerified": { "type": "Boolean", "default": false },
+        "owner": { "type": "ObjectId", "ref": "User" },
+        "address": { "type": "String" },
+        "phone": { "type": "String" },
+        "latitude": { "type": "Number" },
+        "longitude": { "type": "Number" },
+        "proximityRadius": { "type": "Number", "default": 200, "details": "Allowed check-in boundary radius in meters" }
+      }
+    },
+    "Attendance": {
+      "description": "Logs daily employee clock-in and clock-out details.",
+      "schema": {
+        "user": { "type": "ObjectId", "ref": "User", "required": true },
+        "company": { "type": "ObjectId", "ref": "Company", "required": true },
+        "date": { "type": "Date", "required": true },
+        "checkInTime": { "type": "Date" },
+        "checkOutTime": { "type": "Date" },
+        "status": { "type": "String", "enum": ["present", "absent", "half-day", "leave"], "default": "absent" },
+        "totalHours": { "type": "Number" },
+        "remarks": { "type": "String" }
+      }
+    },
+    "Leave": {
+      "description": "Coordinates vacation, sickness, or unpaid leave requests.",
+      "schema": {
+        "user": { "type": "ObjectId", "ref": "User", "required": true },
+        "company": { "type": "ObjectId", "ref": "Company", "required": true },
+        "type": { "type": "String", "enum": ["sick", "personal", "annual", "unpaid"], "required": true },
+        "startDate": { "type": "Date", "required": true },
+        "endDate": { "type": "Date", "required": true },
+        "reason": { "type": "String", "required": true },
+        "status": { "type": "String", "enum": ["pending", "approved", "rejected"], "default": "pending" },
+        "remarks": { "type": "String", "details": "Reviewer feedback notes" }
+      }
+    },
+    "Payroll": {
+      "description": "Calculates and registers monthly salaries and pay stubs.",
+      "schema": {
+        "user": { "type": "ObjectId", "ref": "User", "required": true },
+        "company": { "type": "ObjectId", "ref": "Company", "required": true },
+        "month": { "type": "Number", "min": 1, "max": 12, "required": true },
+        "year": { "type": "Number", "required": true },
+        "basicPay": { "type": "Number", "required": true },
+        "hra": { "type": "Number", "default": 0 },
+        "conveyance": { "type": "Number", "default": 0 },
+        "medical": { "type": "Number", "default": 0 },
+        "bonus": { "type": "Number", "default": 0 },
+        "unpaidLeaveDeductions": { "type": "Number", "default": 0 },
+        "taxes": { "type": "Number", "default": 0 },
+        "grossPay": { "type": "Number", "required": true },
+        "netPay": { "type": "Number", "required": true },
+        "paidDate": { "type": "Date" },
+        "status": { "type": "String", "enum": ["not-generated", "pending", "generated"], "default": "not-generated" }
+      }
+    }
+  },
+  "apiEndpoints": {
+    "Authentication": {
+      "prefix": "/api/auth",
+      "routes": [
+        {
+          "path": "/login",
+          "method": "POST",
+          "access": "Public",
+          "validation": "authSchemas.login",
+          "description": "Logs in a user, sets HTTP-only refresh cookie, and returns access token."
+        },
+        {
+          "path": "/logout",
+          "method": "POST",
+          "access": "Public",
+          "description": "Revokes refresh token and clears authorization cookies."
+        },
+        {
+          "path": "/register",
+          "method": "POST",
+          "access": "Public",
+          "validation": "authSchemas.register",
+          "description": "Completes registration of verified owner and associates company."
+        },
+        {
+          "path": "/send-otp",
+          "method": "POST",
+          "access": "Public",
+          "validation": "authSchemas.sendOtp",
+          "description": "Dispatches verification code email to pre-create owner and company profiles."
+        },
+        {
+          "path": "/verify-otp",
+          "method": "POST",
+          "access": "Public",
+          "validation": "authSchemas.verifyOtp",
+          "description": "Verifies OTP and activates email state."
+        },
+        {
+          "path": "/regenerate-access-token",
+          "method": "POST",
+          "access": "Public",
+          "description": "Validates refresh cookie to generate new access token."
+        },
+        {
+          "path": "/me",
+          "method": "GET",
+          "access": "Protected (Owner/Employee)",
+          "description": "Returns current logged in user context status details."
+        },
+        {
+          "path": "/forgot-password-otp",
+          "method": "POST",
+          "access": "Public",
+          "validation": "authSchemas.forgotPasswordOtp",
+          "description": "Sends password recovery email containing validation challenge code."
+        },
+        {
+          "path": "/reset-password",
+          "method": "POST",
+          "access": "Public",
+          "validation": "authSchemas.resetPassword",
+          "description": "Validates recovery OTP and resets user password."
+        }
+      ]
+    },
+    "Attendance": {
+      "prefix": "/api/attendance",
+      "routes": [
+        {
+          "path": "/clock-in",
+          "method": "POST",
+          "access": "Protected (Employee)",
+          "description": "Performs checks against office boundary coordinates and clocks in employee."
+        },
+        {
+          "path": "/clock-out",
+          "method": "POST",
+          "access": "Protected (Employee)",
+          "description": "Clocks out employee and computes hours worked."
+        },
+        {
+          "path": "/history",
+          "method": "GET",
+          "access": "Protected (Owner lists all, Employee lists self)",
+          "description": "Retrieves paginated attendance history entries."
+        },
+        {
+          "path": "/verify-proximity",
+          "method": "POST",
+          "access": "Protected (Employee)",
+          "description": "Validates employee distance in real-time. Automatically checks out user if outside proximity bounds."
+        }
+      ]
+    },
+    "Leaves": {
+      "prefix": "/api/leaves",
+      "routes": [
+        {
+          "path": "/apply",
+          "method": "POST",
+          "access": "Protected (Employee)",
+          "description": "Creates a leave request application."
+        },
+        {
+          "path": "/history",
+          "method": "GET",
+          "access": "Protected (Owner lists company, Employee lists self)",
+          "description": "Gets history of leave requests."
+        },
+        {
+          "path": "/status/:id",
+          "method": "PUT",
+          "access": "Protected (Owner)",
+          "description": "Approves or rejects a specific leave request with remarks."
+        }
+      ]
+    },
+    "Payroll": {
+      "prefix": "/api/payroll",
+      "routes": [
+        {
+          "path": "/generate",
+          "method": "POST",
+          "access": "Protected (Owner)",
+          "description": "Generates monthly payroll calculations including HRA, allowances, and unpaid leave deductions."
+        },
+        {
+          "path": "/history",
+          "method": "GET",
+          "access": "Protected (Owner lists company, Employee lists self)",
+          "description": "Retrieves history logs of generated payrolls."
+        },
+        {
+          "path": "/slip/:id",
+          "method": "GET",
+          "access": "Protected (Owner/Employee)",
+          "description": "Generates and streams a PDF format salary slip using PDFKit."
+        }
+      ]
+    },
+    "Users": {
+      "prefix": "/api/users",
+      "routes": [
+        {
+          "path": "/add",
+          "method": "POST",
+          "access": "Protected (Owner)",
+          "description": "Onboards a new employee, generates random password, and sends welcome email."
+        },
+        {
+          "path": "/change-password",
+          "method": "PUT",
+          "access": "Protected (Owner/Employee)",
+          "description": "Updates password for active authenticated profile."
+        },
+        {
+          "path": "/search",
+          "method": "GET",
+          "access": "Protected (Owner)",
+          "description": "Searches, filters, and paginates employees inside the company context."
+        },
+        {
+          "path": "/all",
+          "method": "GET",
+          "access": "Protected (Owner)",
+          "description": "Lists all employees in the organization."
+        },
+        {
+          "path": "/profile",
+          "method": "PUT",
+          "access": "Protected (Owner/Employee)",
+          "description": "Updates details on the user's own profile context."
+        },
+        {
+          "path": "/update/:id",
+          "method": "PUT",
+          "access": "Protected (Owner)",
+          "description": "Allows owners to update administrative properties (salary, position, role) of an employee."
+        },
+        {
+          "path": "/profile/:id",
+          "method": "GET",
+          "access": "Protected (Owner, or Employee checking self)",
+          "description": "Gets detailed profile view data."
+        }
+      ]
+    },
+    "Company": {
+      "prefix": "/api/company",
+      "routes": [
+        {
+          "path": "/details",
+          "method": "GET",
+          "access": "Protected (Owner/Employee)",
+          "description": "Retrieves the core details, settings, and check-in coordinates of the company."
+        },
+        {
+          "path": "/update",
+          "method": "PUT",
+          "access": "Protected (Owner)",
+          "description": "Updates company profile settings, geolocation coordinates, and boundary radius."
+        }
+      ]
+    },
+    "Dashboard": {
+      "prefix": "/api/dashboard",
+      "routes": [
+        {
+          "path": "/stats",
+          "method": "GET",
+          "access": "Protected (Owner/Employee)",
+          "description": "Resolves analytical logs, statistics, and graphs specific to the active role."
+        }
+      ]
+    }
+  },
+  "frontendArchitecture": {
+    "reduxSlices": [
+      {
+        "name": "auth",
+        "state": { "user": "Object", "token": "String", "role": "String", "loading": "Boolean", "error": "String" },
+        "description": "Controls active session, verified access token caching, and user details."
+      },
+      {
+        "name": "attendance",
+        "state": { "employee": "Object", "owner": "Object" },
+        "description": "Tracks active check-in states, historical attendance lists, and verification feedback."
+      },
+      {
+        "name": "employees",
+        "state": { "list": "Array", "pagination": "Object", "loading": "Boolean", "error": "String" },
+        "description": "Manages searchable employee directories, onboarding updates, and paging contexts."
+      },
+      {
+        "name": "leaves",
+        "state": { "employee": "Object", "owner": "Object" },
+        "description": "Stores history of leaves, pending approvals, and submission statuses."
+      },
+      {
+        "name": "payroll",
+        "state": { "employee": "Object", "owner": "Object" },
+        "description": "Handles generated slips, monthly history records, and salary parameters."
+      },
+      {
+        "name": "organization",
+        "state": { "companyDetails": "Object", "loading": "Boolean", "error": "String" },
+        "description": "Stores company name, coordinates, boundary settings, and edit statuses."
+      },
+      {
+        "name": "profile",
+        "state": { "data": "Object", "loading": "Boolean" },
+        "description": "Maintains user self-details, password updates, and profile settings."
+      },
+      {
+        "name": "dashboard",
+        "state": { "stats": "Object", "loading": "Boolean" },
+        "description": "Loads statistics charts, counts, summaries, and dashboard logs."
+      }
+    ]
+  }
+}

@@ -12,6 +12,14 @@ if (savedUser) {
   }
 }
 
+/**
+ * @typedef {Object} AuthState
+ * @property {Object|null} user - Decoded **profile metadata**.
+ * @property {string|null} token - JWT **Access token** string.
+ * @property {string|null} role - Current session permission (`owner` or `employee`).
+ * @property {boolean} loading - Redux state spinner trigger.
+ * @property {string|null} error - Error messages from action requests.
+ */
 const initialState = {
   user: parsedUser,
   token: savedToken || null,
@@ -20,13 +28,18 @@ const initialState = {
   error: null,
 };
 
+/**
+ * Redux Toolkit Slice managing **Authentication state parameters** and token persistence.
+ */
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
+    /** Sets the loading state. */
     setLoading: (state, action) => {
       state.loading = action.payload;
     },
+    /** Configures active session states and persists tokens locally. */
     setAuthSuccess: (state, action) => {
       const { user, accessToken } = action.payload;
       state.loading = false;
@@ -38,13 +51,16 @@ const authSlice = createSlice({
       localStorage.setItem('token', accessToken);
       localStorage.setItem('user', JSON.stringify(user));
     },
+    /** Records exception reports and sets loading to false. */
     setAuthFailed: (state, action) => {
       state.loading = false;
       state.error = action.payload;
     },
+    /** Resets the active error state. */
     clearError: (state) => {
       state.error = null;
     },
+    /** Clears local cache tokens and logs user out. */
     logout: (state) => {
       state.user = null;
       state.token = null;
