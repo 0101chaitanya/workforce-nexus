@@ -11,7 +11,7 @@ router.use(protect); // All user routes are protected
 
 // Only owner can add and search users
 router.post("/add", isAuthorized(), validate(ownerSchemas.addUser), userController.addUser);
-router.get("/all", isAuthorized(), validateQuery(ownerSchemas.searchUsersQuery), userController.searchUsers);
+router.get("/search-users-or-get-all", isAuthorized(), validateQuery(ownerSchemas.searchUsersQuery), userController.searchUsers);
 
 // Profile updates (User self-service)
 router.put("/profile", validate(userSchemas.updateProfile), userController.updateProfile);

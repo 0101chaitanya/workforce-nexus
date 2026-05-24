@@ -147,7 +147,7 @@ exports.changePassword = async (req, res) => {
 /**
  * Searches and paginates employees belonging to the company context.
  * Supports case-insensitive regex filtering on `fullName`, `email`, and `identity`.
- * @route `GET /api/users/search`
+ * @route `GET /api/users/search-users-or-get-all`
  * @param {Object} req
  * @param {Object} req.company - Associated company details.
  * @param {Object} req.query
@@ -226,7 +226,7 @@ exports.searchUsers = async (req, res) => {
 
 /**
  * Retrieves all company employees (excluding owners) alphabetically.
- * @route `GET /api/users/all`
+ * @route (Not Registered)
  * @param {Object} req
  * @param {Object} req.company - Associated company details.
  * @returns {Promise<Object>} JSON response containing list of all users.

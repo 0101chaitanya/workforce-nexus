@@ -282,7 +282,7 @@
           "description": "Searches, filters, and paginates employees inside the company context."
         },
         {
-          "path": "/all",
+          "path": "/search-users-or-get-all",
           "method": "GET",
           "access": "Protected (Owner)",
           "description": "Lists all employees in the organization."

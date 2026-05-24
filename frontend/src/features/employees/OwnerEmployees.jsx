@@ -41,7 +41,7 @@ export default function OwnerEmployees() {
       // For initial load (empty query), fetch all users without pagination limit
       // For search, use pagination
       const params = query ? { query, page: 1, limit: 10 } : { query };
-      const res = await api.get('/users/all', { params });
+      const res = await api.get('/users/search-users-or-get-all', { params });
       dispatch(setEmployees(res.data?.data || []));
       dispatch(setError(null));
     } catch (err) {

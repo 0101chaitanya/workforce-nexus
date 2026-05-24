@@ -96,7 +96,7 @@ const OwnerAttendance = () => {
     const timer = setTimeout(async () => {
       dispatch(setOwnerSearchLoading(true));
       try {
-        const response = await api.get('/users/all', {
+        const response = await api.get('/users/search-users-or-get-all', {
           params: { query: searchQuery }
         });
         dispatch(setOwnerSearchResults(response.data.data || []));
