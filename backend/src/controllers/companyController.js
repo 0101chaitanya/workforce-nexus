@@ -2,6 +2,14 @@ const mongoose = require("mongoose");
 const Company = require("../models/Company");
 const { catchAsync } = require("../middleware/authMiddleware");
 
+/**
+ * Retrieves public information about a company (e.g., `logo`, `companyName`, `address`, owner name) for registration/auth references.
+ * @route `GET /api/company/public/:id`
+ * @param {Object} req
+ * @param {Object} req.params
+ * @param {string} req.params.id - Company ID.
+ * @returns {Promise<Object>} JSON response containing company name, logo, address, and owner.
+ */
 exports.getPublicCompanyInfo = catchAsync(async (req, res) => {
     const { id } = req.params;
 
@@ -24,6 +32,13 @@ exports.getPublicCompanyInfo = catchAsync(async (req, res) => {
     });
 });
 
+/**
+ * Retrieves full details of the authenticated user's associated company.
+ * @route `GET /api/company/details`
+ * @param {Object} req
+ * @param {Object} req.company - Associated company details.
+ * @returns {Promise<Object>} JSON response containing full company details.
+ */
 exports.getProtectedCompanyInfo = catchAsync(async (req, res) => {
     const companyId = req.company._id;
 
@@ -40,6 +55,20 @@ exports.getProtectedCompanyInfo = catchAsync(async (req, res) => {
     });
 });
 
+/**
+ * Updates company profile details, including physical coordinates and boundary constraints (**Owner only**).
+ * @route `PUT /api/company/update`
+ * @param {Object} req
+ * @param {Object} req.company - Associated company details.
+ * @param {Object} req.body
+ * @param {string} [req.body.companyName] - Company name.
+ * @param {string} [req.body.address] - Company address.
+ * @param {string} [req.body.phone] - Company phone number.
+ * @param {number} [req.body.latitude] - Office coordinate latitude.
+ * @param {number} [req.body.longitude] - Office coordinate longitude.
+ * @param {number} [req.body.proximityRadius] - Physical boundary check radius in meters.
+ * @returns {Promise<Object>} JSON response containing updated company details.
+ */
 exports.updateCompanyInfo = catchAsync(async (req, res) => {
     const companyId = req.company._id;
     const { companyName, address, phone, latitude, longitude, proximityRadius } = req.body;
@@ -67,3 +96,4 @@ exports.updateCompanyInfo = catchAsync(async (req, res) => {
         data: updatedCompany
     });
 });
+

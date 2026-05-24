@@ -4,6 +4,17 @@ const Leave = require("../models/Leave");
 const PDFDocument = require("pdfkit");
 const logger = require("../utils/logger");
 
+/**
+ * Retrieves the payroll records history for employees.
+ * Employees can only view their own history; **Owners** can fetch organization-wide records.
+ * @route `GET /api/payroll/history`
+ * @param {Object} req
+ * @param {Object} req.query
+ * @param {string} [req.query.targetUserId] - Target employee ID to filter (Owner only).
+ * @param {number} [req.query.month] - Filter by specific calendar month.
+ * @param {number} [req.query.year] - Filter by specific calendar year.
+ * @returns {Promise<Object>} JSON response containing payroll entries list.
+ */
 exports.getPayrollHistory = async (req, res) => {
     try {
         const { targetUserId, page, limit } = req.query;
@@ -69,6 +80,14 @@ exports.getPayrollHistory = async (req, res) => {
     }
 };
 
+/**
+ * Generates and streams a custom payslip **PDF** for a given payroll record.
+ * @route `GET /api/payroll/slip/:id`
+ * @param {Object} req
+ * @param {Object} req.params
+ * @param {string} req.params.id - Payroll record ID.
+ * @returns {Promise<void>} Streamed PDF document binary payload.
+ */
 exports.downloadPayslip = async (req, res) => {
     try {
         const { id } = req.params;
@@ -216,6 +235,16 @@ exports.downloadPayslip = async (req, res) => {
     }
 };
 
+/**
+ * Computes and issues monthly payroll entries for all organization employees.
+ * Accounts for unpaid leave deductions.
+ * @route `POST /api/payroll/generate`
+ * @param {Object} req
+ * @param {Object} req.body
+ * @param {number} req.body.month - Target payroll month (1-12).
+ * @param {number} req.body.year - Target payroll year (e.g., 2026).
+ * @returns {Promise<Object>} JSON response confirming payroll generation count.
+ */
 exports.generateCompanyPayroll = async (req, res) => {
     try {
         const companyId = req.company._id;
@@ -387,6 +416,12 @@ exports.generateCompanyPayroll = async (req, res) => {
     }
 };
 
+/**
+ * Generates and downloads tenure-based payroll overview history.
+ * @route `GET /api/payroll/download-tenure`
+ * @param {Object} req
+ * @returns {Promise<void>} Streamed PDF document binary payload.
+ */
 exports.downloadTenurePayslip = async (req, res) => {
     try {
         const companyId = req.company._id;

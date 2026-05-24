@@ -3,6 +3,11 @@ import store from './store.js';
 import { logout, setAuthSuccess } from '../features/auth/authSlice.js';
 import { navigate } from './navigation.js';
 
+/**
+ * Customized **Axios client instance**.
+ * Base URL points to `VITE_BACKEND_URL` and coordinates cookie credentials.
+ * @type {axios.AxiosInstance}
+ */
 const axiosInterceptors = axios.create({
   baseURL: import.meta.env.VITE_BACKEND_URL,
   withCredentials: true,
@@ -20,6 +25,11 @@ axiosInterceptors.interceptors.request.use((config) => {
 let isRefreshing = false;
 let failedQueue = [];
 
+/**
+ * Triggers **resolve** or **reject** events for a queue of requests that failed due to expired access tokens.
+ * @param {Error|null} error - The token refresh failure details.
+ * @param {string|null} token - The newly generated Access Token.
+ */
 const processQueue = (error, token = null) => {
     failedQueue.forEach(prom => {
         if (error) {
@@ -31,6 +41,10 @@ const processQueue = (error, token = null) => {
     failedQueue = [];
 };
 
+/**
+ * **Axios response interceptor** hook.
+ * Intercepts `401` status errors and initiates access token refresh challenges using cookies before retrying.
+ */
 axiosInterceptors.interceptors.response.use(
     res => res,
     async error => {

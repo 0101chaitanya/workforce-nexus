@@ -23,33 +23,7 @@ const sanitizeCompany = (company) => ({
     owner: company.owner
 });
 
-// --- Controllers ---
-
-exports.sendOtp = catchAsync(async (req, res) => {
-    const { email, companyName } = req.body;
-
-    const existingUser = await User.findOne({ email });
-    const existingCompany = await Company.findOne({ email });
-
-    if (existingUser || existingCompany) {
-        return res.status(409).json({
-            message: "A user or company with this email already exists",
-            success: false,
-            occurredAt: new Date().toISOString()
-        });
-    }
-
-
-    // Use early initialization logic to reduce redundant assignments
-    const company = await new Company({ email, companyName });
-    const user = new User({ email, company: company._id, role: "owner" });
-
-    const otp = Math.floor(10000 + Math.random() * 90000); // 5 digits
-    user.otp = otp;
-    user.otpExpiry = Date.now() + 5 * 60 * 1000;
-
-    await Promise.all([user.save(), company.save()]);
-
+const sendOtpEmail = async (email, otp) => {
     await transporter.sendMail({
         from: process.env.EMAIL,
         to: email,
@@ -105,7 +79,7 @@ exports.sendOtp = catchAsync(async (req, res) => {
         "
       >
         Use the verification code below to complete your sign in process. This
-        OTP is valid for only <strong>5 minutes</strong>.
+        OTP is valid for only <strong>15 minutes</strong>.
       </p>
 
       <!-- OTP Box -->
@@ -165,10 +139,94 @@ exports.sendOtp = catchAsync(async (req, res) => {
 </div>
 `,
     });
+};
+
+// --- Controllers ---
+
+/**
+ * Dispatches a **5-digit verification code** to the target email.
+ * If new, pre-registers a temporary `Company` and owner `User`.
+ * @route `POST /api/auth/send-otp`
+ * @param {Object} req.body
+ * @param {string} req.body.email - Corporate email to register/verify.
+ * @param {string} req.body.companyName - Name of company to register.
+ * @returns {Promise<Object>} JSON response containing success status and message.
+ */
+exports.sendOtp = catchAsync(async (req, res) => {
+    const { email, companyName } = req.body;
+
+    let user = await User.findOne({ email });
+    let company = await Company.findOne({ email });
+
+    if (user) {
+        if (user.isVerified) {
+            return res.status(409).json({
+                message: "Email is already registered. Please login.",
+                success: false,
+                occurredAt: new Date().toISOString()
+            });
+        } else {
+            // Abandoned signup: Graceful re-entry
+            const otp = Math.floor(10000 + Math.random() * 90000); // 5 digits
+            user.otp = otp;
+            user.otpExpiry = Date.now() + 15 * 60 * 1000;
+
+            // Optionally update the company name if the user fixed a typo before re-sending
+            if (company && companyName) {
+                company.companyName = companyName;
+                await company.save();
+            }
+
+            await user.save();
+            await sendOtpEmail(email, otp);
+
+            return res.status(200).json({ message: "A new OTP has been sent to your email.", success: true });
+        }
+    } else if (company) {
+        if (company.isVerified) {
+            return res.status(409).json({
+                message: "A company with this email already exists.",
+                success: false,
+                occurredAt: new Date().toISOString()
+            });
+        } else {
+            // Edge case: Abandoned signup without the user record being completely saved
+            user = new User({ email, company: company._id, role: "owner" });
+            const otp = Math.floor(10000 + Math.random() * 90000); // 5 digits
+            user.otp = otp;
+            user.otpExpiry = Date.now() + 15 * 60 * 1000;
+
+            await user.save();
+            await sendOtpEmail(email, otp);
+
+            return res.status(200).json({ message: "A new OTP has been sent to your email.", success: true });
+        }
+    }
+
+    // Use early initialization logic to reduce redundant assignments
+    company = await new Company({ email, companyName });
+    user = new User({ email, company: company._id, role: "owner" });
+
+    const otp = Math.floor(10000 + Math.random() * 90000); // 5 digits
+    user.otp = otp;
+    user.otpExpiry = Date.now() + 15 * 60 * 1000;
+
+    await Promise.all([user.save(), company.save()]);
+
+    await sendOtpEmail(email, otp);
 
     return res.status(200).json({ message: "OTP sent successfully to email", success: true });
 });
 
+/**
+ * Validates a submitted **5-digit verification OTP** against the database record.
+ * Sets user and company verified flags to `true` if successful.
+ * @route `POST /api/auth/verify-otp`
+ * @param {Object} req.body
+ * @param {string} req.body.email - User email address.
+ * @param {number} req.body.otp - 5-digit OTP verification code.
+ * @returns {Promise<Object>} JSON response containing success status and message.
+ */
 exports.verifyOtp = catchAsync(async (req, res) => {
     const { email, otp } = req.body;
 
@@ -197,6 +255,15 @@ exports.verifyOtp = catchAsync(async (req, res) => {
     return res.status(200).json({ message: "Email Verified", success: true });
 });
 
+/**
+ * Finalizes owner onboarding by assigning `fullName` and hashing the password.
+ * @route `POST /api/auth/register`
+ * @param {Object} req.body
+ * @param {string} req.body.fullName - Owner's full name.
+ * @param {string} req.body.email - Owner's email.
+ * @param {string} req.body.password - Desired password.
+ * @returns {Promise<Object>} JSON response confirming successful registration.
+ */
 exports.register = catchAsync(async (req, res) => {
     const { fullName, email, password } = req.body;
 
@@ -295,6 +362,14 @@ exports.register = catchAsync(async (req, res) => {
     });
 });
 
+/**
+ * Authenticates email/password credentials, sets cookie **refresh token**, and returns **access token**.
+ * @route `POST /api/auth/login`
+ * @param {Object} req.body
+ * @param {string} req.body.email - User's email or identity.
+ * @param {string} req.body.password - User's plain password.
+ * @returns {Promise<Object>} JSON response containing access token, user, and company details.
+ */
 exports.login = catchAsync(async (req, res) => {
     const { email, password } = req.body;
 
@@ -336,6 +411,11 @@ exports.login = catchAsync(async (req, res) => {
     });
 });
 
+/**
+ * Decodes and validates cookie **refresh token** to issue a fresh **access token**.
+ * @route `POST /api/auth/regenerate-access-token`
+ * @returns {Promise<Object>} JSON response containing the new access token.
+ */
 exports.regenerateAccessToken = catchAsync(async (req, res) => {
     const { refreshToken } = req.cookies;
     if (!refreshToken) return res.status(401).json({ message: "No refresh token provided", success: false, occurredAt: new Date().toISOString() });
@@ -363,6 +443,11 @@ exports.regenerateAccessToken = catchAsync(async (req, res) => {
     return res.status(200).json({ accessToken, message: "Token refreshed successfully", success: true });
 });
 
+/**
+ * Clears local session state and cookie **refresh token**.
+ * @route `POST /api/auth/logout`
+ * @returns {Promise<Object>} JSON response detailing logout success.
+ */
 exports.logout = catchAsync(async (req, res) => {
     const { refreshToken } = req.cookies;
     if (refreshToken) {
@@ -387,6 +472,13 @@ exports.testGet = catchAsync(async (req, res) => {
     });
 });
 
+/**
+ * Generates and dispatches a password recovery **OTP** to the user's email address.
+ * @route `POST /api/auth/forgot-password-otp`
+ * @param {Object} req.body
+ * @param {string} req.body.email - User's email.
+ * @returns {Promise<Object>} JSON response specifying code transfer success.
+ */
 exports.forgotPasswordOtp = catchAsync(async (req, res) => {
     const { email } = req.body;
 
@@ -417,6 +509,15 @@ exports.forgotPasswordOtp = catchAsync(async (req, res) => {
     return res.status(200).json({ message: "OTP sent successfully to email", success: true });
 });
 
+/**
+ * Resets user password by validating the recovery code challenge.
+ * @route `POST /api/auth/reset-password`
+ * @param {Object} req.body
+ * @param {string} req.body.email - User's email.
+ * @param {number} req.body.otp - 5-digit verification OTP.
+ * @param {string} req.body.newPassword - Desired new password.
+ * @returns {Promise<Object>} JSON response confirming password reset success.
+ */
 exports.resetPassword = catchAsync(async (req, res) => {
     const { email, otp, newPassword } = req.body;
 

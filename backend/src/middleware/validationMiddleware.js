@@ -1,5 +1,11 @@
 const { z } = require("zod");
 
+/**
+ * Validates the Express request body against a given **Zod schema**.
+ * Sends a `400` response with structured validation errors if validation fails.
+ * @param {z.ZodSchema} schema - Zod validation schema to parse.
+ * @returns {Function} Express middleware.
+ */
 const validate = (schema) => async (req, res, next) => {
     try {
         req.body = await schema.parseAsync(req.body);
@@ -24,6 +30,12 @@ const validate = (schema) => async (req, res, next) => {
     }
 };
 
+/**
+ * Validates the Express query parameters against a given **Zod schema**.
+ * Sends a `400` response with structured query validation errors if validation fails.
+ * @param {z.ZodSchema} schema - Zod validation schema to parse.
+ * @returns {Function} Express middleware.
+ */
 const validateQuery = (schema) => async (req, res, next) => {
     try {
         // We use parseAsync. Zod can also coerce string queries to numbers/booleans if specified in the schema.
@@ -53,3 +65,4 @@ module.exports = {
     validate,
     validateQuery
 };
+

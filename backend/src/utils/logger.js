@@ -3,11 +3,23 @@ const path = require('path');
 
 const { combine, timestamp, printf, colorize, errors } = winston.format;
 
-// Custom format for logs
+/**
+ * Custom log formatting function for print output styling.
+ * @param {Object} info - Log details.
+ * @param {string} info.level - Log level (e.g., `info`, `error`).
+ * @param {string} info.message - Log text message.
+ * @param {string} info.timestamp - Timestamp.
+ * @param {string} [info.stack] - Error stack trace context.
+ * @returns {string} Formatted log entry.
+ */
 const logFormat = printf(({ level, message, timestamp, stack }) => {
     return `${timestamp} ${level}: ${stack || message}`;
 });
 
+/**
+ * Winston Logger configuration orchestrating output log streams (`combined logs`, `error files`, `console`).
+ * @type {winston.Logger}
+ */
 const logger = winston.createLogger({
     level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
     format: combine(
@@ -40,3 +52,4 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 module.exports = logger;
+
