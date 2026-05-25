@@ -135,7 +135,7 @@ export default function OwnerEmployees() {
     dispatch(setSuccessMessage(null));
     dispatch(setValidationErrors({}));
     try {
-      const payload = { ...editForm };
+      const payload = { ...editForm, role: 'employee' };
       if (payload.salary) payload.salary = Number(payload.salary);
       await api.put(`/users/admin-update/${selectedUser._id}`, payload);
       dispatch(setSuccessMessage('Employee updated successfully.'));
@@ -354,10 +354,7 @@ export default function OwnerEmployees() {
             <form onSubmit={handleEditSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
-                  <div className="flex justify-between items-center">
-                    <label className="text-xs font-bold text-slate-500 uppercase">Full Name</label>
-                    <span className="text-[10px] text-slate-400 font-semibold tracking-wide">2-100 chars • Required</span>
-                  </div>
+                  <label className="text-xs font-bold text-slate-500 uppercase">Full Name</label>
                   <input
                     required
                     type="text"
@@ -375,33 +372,7 @@ export default function OwnerEmployees() {
                 </div>
 
                 <div>
-                  <div className="flex justify-between items-center">
-                    <label className="text-xs font-bold text-slate-500 uppercase">Role</label>
-                    <span className="text-[10px] text-slate-400 font-semibold tracking-wide">Employee/Owner • Required</span>
-                  </div>
-                  <select
-                    required
-                    value={editForm.role}
-                    onChange={e => setEditForm({ ...editForm, role: e.target.value })}
-                    className={`w-full mt-1 px-4 py-2.5 bg-slate-50 border rounded-xl text-sm outline-none transition focus:ring-2 ${
-                      validationErrors.role
-                        ? 'border-rose-300 focus:ring-rose-500/20 focus:border-rose-500'
-                        : 'border-slate-200 focus:ring-indigo-500/20 focus:border-indigo-500'
-                    }`}
-                  >
-                    <option value="employee">Employee</option>
-                    <option value="owner">Owner</option>
-                  </select>
-                  {validationErrors.role && (
-                    <span className="text-rose-500 text-xs font-bold mt-1 block">{validationErrors.role}</span>
-                  )}
-                </div>
-
-                <div>
-                  <div className="flex justify-between items-center">
-                    <label className="text-xs font-bold text-slate-500 uppercase">Salary Base</label>
-                    <span className="text-[10px] text-slate-400 font-semibold tracking-wide">Non-negative • Optional</span>
-                  </div>
+                  <label className="text-xs font-bold text-slate-500 uppercase">Salary Base</label>
                   <input
                     type="number"
                     min="0"
@@ -419,10 +390,7 @@ export default function OwnerEmployees() {
                 </div>
 
                 <div>
-                  <div className="flex justify-between items-center">
-                    <label className="text-xs font-bold text-slate-500 uppercase">Branch</label>
-                    <span className="text-[10px] text-slate-400 font-semibold tracking-wide">Max 100 chars • Optional</span>
-                  </div>
+                  <label className="text-xs font-bold text-slate-500 uppercase">Branch</label>
                   <input
                     type="text"
                     value={editForm.branch}
@@ -438,11 +406,8 @@ export default function OwnerEmployees() {
                   )}
                 </div>
 
-                <div>
-                  <div className="flex justify-between items-center">
-                    <label className="text-xs font-bold text-slate-500 uppercase">Position</label>
-                    <span className="text-[10px] text-slate-400 font-semibold tracking-wide">Max 100 chars • Optional</span>
-                  </div>
+                <div className="col-span-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase">Position</label>
                   <input
                     type="text"
                     value={editForm.position}
@@ -459,10 +424,7 @@ export default function OwnerEmployees() {
                 </div>
 
                 <div className="col-span-2">
-                  <div className="flex justify-between items-center">
-                    <label className="text-xs font-bold text-slate-500 uppercase">Phone</label>
-                    <span className="text-[10px] text-slate-400 font-semibold tracking-wide">10-20 digits • Optional</span>
-                  </div>
+                  <label className="text-xs font-bold text-slate-500 uppercase">Phone</label>
                   <input
                     type="text"
                     value={editForm.phone}
@@ -479,10 +441,7 @@ export default function OwnerEmployees() {
                 </div>
 
                 <div className="col-span-2">
-                  <div className="flex justify-between items-center">
-                    <label className="text-xs font-bold text-slate-500 uppercase">Address</label>
-                    <span className="text-[10px] text-slate-400 font-semibold tracking-wide">Max 255 chars • Optional</span>
-                  </div>
+                  <label className="text-xs font-bold text-slate-500 uppercase">Address</label>
                   <textarea
                     rows={2}
                     value={editForm.address}

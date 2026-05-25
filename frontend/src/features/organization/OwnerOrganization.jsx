@@ -8,7 +8,7 @@ import {
     setLoading,
     setError,
     setSuccessMessage,
-    setSaving,
+    setCompanySaving,
     setOwnerProfile,
     setOwnerLoading,
     setOwnerSaving,
@@ -193,7 +193,7 @@ const OwnerOrganization = () => {
 
     const handleSave = async (e) => {
         e.preventDefault();
-        dispatch(setSaving(true));
+        dispatch(setCompanySaving(true));
         dispatch(setError(null));
         dispatch(setSuccessMessage(null));
         try {
@@ -212,7 +212,7 @@ const OwnerOrganization = () => {
         } catch (err) {
             dispatch(setError(err.response?.data?.message || 'Failed to update organization details.'));
         } finally {
-            dispatch(setSaving(false));
+            dispatch(setCompanySaving(false));
         }
     };
 
