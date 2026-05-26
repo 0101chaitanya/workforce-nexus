@@ -2,27 +2,27 @@ const { z } = require("zod");
 
 const userSchemas = {
     updateProfile: z.object({
-        fullName: z.string().min(2, "Full name must be at least 2 characters").max(100).optional(),
-        phone: z.string().min(10, "Phone number must be at least 10 digits").max(20).nullable().optional().or(z.literal("")),
-        address: z.string().max(255).nullable().optional().or(z.literal("")),
+        fullName: z.string().min(2, "Full name must be at least 2 characters").max(100),
+        phone: z.string().min(10, "Phone number must be at least 10 digits").max(20),
+        address: z.string().min(1, "Address is required").max(255),
         dateOfBirth: z.preprocess(
             (val) => (val === "" || val === null || val === undefined ? undefined : val),
-            z.coerce.date().optional()
+            z.coerce.date()
         ),
-        bankAccount: z.string().max(50).nullable().optional().or(z.literal("")),
+        bankAccount: z.string().min(1, "Bank account is required").max(50),
     }),
 
     updateUserByAdmin: z.object({
-        fullName: z.string().min(2).max(100).optional(),
+        fullName: z.string().min(2, "Full name must be at least 2 characters").max(100),
         role: z.enum(["employee", "owner"]).optional(),
         salary: z.preprocess(
-            (val) => (val === "" || val === null || val === undefined ? undefined : Number(val)),
-            z.number().nonnegative("Salary cannot be negative").optional()
+            (val) => Number(val),
+            z.number().nonnegative("Salary cannot be negative")
         ),
-        branch: z.string().max(100).nullable().optional().or(z.literal("")),
-        position: z.string().max(100).nullable().optional().or(z.literal("")),
-        phone: z.string().min(10).max(20).nullable().optional().or(z.literal("")),
-        address: z.string().max(255).nullable().optional().or(z.literal("")),
+        branch: z.string().min(2, "Branch must be at least 2 characters").max(100),
+        position: z.string().min(2, "Position must be at least 2 characters").max(100),
+        phone: z.string().min(10, "Phone number must be at least 10 digits").max(20),
+        address: z.string().min(1, "Address is required").max(255),
         dateOfBirth: z.preprocess(
             (val) => (val === "" || val === null || val === undefined ? undefined : val),
             z.coerce.date().optional()

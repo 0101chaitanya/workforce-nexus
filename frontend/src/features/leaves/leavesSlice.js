@@ -36,8 +36,6 @@ const initialState = {
     leaves: [],
     loading: true,
     submitLoading: false,
-    error: null,
-    successMessage: null,
     page: 1,
     limit: 10,
     paginationInfo: {
@@ -50,14 +48,15 @@ const initialState = {
       pending: 0,
       approved: 0,
       rejected: 0
-    }
+    },
+    isCached: false,
+    cachedParams: null
   },
   owner: {
     leaves: [],
     targetUserId: '',
     loading: true,
     actionPending: null,
-    error: null,
     page: 1,
     limit: 10,
     paginationInfo: {
@@ -70,7 +69,9 @@ const initialState = {
     searchResults: [],
     selectedUserObj: null,
     showDropdown: false,
-    searchLoading: false
+    searchLoading: false,
+    isCached: false,
+    cachedParams: null
   }
 };
 
@@ -85,6 +86,11 @@ const leavesSlice = createSlice({
     /** Caches employee personal leave list. */
     setEmployeeLeaves: (state, action) => {
       state.employee.leaves = action.payload;
+      state.employee.isCached = true;
+      state.employee.cachedParams = {
+        page: state.employee.page,
+        limit: state.employee.limit
+      };
     },
     /** Sets leave logs loading flag for employee. */
     setEmployeeLoading: (state, action) => {
@@ -93,14 +99,6 @@ const leavesSlice = createSlice({
     /** Sets application form submit processing loading flag. */
     setEmployeeSubmitLoading: (state, action) => {
       state.employee.submitLoading = action.payload;
-    },
-    /** Caches employee leave actions error messages. */
-    setEmployeeError: (state, action) => {
-      state.employee.error = action.payload;
-    },
-    /** Caches employee leave success feedback. */
-    setEmployeeSuccessMessage: (state, action) => {
-      state.employee.successMessage = action.payload;
     },
     /** Updates employee pagination page. */
     setEmployeePage: (state, action) => {
@@ -118,11 +116,22 @@ const leavesSlice = createSlice({
     setEmployeeLeaveStats: (state, action) => {
       state.employee.leaveStats = action.payload;
     },
+    /** Invalidates employee leave cache. */
+    invalidateEmployeeCache: (state) => {
+      state.employee.isCached = false;
+      state.employee.cachedParams = null;
+    },
 
     // Owner reducers
     /** Caches organization-wide leave requests. */
     setOwnerLeaves: (state, action) => {
       state.owner.leaves = action.payload;
+      state.owner.isCached = true;
+      state.owner.cachedParams = {
+        page: state.owner.page,
+        limit: state.owner.limit,
+        targetUserId: state.owner.targetUserId
+      };
     },
     /** Sets target employee identifier filter. */
     setOwnerTargetUserId: (state, action) => {
@@ -135,10 +144,6 @@ const leavesSlice = createSlice({
     /** Tracks active loading state during approval/rejection actions. */
     setOwnerActionPending: (state, action) => {
       state.owner.actionPending = action.payload;
-    },
-    /** Caches owner leave actions error messages. */
-    setOwnerError: (state, action) => {
-      state.owner.error = action.payload;
     },
     /** Updates owner logs paging index. */
     setOwnerPage: (state, action) => {
@@ -171,6 +176,11 @@ const leavesSlice = createSlice({
     /** Toggles search loading state. */
     setOwnerSearchLoading: (state, action) => {
       state.owner.searchLoading = action.payload;
+    },
+    /** Invalidates owner leave cache. */
+    invalidateOwnerCache: (state) => {
+      state.owner.isCached = false;
+      state.owner.cachedParams = null;
     }
   }
 });
@@ -179,17 +189,15 @@ export const {
   setEmployeeLeaves,
   setEmployeeLoading,
   setEmployeeSubmitLoading,
-  setEmployeeError,
-  setEmployeeSuccessMessage,
   setEmployeePage,
   setEmployeeLimit,
   setEmployeePaginationInfo,
   setEmployeeLeaveStats,
+  invalidateEmployeeCache,
   setOwnerLeaves,
   setOwnerTargetUserId,
   setOwnerLoading,
   setOwnerActionPending,
-  setOwnerError,
   setOwnerPage,
   setOwnerLimit,
   setOwnerPaginationInfo,
@@ -197,8 +205,8 @@ export const {
   setOwnerSearchResults,
   setOwnerSelectedUserObj,
   setOwnerShowDropdown,
-  setOwnerSearchLoading
+  setOwnerSearchLoading,
+  invalidateOwnerCache
 } = leavesSlice.actions;
 
 export default leavesSlice.reducer;
-

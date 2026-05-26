@@ -1,13 +1,12 @@
-import React, { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
 import Pagination from '../../components/common/Pagination';
 import { toast } from 'react-toastify';
-import { Loader2, CalendarCheck, Search, X } from 'lucide-react';
+import { Loader2, CalendarCheck, Search, X, RefreshCcw } from 'lucide-react';
 import {
   setOwnerAttendance,
   setOwnerLoading,
-  setOwnerError,
   setOwnerPage,
   setOwnerLimit,
   setOwnerPaginationInfo,
@@ -18,13 +17,12 @@ import {
   setOwnerShowDropdown,
   setOwnerSearchLoading
 } from './attendanceSlice';
-
+ 
 const OwnerAttendance = () => {
   const dispatch = useDispatch();
   const {
     attendance,
     loading,
-    error,
     page,
     limit,
     paginationInfo,
@@ -33,12 +31,20 @@ const OwnerAttendance = () => {
     targetUserId,
     selectedUserObj,
     showDropdown,
-    searchLoading
+    searchLoading,
+    isCached,
+    cachedParams
   } = useSelector((state) => state.attendance.owner);
+ 
+  const fetchAttendance = useCallback(async (force = false) => {
+    if (!force && isCached && cachedParams &&
+        cachedParams.page === page &&
+        cachedParams.limit === limit &&
+        cachedParams.targetUserId === targetUserId) {
+      return;
+    }
 
-  const fetchAttendance = async () => {
     dispatch(setOwnerLoading(true));
-    dispatch(setOwnerError(null));
     try {
       const response = await api.get('/attendance/history', {
         params: {
@@ -59,22 +65,15 @@ const OwnerAttendance = () => {
         }));
       }
     } catch (err) {
-      dispatch(setOwnerError(err.response?.data?.message || 'Could not fetch attendance history.'));
+      toast.error(err.response?.data?.message || 'Could not fetch attendance history.');
     } finally {
       dispatch(setOwnerLoading(false));
     }
-  };
-
+  }, [targetUserId, page, limit, dispatch, isCached, cachedParams]);
+ 
   useEffect(() => {
     fetchAttendance();
-  }, [targetUserId, page, limit]);
-
-  useEffect(() => {
-    if (error) {
-      toast.error(error);
-      dispatch(setOwnerError(null));
-    }
-  }, [error, dispatch]);
+  }, [fetchAttendance]);
 
   // Search user autocomplete effect
   useEffect(() => {
@@ -109,7 +108,7 @@ const OwnerAttendance = () => {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchQuery, selectedUserObj]);
+  }, [searchQuery, selectedUserObj, dispatch]);
 
   const handleSelectUser = (user) => {
     dispatch(setOwnerTargetUserId(user._id));
@@ -151,6 +150,14 @@ const OwnerAttendance = () => {
             <h1 className="text-3xl font-black text-slate-900">Attendance Management</h1>
             <p className="mt-2 text-slate-500">View company attendance history and look up employee records.</p>
           </div>
+          <button
+            onClick={() => fetchAttendance(true)}
+            disabled={loading}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 font-bold text-xs rounded-xl transition active:scale-95 disabled:opacity-50 shrink-0"
+          >
+            <RefreshCcw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
         </div>
       </div>
 

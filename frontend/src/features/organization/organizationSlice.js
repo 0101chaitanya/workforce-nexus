@@ -16,14 +16,12 @@ import { createSlice } from '@reduxjs/toolkit';
 const initialState = {
   company: null,
   loading: true,
-  error: null,
-  successMessage: null,
   saving: false,
   ownerProfile: null,
   ownerLoading: false,
   ownerSaving: false,
-  ownerError: null,
-  ownerSuccessMessage: null
+  isCached: false,
+  ownerProfileIsCached: false
 };
 
 /**
@@ -36,18 +34,11 @@ const organizationSlice = createSlice({
     /** Caches retrieved company settings payload. */
     setCompany: (state, action) => {
       state.company = action.payload;
+      state.isCached = true;
     },
     /** Sets loader for company details. */
     setLoading: (state, action) => {
       state.loading = action.payload;
-    },
-    /** Caches retrieval failure message. */
-    setError: (state, action) => {
-      state.error = action.payload;
-    },
-    /** Sets success alert validation message. */
-    setSuccessMessage: (state, action) => {
-      state.successMessage = action.payload;
     },
     /** Toggles saving loader indicator for company updates. */
     setCompanySaving: (state, action) => {
@@ -56,6 +47,7 @@ const organizationSlice = createSlice({
     /** Caches company owner profile context parameters. */
     setOwnerProfile: (state, action) => {
       state.ownerProfile = action.payload;
+      state.ownerProfileIsCached = true;
     },
     /** Sets loader for owner profile settings. */
     setOwnerLoading: (state, action) => {
@@ -65,13 +57,10 @@ const organizationSlice = createSlice({
     setOwnerSaving: (state, action) => {
       state.ownerSaving = action.payload;
     },
-    /** Caches owner profile update error logs. */
-    setOwnerError: (state, action) => {
-      state.ownerError = action.payload;
-    },
-    /** Sets owner profile save action feedback. */
-    setOwnerSuccessMessage: (state, action) => {
-      state.ownerSuccessMessage = action.payload;
+    /** Invalidates company & owner profile cache. */
+    invalidateCache: (state) => {
+      state.isCached = false;
+      state.ownerProfileIsCached = false;
     }
   }
 });
@@ -79,15 +68,11 @@ const organizationSlice = createSlice({
 export const {
   setCompany,
   setLoading,
-  setError,
-  setSuccessMessage,
   setCompanySaving,
   setOwnerProfile,
   setOwnerLoading,
   setOwnerSaving,
-  setOwnerError,
-  setOwnerSuccessMessage
+  invalidateCache
 } = organizationSlice.actions;
 
 export default organizationSlice.reducer;
-

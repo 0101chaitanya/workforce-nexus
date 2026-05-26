@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
 import Pagination from '../../components/common/Pagination';
 import { toast } from 'react-toastify';
-import { Loader2, CreditCard, Download, Users, ArrowUpRight, AlertTriangle, Search, X } from 'lucide-react';
+import { Loader2, CreditCard, Download, ArrowUpRight, Search, X, RefreshCcw } from 'lucide-react';
 import {
   setOwnerPayrolls,
   setOwnerTargetUserId,
@@ -12,8 +12,6 @@ import {
   setOwnerDownloadLoading,
   setOwnerTenureDownloading,
   setOwnerRowTenureDownloading,
-  setOwnerError,
-  setOwnerMessage,
   setOwnerPage,
   setOwnerLimit,
   setOwnerPaginationInfo,
@@ -23,7 +21,7 @@ import {
   setOwnerShowDropdown,
   setOwnerSearchLoading
 } from './payrollSlice';
-
+ 
 const OwnerPayroll = () => {
   const dispatch = useDispatch();
   const {
@@ -34,8 +32,6 @@ const OwnerPayroll = () => {
     downloadLoading,
     tenureDownloading,
     rowTenureDownloading,
-    error,
-    message,
     page,
     limit,
     paginationInfo,
@@ -43,13 +39,20 @@ const OwnerPayroll = () => {
     searchResults,
     selectedUserObj,
     showDropdown,
-    searchLoading
+    searchLoading,
+    isCached,
+    cachedParams
   } = useSelector((state) => state.payroll.owner);
+ 
+  const fetchPayrolls = async (force = false) => {
+    if (!force && isCached && cachedParams &&
+        cachedParams.page === page &&
+        cachedParams.limit === limit &&
+        cachedParams.targetUserId === targetUserId) {
+      return;
+    }
 
-  const fetchPayrolls = async () => {
     dispatch(setOwnerLoading(true));
-    dispatch(setOwnerError(null));
-    dispatch(setOwnerMessage(null));
     try {
       const response = await api.get('/payroll/history', {
         params: {
@@ -70,30 +73,16 @@ const OwnerPayroll = () => {
         }));
       }
     } catch (err) {
-      dispatch(setOwnerError(err.response?.data?.message || 'Unable to fetch payroll history.'));
+      toast.error(err.response?.data?.message || 'Unable to fetch payroll history.');
     } finally {
       dispatch(setOwnerLoading(false));
     }
   };
-
+ 
   useEffect(() => {
     fetchPayrolls();
   }, [targetUserId, page, limit]);
-
-  useEffect(() => {
-    if (error) {
-      toast.error(error);
-      dispatch(setOwnerError(null));
-    }
-  }, [error, dispatch]);
-
-  useEffect(() => {
-    if (message) {
-      toast.success(message);
-      dispatch(setOwnerMessage(null));
-    }
-  }, [message, dispatch]);
-
+ 
   // Search user autocomplete effect
   useEffect(() => {
     if (searchQuery.trim().length < 2) {
@@ -101,7 +90,7 @@ const OwnerPayroll = () => {
       dispatch(setOwnerShowDropdown(false));
       return;
     }
-
+ 
     // Skip search query if it exactly matches the currently selected user
     if (selectedUserObj && (
       searchQuery === selectedUserObj.fullName ||
@@ -110,7 +99,7 @@ const OwnerPayroll = () => {
     )) {
       return;
     }
-
+ 
     const timer = setTimeout(async () => {
       dispatch(setOwnerSearchLoading(true));
       try {
@@ -125,10 +114,10 @@ const OwnerPayroll = () => {
         dispatch(setOwnerSearchLoading(false));
       }
     }, 300);
-
+ 
     return () => clearTimeout(timer);
   }, [searchQuery, selectedUserObj]);
-
+ 
   const handleSelectUser = (user) => {
     dispatch(setOwnerTargetUserId(user._id));
     dispatch(setOwnerSelectedUserObj(user));
@@ -136,7 +125,7 @@ const OwnerPayroll = () => {
     dispatch(setOwnerShowDropdown(false));
     dispatch(setOwnerPage(1));
   };
-
+ 
   const handleClearSearch = () => {
     dispatch(setOwnerSearchQuery(''));
     dispatch(setOwnerTargetUserId(''));
@@ -145,7 +134,7 @@ const OwnerPayroll = () => {
     dispatch(setOwnerShowDropdown(false));
     dispatch(setOwnerPage(1));
   };
-
+ 
   const handleSearchChange = (val) => {
     dispatch(setOwnerSearchQuery(val));
     if (val === '') {
@@ -160,26 +149,24 @@ const OwnerPayroll = () => {
       }
     }
   };
-
+ 
   const handleGeneratePayroll = async () => {
     dispatch(setOwnerGenerating(true));
-    dispatch(setOwnerError(null));
-    dispatch(setOwnerMessage(null));
     try {
       const response = await api.post('/payroll/generate');
-      dispatch(setOwnerMessage(response.data.message || 'Payroll generated successfully.'));
+      toast.success(response.data.message || 'Payroll generated successfully.');
       if (page === 1) {
-        fetchPayrolls();
+        fetchPayrolls(true);
       } else {
         dispatch(setOwnerPage(1));
       }
     } catch (err) {
-      dispatch(setOwnerError(err.response?.data?.message || 'Payroll generation failed.'));
+      toast.error(err.response?.data?.message || 'Payroll generation failed.');
     } finally {
       dispatch(setOwnerGenerating(false));
     }
   };
-
+ 
   const handleDownload = async (id) => {
     dispatch(setOwnerDownloadLoading(id));
     try {
@@ -195,16 +182,15 @@ const OwnerPayroll = () => {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      dispatch(setOwnerError(err.response?.data?.message || 'Could not download payslip.'));
+      toast.error(err.response?.data?.message || 'Could not download payslip.');
     } finally {
       dispatch(setOwnerDownloadLoading(''));
     }
   };
-
+ 
   const handleDownloadTenure = async () => {
     if (!targetUserId) return;
     dispatch(setOwnerTenureDownloading(true));
-    dispatch(setOwnerError(null));
     try {
       const response = await api.get('/payroll/tenure/download', {
         params: { targetUserId },
@@ -220,16 +206,15 @@ const OwnerPayroll = () => {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      dispatch(setOwnerError('Could not download consolidated payslip.'));
+      toast.error('Could not download consolidated payslip.');
     } finally {
       dispatch(setOwnerTenureDownloading(false));
     }
   };
-
+ 
   const handleDownloadRowTenure = async (userId, fullName) => {
     if (!userId) return;
     dispatch(setOwnerRowTenureDownloading(userId));
-    dispatch(setOwnerError(null));
     try {
       const response = await api.get('/payroll/tenure/download', {
         params: { targetUserId: userId },
@@ -245,12 +230,12 @@ const OwnerPayroll = () => {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      dispatch(setOwnerError('Could not download consolidated payslip.'));
+      toast.error('Could not download consolidated payslip.');
     } finally {
       dispatch(setOwnerRowTenureDownloading(''));
     }
   };
-
+ 
   return (
     <div className="space-y-6">
       <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
@@ -259,14 +244,24 @@ const OwnerPayroll = () => {
             <h1 className="text-3xl font-black text-slate-900">Payroll Administration</h1>
             <p className="mt-2 text-slate-500">Generate company payroll, review payouts, and download payslips for employees.</p>
           </div>
-          <button
-            onClick={handleGeneratePayroll}
-            disabled={generating}
-            className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-5 py-3 text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-300"
-          >
-            <ArrowUpRight size={18} />
-            {generating ? 'Generating...' : 'Generate Payroll'}
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => fetchPayrolls(true)}
+              disabled={loading}
+              className="p-3 text-slate-500 bg-slate-50 hover:bg-slate-100 hover:text-slate-800 rounded-2xl transition border border-slate-200/60 active:scale-95 disabled:opacity-50 shrink-0"
+              title="Refresh Data"
+            >
+              <RefreshCcw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+            <button
+              onClick={handleGeneratePayroll}
+              disabled={generating}
+              className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-5 py-3 text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-300 shrink-0 text-sm font-semibold"
+            >
+              <ArrowUpRight size={18} />
+              {generating ? 'Generating...' : 'Generate Payroll'}
+            </button>
+          </div>
         </div>
       </div>
 

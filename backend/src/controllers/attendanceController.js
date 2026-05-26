@@ -102,7 +102,7 @@ exports.clockIn = async (req, res) => {
     } catch (err) {
         logger.error(`Error in clockIn: ${err.message || err}`, { stack: err.stack });
         return res.status(500).json({
-            message: "`Error in clockIn",
+            message: "Error in clockIn",
             success: false,
             occurredAt: new Date().toISOString()
         });

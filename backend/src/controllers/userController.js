@@ -174,7 +174,7 @@ exports.searchUsers = async (req, res) => {
         }
 
         // If pagination params are provided, use pagination; otherwise fetch all
-        if (page !== undefined && limit !== undefined) {
+        if (page !== undefined || limit !== undefined) {
             const pageNum = parseInt(page) || 1;
             const limitNum = parseInt(limit) || 10;
 

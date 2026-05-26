@@ -12,12 +12,9 @@ const validate = (schema) => async (req, res, next) => {
         next();
     } catch (error) {
         if (error instanceof z.ZodError) {
+            const concatenatedMessage = (error.issues || []).map((e) => e.message).join(", ");
             return res.status(400).json({
-                message: "Validation failed",
-                errors: (error.issues || []).map((e) => ({
-                    field: e.path.join("."),
-                    message: e.message,
-                })),
+                message: concatenatedMessage || "Validation failed",
                 success: false,
                 occurredAt: new Date().toISOString()
             });
@@ -43,12 +40,9 @@ const validateQuery = (schema) => async (req, res, next) => {
         next();
     } catch (error) {
         if (error instanceof z.ZodError) {
+            const concatenatedMessage = (error.issues || []).map((e) => e.message).join(", ");
             return res.status(400).json({
-                message: "Query validation failed",
-                errors: (error.issues || []).map((e) => ({
-                    field: e.path.join("."),
-                    message: e.message,
-                })),
+                message: concatenatedMessage || "Query validation failed",
                 success: false,
                 occurredAt: new Date().toISOString()
             });
@@ -65,4 +59,3 @@ module.exports = {
     validate,
     validateQuery
 };
-

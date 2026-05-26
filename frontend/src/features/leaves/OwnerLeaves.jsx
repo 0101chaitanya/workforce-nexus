@@ -3,13 +3,14 @@ import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
 import Pagination from '../../components/common/Pagination';
 import { toast } from 'react-toastify';
+import { validateForm } from '../../utils/validation';
+import { leaveSchemas } from './leaveSchemas';
 import { Loader2, User, FileSpreadsheet, CheckCircle2, XCircle, RefreshCcw, MessageSquare, Search, X } from 'lucide-react';
 import {
   setOwnerLeaves,
   setOwnerTargetUserId,
   setOwnerLoading,
   setOwnerActionPending,
-  setOwnerError,
   setOwnerPage,
   setOwnerLimit,
   setOwnerPaginationInfo,
@@ -27,7 +28,6 @@ const OwnerLeaves = () => {
     targetUserId,
     loading,
     actionPending,
-    error,
     page,
     limit,
     paginationInfo,
@@ -35,7 +35,9 @@ const OwnerLeaves = () => {
     searchResults,
     selectedUserObj,
     showDropdown,
-    searchLoading
+    searchLoading,
+    isCached,
+    cachedParams
   } = useSelector((state) => state.leaves.owner);
 
   // Modal state (local UI state)
@@ -44,9 +46,15 @@ const OwnerLeaves = () => {
   const [actionType, setActionType] = useState(null);
   const [remarks, setRemarks] = useState('');
 
-  const fetchLeaves = async () => {
+  const fetchLeaves = async (force = false) => {
+    if (!force && isCached && cachedParams &&
+        cachedParams.page === page &&
+        cachedParams.limit === limit &&
+        cachedParams.targetUserId === targetUserId) {
+      return;
+    }
+
     dispatch(setOwnerLoading(true));
-    dispatch(setOwnerError(null));
     try {
       const response = await api.get('/leaves/history', {
         params: {
@@ -67,7 +75,7 @@ const OwnerLeaves = () => {
         }));
       }
     } catch (err) {
-      dispatch(setOwnerError(err.response?.data?.message || 'Unable to load leave requests.'));
+      toast.error(err.response?.data?.message || 'Unable to load leave requests.');
     } finally {
       dispatch(setOwnerLoading(false));
     }
@@ -76,13 +84,6 @@ const OwnerLeaves = () => {
   useEffect(() => {
     fetchLeaves();
   }, [targetUserId, page, limit]);
-
-  useEffect(() => {
-    if (error) {
-      toast.error(error);
-      dispatch(setOwnerError(null));
-    }
-  }, [error, dispatch]);
 
   // Search user autocomplete effect
   useEffect(() => {
@@ -159,16 +160,19 @@ const OwnerLeaves = () => {
   };
 
   const handleConfirmAction = async () => {
+    const validated = validateForm(leaveSchemas.updateLeaveStatus, { status: actionType, remarks });
+    if (!validated) return;
+
     dispatch(setOwnerActionPending(selectedLeave));
     try {
-      await api.put(`/leaves/${selectedLeave}/status`, { status: actionType, remarks });
-      await fetchLeaves();
+      await api.put(`/leaves/${selectedLeave}/status`, validated);
+      await fetchLeaves(true);
       setIsModalOpen(false);
       setSelectedLeave(null);
       setActionType(null);
       setRemarks('');
     } catch (err) {
-      dispatch(setOwnerError(err.response?.data?.message || 'Could not update leave status.'));
+      toast.error(err.response?.data?.message || 'Could not update leave status.');
     } finally {
       dispatch(setOwnerActionPending(null));
     }
@@ -189,8 +193,18 @@ const OwnerLeaves = () => {
             <h1 className="text-3xl font-black text-slate-900">Leave Approval</h1>
             <p className="mt-2 text-slate-500">Review leave requests and approve or reject them for your team.</p>
           </div>
-          <div className="inline-flex items-center gap-2 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-            <RefreshCcw size={18} /> Company leave management
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => fetchLeaves(true)}
+              disabled={loading}
+              className="p-3 text-slate-500 bg-slate-50 hover:bg-slate-100 hover:text-slate-800 rounded-2xl transition border border-slate-200/60 active:scale-95 disabled:opacity-50"
+              title="Refresh Data"
+            >
+              <RefreshCcw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+            <div className="inline-flex items-center gap-2 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+              Company leave management
+            </div>
           </div>
         </div>
       </div>

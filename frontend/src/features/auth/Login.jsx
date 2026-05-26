@@ -1,44 +1,26 @@
-import { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
-import axiosInterceptors from '../../app/axiosInterceptors';
-import { setAuthSuccess, setAuthFailed, clearError } from './authSlice';
+import authApi from '../../app/authApi';
+import { setAuthSuccess } from './authSlice';
 import { Mail, Lock, Briefcase } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { validateForm } from '../../utils/validation';
+import { authSchemas } from './authSchemas';
 
 const Login = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { error } = useSelector((state) => state.auth);
 
   const [isForgotMode, setIsForgotMode] = useState(false);
   const [isOtpMode, setIsOtpMode] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
 
   // Data inputs
   const [loginData, setLoginData] = useState({ identifier: '', password: '' });
   const [recoveryEmail, setRecoveryEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
-
-  useEffect(() => {
-    dispatch(clearError());
-  }, [dispatch, isForgotMode]);
-
-  useEffect(() => {
-    if (error) {
-      toast.error(error);
-      dispatch(clearError());
-    }
-  }, [error, dispatch]);
-
-  useEffect(() => {
-    if (successMessage) {
-      toast.success(successMessage);
-      setSuccessMessage('');
-    }
-  }, [successMessage]);
 
   const handleInputChange = (e) => {
     setLoginData({ ...loginData, [e.target.name]: e.target.value });
@@ -47,16 +29,21 @@ const Login = () => {
   // Auth processing submission routine
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
+    const validated = validateForm(authSchemas.login, {
+      email: loginData.identifier,
+      password: loginData.password
+    });
+    if (!validated) return;
+
     setLoading(true);
-    dispatch(clearError());
 
     try {
       const payload = {
-        email: loginData.identifier.trim().toLowerCase(),
-        password: loginData.password,
+        email: validated.email.toLowerCase(),
+        password: validated.password,
       };
 
-      const response = await axiosInterceptors.post('/auth/login', payload);
+      const response = await authApi.post('/auth/login', payload);
       dispatch(setAuthSuccess(response.data));
 
       // Navigate directly to the role-specific dashboard — no intermediate redirect needed
@@ -65,7 +52,7 @@ const Login = () => {
       const destination = normalizedRole === 'owner' ? '/owner' : '/employee';
       navigate(destination);
     } catch (err) {
-      dispatch(setAuthFailed(err.response?.data?.message || "Invalid credentials provided."));
+      toast.error(err.response?.data?.message || "Invalid credentials provided.");
     } finally {
       setLoading(false);
     }
@@ -74,17 +61,17 @@ const Login = () => {
   // Password reset transmission block
   const handleRecoverySubmit = async (e) => {
     e.preventDefault();
-    if (!recoveryEmail) return;
+    const validated = validateForm(authSchemas.forgotPasswordOtp, { email: recoveryEmail });
+    if (!validated) return;
+
     setLoading(true);
-    dispatch(clearError());
-    setSuccessMessage('');
 
     try {
-      await axiosInterceptors.post('/auth/forgot-password-otp', { email: recoveryEmail });
-      setSuccessMessage("Recovery instructions forwarded! Check your inbox.");
+      await authApi.post('/auth/forgot-password-otp', validated);
+      toast.success("Recovery instructions forwarded! Check your inbox.");
       setIsOtpMode(true);
     } catch (err) {
-      dispatch(setAuthFailed(err.response?.data?.message || "Failed to issue password restoration ticket."));
+      toast.error(err.response?.data?.message || "Failed to issue password restoration ticket.");
     } finally {
       setLoading(false);
     }
@@ -92,14 +79,18 @@ const Login = () => {
 
   const handleResetSubmit = async (e) => {
     e.preventDefault();
-    if (!otp || !newPassword) return;
+    const validated = validateForm(authSchemas.resetPassword, {
+      email: recoveryEmail,
+      otp: otp,
+      newPassword: newPassword
+    });
+    if (!validated) return;
+
     setLoading(true);
-    dispatch(clearError());
-    setSuccessMessage('');
 
     try {
-      await axiosInterceptors.post('/auth/reset-password', { email: recoveryEmail, otp, newPassword });
-      setSuccessMessage("Password reset successfully! You can now login.");
+      await authApi.post('/auth/reset-password', validated);
+      toast.success("Password reset successfully! You can now login.");
       setTimeout(() => {
         setIsForgotMode(false);
         setIsOtpMode(false);
@@ -108,7 +99,7 @@ const Login = () => {
         setRecoveryEmail('');
       }, 2000);
     } catch (err) {
-      dispatch(setAuthFailed(err.response?.data?.message || "Failed to reset password."));
+      toast.error(err.response?.data?.message || "Failed to reset password.");
     } finally {
       setLoading(false);
     }

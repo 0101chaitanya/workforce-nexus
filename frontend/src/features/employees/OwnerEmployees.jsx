@@ -1,162 +1,149 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Search, UserPlus, Edit2, Shield, Loader2, AlertCircle, Phone, MapPin, Briefcase } from 'lucide-react';
+import { Search, UserPlus, Edit2, Shield, Loader2, Phone, MapPin, Briefcase, RefreshCcw } from 'lucide-react';
 import api from '../../app/axiosInterceptors';
 import { toast } from 'react-toastify';
 import {
   setEmployees,
   setLoading,
-  setError,
-  setSuccessMessage,
   setSearchQuery,
   setSelectedUser,
   setModalLoading,
-  setValidationErrors
+  setPage,
+  setLimit,
+  setPaginationInfo
 } from './employeesSlice';
-
+import { validateForm } from '../../utils/validation';
+import { employeeSchemas } from './employeeSchemas';
+import Pagination from '../../components/common/Pagination';
+ 
 export default function OwnerEmployees() {
   const dispatch = useDispatch();
   const {
     employees,
     loading,
-    error,
-    successMessage,
     searchQuery,
     selectedUser,
     modalLoading,
-    validationErrors
+    page,
+    limit,
+    paginationInfo,
+    isCached,
+    cachedParams
   } = useSelector((state) => state.employees);
-
+ 
+  // Local state for search input (to debounce and avoid query page-reset issues)
+  const [localSearch, setLocalSearch] = useState(searchQuery);
+ 
   // Modals (local UI states)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-
+ 
   // Form Data (local UI states)
   const [addForm, setAddForm] = useState({ fullName: '', email: '', salary: '', branch: '', position: '' });
-  const [editForm, setEditForm] = useState({ fullName: '', role: 'employee', salary: '', branch: '', position: '', phone: '', address: '' });
+  const [editForm, setEditForm] = useState({ fullName: '', salary: '', branch: '', position: '', phone: '', address: '' });
+ 
+  const fetchEmployees = useCallback(async (queryVal, pageVal, limitVal, force = false) => {
+    if (!force && isCached && cachedParams &&
+        cachedParams.page === pageVal &&
+        cachedParams.limit === limitVal &&
+        cachedParams.searchQuery === queryVal) {
+      return;
+    }
 
-  const fetchEmployees = useCallback(async (query = '') => {
     dispatch(setLoading(true));
     try {
-      // For initial load (empty query), fetch all users without pagination limit
-      // For search, use pagination
-      const params = query ? { query, page: 1, limit: 10 } : { query };
+      const params = { page: pageVal, limit: limitVal };
+      if (queryVal && queryVal.trim() !== "") {
+        params.query = queryVal;
+      }
       const res = await api.get('/users/search-users-or-get-all', { params });
       dispatch(setEmployees(res.data?.data || []));
-      dispatch(setError(null));
+      if (res.data?.pagination) {
+        dispatch(setPaginationInfo(res.data.pagination));
+      } else {
+        dispatch(setPaginationInfo({
+          total: (res.data?.data || []).length,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false
+        }));
+      }
     } catch (err) {
-      dispatch(setError(err.response?.data?.message || 'Failed to fetch directory'));
+      toast.error(err.response?.data?.message || 'Failed to fetch directory');
     } finally {
       dispatch(setLoading(false));
     }
-  }, [dispatch]);
-
-  useEffect(() => {
-    // Initial fetch
-    fetchEmployees();
-  }, [fetchEmployees]);
-
-  useEffect(() => {
-    if (successMessage) {
-      toast.success(successMessage);
-      dispatch(setSuccessMessage(null));
-    }
-  }, [successMessage, dispatch]);
-
-  useEffect(() => {
-    if (error) {
-      toast.error(error);
-      dispatch(setError(null));
-    }
-  }, [error, dispatch]);
-
-  // Debounced search effect
+  }, [dispatch, isCached, cachedParams]);
+ 
+  // Debounced search query update
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
-      // Only search if query is empty or has at least 2 characters
-      if (searchQuery === '' || searchQuery.length >= 2) {
-        fetchEmployees(searchQuery);
+      if (localSearch === '' || localSearch.length >= 2) {
+        dispatch(setSearchQuery(localSearch));
+        dispatch(setPage(1));
       }
     }, 500);
-
+ 
     return () => clearTimeout(debounceTimer);
-  }, [searchQuery, fetchEmployees]);
-
+  }, [localSearch, dispatch]);
+ 
+  // Main fetch hook: runs instantly whenever searchQuery, page, or limit changes
+  useEffect(() => {
+    fetchEmployees(searchQuery, page, limit);
+  }, [searchQuery, page, limit, fetchEmployees]);
+ 
   const handleAddSubmit = async (e) => {
     e.preventDefault();
+    const validated = validateForm(employeeSchemas.addUser, addForm);
+    if (!validated) return;
+ 
     dispatch(setModalLoading(true));
-    dispatch(setError(null));
-    dispatch(setSuccessMessage(null));
-    dispatch(setValidationErrors({}));
     try {
-      const payload = { ...addForm, role: 'employee' };
-      if (payload.salary) payload.salary = Number(payload.salary);
-      await api.post('/users/add', payload);
-      dispatch(setSuccessMessage('Employee added successfully. An email with temporary password has been sent.'));
+      await api.post('/users/add', validated);
+      toast.success('Employee added successfully. An email with temporary password has been sent.');
       setIsAddModalOpen(false);
       setAddForm({ fullName: '', email: '', salary: '', branch: '', position: '' });
-      fetchEmployees();
+      fetchEmployees(searchQuery, page, limit, true);
     } catch (err) {
-      if (err.response?.status === 400 && err.response?.data?.errors) {
-        const errorsObj = {};
-        err.response.data.errors.forEach(e => {
-          errorsObj[e.field] = e.message;
-        });
-        dispatch(setValidationErrors(errorsObj));
-        dispatch(setError(err.response.data.message || 'Validation failed'));
-      } else {
-        dispatch(setError(err.response?.data?.message || 'Failed to add employee'));
-      }
+      toast.error(err.response?.data?.message || 'Failed to add employee');
     } finally {
       dispatch(setModalLoading(false));
     }
   };
-
+ 
   const handleEditClick = (user) => {
     dispatch(setSelectedUser(user));
     setEditForm({
       fullName: user.fullName || '',
-      role: user.role || 'employee',
       salary: user.salary || '',
       branch: user.branch || '',
       position: user.position || '',
       phone: user.phone || '',
       address: user.address || ''
     });
-    dispatch(setValidationErrors({}));
-    dispatch(setError(null));
     setIsEditModalOpen(true);
   };
-
+ 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
+    const validated = validateForm(employeeSchemas.updateUserByAdmin, editForm);
+    if (!validated) return;
+ 
     dispatch(setModalLoading(true));
-    dispatch(setError(null));
-    dispatch(setSuccessMessage(null));
-    dispatch(setValidationErrors({}));
     try {
-      const payload = { ...editForm, role: 'employee' };
-      if (payload.salary) payload.salary = Number(payload.salary);
+      const payload = { ...validated, role: 'employee' };
       await api.put(`/users/admin-update/${selectedUser._id}`, payload);
-      dispatch(setSuccessMessage('Employee updated successfully.'));
+      toast.success('Employee updated successfully.');
       setIsEditModalOpen(false);
-      fetchEmployees();
+      fetchEmployees(searchQuery, page, limit, true);
     } catch (err) {
-      if (err.response?.status === 400 && err.response?.data?.errors) {
-        const errorsObj = {};
-        err.response.data.errors.forEach(e => {
-          errorsObj[e.field] = e.message;
-        });
-        dispatch(setValidationErrors(errorsObj));
-        dispatch(setError(err.response.data.message || 'Validation failed'));
-      } else {
-        dispatch(setError(err.response?.data?.message || 'Failed to update employee'));
-      }
+      toast.error(err.response?.data?.message || 'Failed to update employee');
     } finally {
       dispatch(setModalLoading(false));
     }
   };
-
+ 
   if (loading && employees.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-20 space-y-3 bg-white rounded-2xl border">
@@ -165,7 +152,7 @@ export default function OwnerEmployees() {
       </div>
     );
   }
-
+ 
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -177,10 +164,20 @@ export default function OwnerEmployees() {
           </h1>
           <p className="text-slate-500 text-sm mt-1">Manage personnel records, roles, and administrative profiles.</p>
         </div>
-        <button onClick={() => { setIsAddModalOpen(true); setValidationErrors({}); setError(null); }} className="flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 text-white font-bold text-sm rounded-xl hover:bg-indigo-700 transition active:scale-95 shadow-md shadow-indigo-200">
-          <UserPlus size={18} />
-          Add New Employee
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => fetchEmployees(searchQuery, page, limit, true)}
+            disabled={loading}
+            className="p-2.5 text-slate-500 bg-slate-50 hover:bg-slate-100 hover:text-slate-800 rounded-xl transition border border-slate-200/60 active:scale-95 disabled:opacity-50"
+            title="Refresh Data"
+          >
+            <RefreshCcw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+          <button onClick={() => setIsAddModalOpen(true)} className="flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 text-white font-bold text-sm rounded-xl hover:bg-indigo-700 transition active:scale-95 shadow-md shadow-indigo-200">
+            <UserPlus size={18} />
+            Add New Employee
+          </button>
+        </div>
       </div>
 
       {/* Search Bar */}
@@ -189,8 +186,8 @@ export default function OwnerEmployees() {
         <input
           type="text"
           placeholder="Search by name, email or ID (min. 2 characters)..."
-          value={searchQuery}
-          onChange={(e) => dispatch(setSearchQuery(e.target.value))}
+          value={localSearch}
+          onChange={(e) => setLocalSearch(e.target.value)}
           className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200/80 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-sm font-medium text-slate-700"
         />
       </div>
@@ -242,6 +239,20 @@ export default function OwnerEmployees() {
         )}
       </div>
 
+      <Pagination
+        page={page}
+        limit={limit}
+        total={paginationInfo.total}
+        totalPages={paginationInfo.totalPages}
+        hasNext={paginationInfo.hasNext}
+        hasPrev={paginationInfo.hasPrev}
+        onPageChange={(p) => dispatch(setPage(p))}
+        onLimitChange={(newLimit) => {
+          dispatch(setLimit(newLimit));
+          dispatch(setPage(1));
+        }}
+      />
+
       {/* Add Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
@@ -256,15 +267,8 @@ export default function OwnerEmployees() {
                     type="text"
                     value={addForm.fullName}
                     onChange={e => setAddForm({ ...addForm, fullName: e.target.value })}
-                    className={`w-full mt-1 px-4 py-2.5 bg-slate-50 border rounded-xl text-sm outline-none transition focus:ring-2 ${
-                      validationErrors.fullName
-                        ? 'border-rose-300 focus:ring-rose-500/20 focus:border-rose-500'
-                        : 'border-slate-200 focus:ring-indigo-500/20 focus:border-indigo-500'
-                    }`}
+                    className="w-full mt-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none transition focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                   />
-                  {validationErrors.fullName && (
-                    <span className="text-rose-500 text-xs font-bold mt-1 block">{validationErrors.fullName}</span>
-                  )}
                 </div>
 
                 <div className="col-span-2">
@@ -274,15 +278,8 @@ export default function OwnerEmployees() {
                     type="email"
                     value={addForm.email}
                     onChange={e => setAddForm({ ...addForm, email: e.target.value })}
-                    className={`w-full mt-1 px-4 py-2.5 bg-slate-50 border rounded-xl text-sm outline-none transition focus:ring-2 ${
-                      validationErrors.email
-                        ? 'border-rose-300 focus:ring-rose-500/20 focus:border-rose-500'
-                        : 'border-slate-200 focus:ring-indigo-500/20 focus:border-indigo-500'
-                    }`}
+                    className="w-full mt-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none transition focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                   />
-                  {validationErrors.email && (
-                    <span className="text-rose-500 text-xs font-bold mt-1 block">{validationErrors.email}</span>
-                  )}
                 </div>
 
                 <div>
@@ -292,15 +289,8 @@ export default function OwnerEmployees() {
                     min="0"
                     value={addForm.salary}
                     onChange={e => setAddForm({ ...addForm, salary: e.target.value })}
-                    className={`w-full mt-1 px-4 py-2.5 bg-slate-50 border rounded-xl text-sm outline-none transition focus:ring-2 ${
-                      validationErrors.salary
-                        ? 'border-rose-300 focus:ring-rose-500/20 focus:border-rose-500'
-                        : 'border-slate-200 focus:ring-indigo-500/20 focus:border-indigo-500'
-                    }`}
+                    className="w-full mt-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none transition focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                   />
-                  {validationErrors.salary && (
-                    <span className="text-rose-500 text-xs font-bold mt-1 block">{validationErrors.salary}</span>
-                  )}
                 </div>
 
                 <div>
@@ -309,15 +299,8 @@ export default function OwnerEmployees() {
                     type="text"
                     value={addForm.branch}
                     onChange={e => setAddForm({ ...addForm, branch: e.target.value })}
-                    className={`w-full mt-1 px-4 py-2.5 bg-slate-50 border rounded-xl text-sm outline-none transition focus:ring-2 ${
-                      validationErrors.branch
-                        ? 'border-rose-300 focus:ring-rose-500/20 focus:border-rose-500'
-                        : 'border-slate-200 focus:ring-indigo-500/20 focus:border-indigo-500'
-                    }`}
+                    className="w-full mt-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none transition focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                   />
-                  {validationErrors.branch && (
-                    <span className="text-rose-500 text-xs font-bold mt-1 block">{validationErrors.branch}</span>
-                  )}
                 </div>
 
                 <div className="col-span-2">
@@ -326,19 +309,12 @@ export default function OwnerEmployees() {
                     type="text"
                     value={addForm.position}
                     onChange={e => setAddForm({ ...addForm, position: e.target.value })}
-                    className={`w-full mt-1 px-4 py-2.5 bg-slate-50 border rounded-xl text-sm outline-none transition focus:ring-2 ${
-                      validationErrors.position
-                        ? 'border-rose-300 focus:ring-rose-500/20 focus:border-rose-500'
-                        : 'border-slate-200 focus:ring-indigo-500/20 focus:border-indigo-500'
-                    }`}
+                    className="w-full mt-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none transition focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                   />
-                  {validationErrors.position && (
-                    <span className="text-rose-500 text-xs font-bold mt-1 block">{validationErrors.position}</span>
-                  )}
                 </div>
               </div>
               <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => { setIsAddModalOpen(false); setValidationErrors({}); setError(null); }} className="flex-1 py-3 bg-slate-100 text-slate-700 font-bold text-sm rounded-xl">Cancel</button>
+                <button type="button" onClick={() => setIsAddModalOpen(false)} className="flex-1 py-3 bg-slate-100 text-slate-700 font-bold text-sm rounded-xl">Cancel</button>
                 <button type="submit" disabled={modalLoading} className="flex-1 py-3 bg-indigo-600 text-white font-bold text-sm rounded-xl disabled:bg-indigo-400">{modalLoading ? 'Saving...' : 'Add User'}</button>
               </div>
             </form>
@@ -360,16 +336,10 @@ export default function OwnerEmployees() {
                     type="text"
                     value={editForm.fullName}
                     onChange={e => setEditForm({ ...editForm, fullName: e.target.value })}
-                    className={`w-full mt-1 px-4 py-2.5 bg-slate-50 border rounded-xl text-sm outline-none transition focus:ring-2 ${
-                      validationErrors.fullName
-                        ? 'border-rose-300 focus:ring-rose-500/20 focus:border-rose-500'
-                        : 'border-slate-200 focus:ring-indigo-500/20 focus:border-indigo-500'
-                    }`}
+                    className="w-full mt-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none transition focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                   />
-                  {validationErrors.fullName && (
-                    <span className="text-rose-500 text-xs font-bold mt-1 block">{validationErrors.fullName}</span>
-                  )}
                 </div>
+
 
                 <div>
                   <label className="text-xs font-bold text-slate-500 uppercase">Salary Base</label>
@@ -378,15 +348,8 @@ export default function OwnerEmployees() {
                     min="0"
                     value={editForm.salary}
                     onChange={e => setEditForm({ ...editForm, salary: e.target.value })}
-                    className={`w-full mt-1 px-4 py-2.5 bg-slate-50 border rounded-xl text-sm outline-none transition focus:ring-2 ${
-                      validationErrors.salary
-                        ? 'border-rose-300 focus:ring-rose-500/20 focus:border-rose-500'
-                        : 'border-slate-200 focus:ring-indigo-500/20 focus:border-indigo-500'
-                    }`}
+                    className="w-full mt-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none transition focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                   />
-                  {validationErrors.salary && (
-                    <span className="text-rose-500 text-xs font-bold mt-1 block">{validationErrors.salary}</span>
-                  )}
                 </div>
 
                 <div>
@@ -395,32 +358,18 @@ export default function OwnerEmployees() {
                     type="text"
                     value={editForm.branch}
                     onChange={e => setEditForm({ ...editForm, branch: e.target.value })}
-                    className={`w-full mt-1 px-4 py-2.5 bg-slate-50 border rounded-xl text-sm outline-none transition focus:ring-2 ${
-                      validationErrors.branch
-                        ? 'border-rose-300 focus:ring-rose-500/20 focus:border-rose-500'
-                        : 'border-slate-200 focus:ring-indigo-500/20 focus:border-indigo-500'
-                    }`}
+                    className="w-full mt-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none transition focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                   />
-                  {validationErrors.branch && (
-                    <span className="text-rose-500 text-xs font-bold mt-1 block">{validationErrors.branch}</span>
-                  )}
                 </div>
 
-                <div className="col-span-2">
+                <div>
                   <label className="text-xs font-bold text-slate-500 uppercase">Position</label>
                   <input
                     type="text"
                     value={editForm.position}
                     onChange={e => setEditForm({ ...editForm, position: e.target.value })}
-                    className={`w-full mt-1 px-4 py-2.5 bg-slate-50 border rounded-xl text-sm outline-none transition focus:ring-2 ${
-                      validationErrors.position
-                        ? 'border-rose-300 focus:ring-rose-500/20 focus:border-rose-500'
-                        : 'border-slate-200 focus:ring-indigo-500/20 focus:border-indigo-500'
-                    }`}
+                    className="w-full mt-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none transition focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                   />
-                  {validationErrors.position && (
-                    <span className="text-rose-500 text-xs font-bold mt-1 block">{validationErrors.position}</span>
-                  )}
                 </div>
 
                 <div className="col-span-2">
@@ -429,15 +378,8 @@ export default function OwnerEmployees() {
                     type="text"
                     value={editForm.phone}
                     onChange={e => setEditForm({ ...editForm, phone: e.target.value })}
-                    className={`w-full mt-1 px-4 py-2.5 bg-slate-50 border rounded-xl text-sm outline-none transition focus:ring-2 ${
-                      validationErrors.phone
-                        ? 'border-rose-300 focus:ring-rose-500/20 focus:border-rose-500'
-                        : 'border-slate-200 focus:ring-indigo-500/20 focus:border-indigo-500'
-                    }`}
+                    className="w-full mt-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none transition focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                   />
-                  {validationErrors.phone && (
-                    <span className="text-rose-500 text-xs font-bold mt-1 block">{validationErrors.phone}</span>
-                  )}
                 </div>
 
                 <div className="col-span-2">
@@ -446,19 +388,12 @@ export default function OwnerEmployees() {
                     rows={2}
                     value={editForm.address}
                     onChange={e => setEditForm({ ...editForm, address: e.target.value })}
-                    className={`w-full mt-1 px-4 py-2.5 bg-slate-50 border rounded-xl text-sm outline-none transition focus:ring-2 ${
-                      validationErrors.address
-                        ? 'border-rose-300 focus:ring-rose-500/20 focus:border-rose-500'
-                        : 'border-slate-200 focus:ring-indigo-500/20 focus:border-indigo-500'
-                    }`}
+                    className="w-full mt-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none transition focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                   />
-                  {validationErrors.address && (
-                    <span className="text-rose-500 text-xs font-bold mt-1 block">{validationErrors.address}</span>
-                  )}
                 </div>
               </div>
               <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => { setIsEditModalOpen(false); setValidationErrors({}); setError(null); }} className="flex-1 py-3 bg-slate-100 text-slate-700 font-bold text-sm rounded-xl">Cancel</button>
+                <button type="button" onClick={() => setIsEditModalOpen(false)} className="flex-1 py-3 bg-slate-100 text-slate-700 font-bold text-sm rounded-xl">Cancel</button>
                 <button type="submit" disabled={modalLoading} className="flex-1 py-3 bg-indigo-600 text-white font-bold text-sm rounded-xl disabled:bg-indigo-400">{modalLoading ? 'Saving...' : 'Update'}</button>
               </div>
             </form>

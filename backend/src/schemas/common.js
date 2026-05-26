@@ -6,7 +6,7 @@ const common = {
   objectId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid ID format"),
 
   // Email with standard validation
-  email: z.string().email("Invalid email format").trim(),
+  email: z.string().trim().min(1, "Email is required").email("Invalid email format"),
 
   // Email or Identity (e.g. EMP-A1B2C3)
   emailOrIdentity: z.string().trim().refine(val => {
@@ -18,14 +18,8 @@ const common = {
   // Password for login (minimal check)
   password: z.string().min(8, "Password must be at least 8 characters"),
 
-  // Password for registration (strict rules)
-  newPassword: z.string()
-    .min(8, "Password must be at least 8 characters")
-    .max(100, "Password is too long")
-    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .regex(/[0-9]/, "Password must contain at least one number")
-    .regex(/[^a-zA-Z0-9]/, "Password must contain at least one special character"),
+  // Password for registration (same as login)
+  newPassword: z.string().min(8, "Password must be at least 8 characters"),
 
   // Person name
   name: z.string().trim().min(6, "Name must be at least 6 characters").max(70, "Name is too long"),

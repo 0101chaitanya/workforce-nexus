@@ -9,7 +9,7 @@ import { createSlice } from '@reduxjs/toolkit';
 const initialState = {
   stats: {},
   loading: true,
-  error: null
+  isCached: false
 };
 
 /**
@@ -22,14 +22,15 @@ const dashboardSlice = createSlice({
     /** Caches the statistics data object. */
     setStats: (state, action) => {
       state.stats = action.payload;
+      state.isCached = true;
     },
     /** Sets loader for analytics counts. */
     setLoading: (state, action) => {
       state.loading = action.payload;
     },
-    /** Caches query failure error logs. */
-    setError: (state, action) => {
-      state.error = action.payload;
+    /** Invalidates dashboard cache. */
+    invalidateCache: (state) => {
+      state.isCached = false;
     }
   }
 });
@@ -37,8 +38,7 @@ const dashboardSlice = createSlice({
 export const {
   setStats,
   setLoading,
-  setError
+  invalidateCache
 } = dashboardSlice.actions;
 
 export default dashboardSlice.reducer;
-

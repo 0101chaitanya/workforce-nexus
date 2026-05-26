@@ -7,10 +7,13 @@ const leaveSchemas = {
         startDate: common.isoDate,
         endDate: common.isoDate,
         reason: common.mediumText
+    }).refine((data) => new Date(data.startDate) <= new Date(data.endDate), {
+        message: "Start date cannot be after end date",
+        path: ["startDate"]
     }),
     updateLeaveStatus: z.object({
         status: common.approvalStatus,
-        remarks: common.optionalMediumText
+        remarks: common.mediumText
     }),
     historyQuery: z.object({
         targetUserId: common.objectId.optional(),

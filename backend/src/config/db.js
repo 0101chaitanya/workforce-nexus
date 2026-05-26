@@ -5,6 +5,17 @@ const connectDB = async () => {
     try {
         const conn = await mongoose.connect(process.env.MONGODB_URI);
         logger.info('MongoDB connected');
+
+        // Drop legacy unique name_1 index if it exists
+        try {
+            await mongoose.connection.db.collection('companies').dropIndex('name_1');
+            logger.info('Dropped legacy name_1 index from companies collection');
+        } catch (indexError) {
+            if (indexError.code !== 27 && indexError.codeName !== 'IndexNotFound') {
+                logger.warn(`Could not drop legacy name_1 index: ${indexError.message}`);
+            }
+        }
+
         return conn;
     } catch (error) {
         logger.error(`MongoDB connection error: ${error.message}`, { stack: error.stack });

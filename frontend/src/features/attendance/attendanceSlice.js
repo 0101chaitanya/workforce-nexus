@@ -35,8 +35,6 @@ const initialState = {
     history: [],
     loading: true,
     actionLoading: false,
-    error: null,
-    successMessage: null,
     todayRecord: null,
     page: 1,
     limit: 10,
@@ -45,12 +43,13 @@ const initialState = {
       totalPages: 1,
       hasNext: false,
       hasPrev: false
-    }
+    },
+    isCached: false,
+    cachedParams: null
   },
   owner: {
     attendance: [],
     loading: true,
-    error: null,
     page: 1,
     limit: 10,
     paginationInfo: {
@@ -64,7 +63,9 @@ const initialState = {
     targetUserId: '',
     selectedUserObj: null,
     showDropdown: false,
-    searchLoading: false
+    searchLoading: false,
+    isCached: false,
+    cachedParams: null
   }
 };
 
@@ -79,6 +80,11 @@ const attendanceSlice = createSlice({
     /** Sets the employee's attendance logs. */
     setEmployeeHistory: (state, action) => {
       state.employee.history = action.payload;
+      state.employee.isCached = true;
+      state.employee.cachedParams = {
+        page: state.employee.page,
+        limit: state.employee.limit
+      };
     },
     /** Configures active loading spinner for history fetch. */
     setEmployeeLoading: (state, action) => {
@@ -87,14 +93,6 @@ const attendanceSlice = createSlice({
     /** Configures action loading during clock-in/out. */
     setEmployeeActionLoading: (state, action) => {
       state.employee.actionLoading = action.payload;
-    },
-    /** Records employee attendance error messages. */
-    setEmployeeError: (state, action) => {
-      state.employee.error = action.payload;
-    },
-    /** Sets success action messages. */
-    setEmployeeSuccessMessage: (state, action) => {
-      state.employee.successMessage = action.payload;
     },
     /** Sets today's attendance log details. */
     setEmployeeTodayRecord: (state, action) => {
@@ -112,19 +110,26 @@ const attendanceSlice = createSlice({
     setEmployeePaginationInfo: (state, action) => {
       state.employee.paginationInfo = action.payload;
     },
+    /** Invalidates employee attendance cache. */
+    invalidateEmployeeCache: (state) => {
+      state.employee.isCached = false;
+      state.employee.cachedParams = null;
+    },
 
     // Owner actions
     /** Caches company-wide attendance entries. */
     setOwnerAttendance: (state, action) => {
       state.owner.attendance = action.payload;
+      state.owner.isCached = true;
+      state.owner.cachedParams = {
+        page: state.owner.page,
+        limit: state.owner.limit,
+        targetUserId: state.owner.targetUserId
+      };
     },
     /** Configures loading indicator for company logs. */
     setOwnerLoading: (state, action) => {
       state.owner.loading = action.payload;
-    },
-    /** Records owner attendance actions error messages. */
-    setOwnerError: (state, action) => {
-      state.owner.error = action.payload;
     },
     /** Sets query paging index for owner. */
     setOwnerPage: (state, action) => {
@@ -161,6 +166,11 @@ const attendanceSlice = createSlice({
     /** Toggles search indicator state. */
     setOwnerSearchLoading: (state, action) => {
       state.owner.searchLoading = action.payload;
+    },
+    /** Invalidates owner attendance cache. */
+    invalidateOwnerCache: (state) => {
+      state.owner.isCached = false;
+      state.owner.cachedParams = null;
     }
   }
 });
@@ -169,15 +179,13 @@ export const {
   setEmployeeHistory,
   setEmployeeLoading,
   setEmployeeActionLoading,
-  setEmployeeError,
-  setEmployeeSuccessMessage,
   setEmployeeTodayRecord,
   setEmployeePage,
   setEmployeeLimit,
   setEmployeePaginationInfo,
+  invalidateEmployeeCache,
   setOwnerAttendance,
   setOwnerLoading,
-  setOwnerError,
   setOwnerPage,
   setOwnerLimit,
   setOwnerPaginationInfo,
@@ -186,8 +194,8 @@ export const {
   setOwnerTargetUserId,
   setOwnerSelectedUserObj,
   setOwnerShowDropdown,
-  setOwnerSearchLoading
+  setOwnerSearchLoading,
+  invalidateOwnerCache
 } = attendanceSlice.actions;
 
 export default attendanceSlice.reducer;
-
