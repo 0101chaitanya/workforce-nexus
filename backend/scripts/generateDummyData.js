@@ -38,6 +38,9 @@ const generateData = async () => {
       isVerified: true,
       address: '123 Tech Blvd, Silicon Valley, CA',
       phone: '+1 (555) 019-2834',
+      latitude: 37.7749,
+      longitude: -122.4194,
+      proximityRadius: 200,
     });
     console.log('Created Company:', company.companyName);
 
@@ -90,7 +93,7 @@ const generateData = async () => {
         company: company._id,
         position: 'Product Manager',
         branch: 'HQ',
-        salary: 95000,
+        salary: 78000,
         dateOfBirth: new Date('1990-03-12'),
         joinDate: new Date('2023-06-01'),
         phone: '+1 (555) 333-4444',
@@ -106,7 +109,7 @@ const generateData = async () => {
         company: company._id,
         position: 'UX Designer',
         branch: 'Branch A',
-        salary: 75000,
+        salary: 65000,
         dateOfBirth: new Date('1995-11-05'),
         joinDate: new Date('2024-03-10'),
         phone: '+1 (555) 444-5555',
@@ -122,7 +125,7 @@ const generateData = async () => {
         company: company._id,
         position: 'HR Manager',
         branch: 'HQ',
-        salary: 85000,
+        salary: 75000,
         dateOfBirth: new Date('1988-07-22'),
         joinDate: new Date('2022-11-01'),
         phone: '+1 (555) 555-6666',
@@ -138,7 +141,7 @@ const generateData = async () => {
         company: company._id,
         position: 'QA Engineer',
         branch: 'Branch A',
-        salary: 70000,
+        salary: 60000,
         dateOfBirth: new Date('1997-04-18'),
         joinDate: new Date('2024-05-01'),
         phone: '+1 (555) 666-7777',
@@ -211,7 +214,7 @@ const generateData = async () => {
       const daysInMonth = new Date(currentYear, month, 0).getDate();
       for (const emp of employees) {
         const grossSalary = emp.salary || 60000;
-        const monthlySalary = Math.round(grossSalary / 12);
+        const monthlySalary = grossSalary;
         
         let unpaidDays = 0;
         // John Doe had 4 days of unpaid leave in April
@@ -229,7 +232,7 @@ const generateData = async () => {
         const grossPay = basicPay + hra + conveyance + medical + bonus;
         
         const taxableIncome = grossPay - unpaidLeaveDeductions;
-        const taxes = Math.round(taxableIncome * 0.1); // 10% taxes
+        const taxes = taxableIncome > 50000 ? Math.round(taxableIncome * 0.1) : 0;
         const netPay = taxableIncome - taxes;
 
         await Payroll.create({
