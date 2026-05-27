@@ -1,6 +1,17 @@
+/**
+ * @file leaveSchemas.js
+ * @description Zod validation schemas for leave application forms and reviewer response forms.
+ */
+
 import { z } from "zod";
 import { common } from "../../utils/validation";
 
+/**
+ * Validation schemas for leave request pages.
+ * @type {Object}
+ * @property {z.ZodSchema} applyLeave - Schema for applying for leaves.
+ * @property {z.ZodSchema} updateLeaveStatus - Schema for approving/rejecting leave applications.
+ */
 export const leaveSchemas = {
   applyLeave: z.object({
     type: common.leaveType,

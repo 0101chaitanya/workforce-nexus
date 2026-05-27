@@ -60,7 +60,7 @@ This document explains the end-to-end flow of the Owner's Employee Directory scr
 ## 3. Backend Integration & Logic
 
 ### Endpoints:
-1. `GET /api/users/all` (Fetch/Search and Paginate Company Employees)
+1. `GET /api/users/search-users-or-get-all` (Fetch/Search and Paginate Company Employees)
 2. `POST /api/users/add` (Onboard New Employee)
 3. `PUT /api/users/admin-update/:id` (Update Employee Administrative Profile)
 

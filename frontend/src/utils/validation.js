@@ -1,7 +1,11 @@
 import { z } from "zod";
 import { toast } from "react-toastify";
 
-// Reusable base validators (identical to backend common.js)
+/**
+ * Reusable base validation schemas using Zod.
+ * Maps closely with backend validators.
+ * @type {Object}
+ */
 export const common = {
   objectId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid ID format"),
   email: z.string().trim().min(1, "Email is required").email("Invalid email format"),
@@ -24,6 +28,14 @@ export const common = {
   approvalStatus: z.enum(["approved", "rejected"])
 };
 
+/**
+ * Helper to validate a form data against a Zod schema.
+ * Triggers toast error alerts for any validation errors and returns parsed data on success.
+ * 
+ * @param {z.ZodSchema} schema - The Zod schema to parse with.
+ * @param {any} data - The form data object to validate.
+ * @returns {any|null} The parsed/validated data, or null if validation failed.
+ */
 export const validateForm = (schema, data) => {
   const result = schema.safeParse(data);
   if (!result.success) {
@@ -34,6 +46,11 @@ export const validateForm = (schema, data) => {
   return result.data;
 };
 
+/**
+ * Displays error toast messages for each validation issue.
+ * 
+ * @param {string[]} messages - Array of error message strings to toast.
+ */
 export const toastFormErrors = (messages) => {
   messages.forEach(msg => toast.error(msg));
 };

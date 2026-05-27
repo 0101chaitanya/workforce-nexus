@@ -1,6 +1,18 @@
+/**
+ * @file leaveSchemas.js
+ * @description Zod validation schemas for leave management routes (applying leaves, updating status, querying history).
+ */
+
 const { z } = require("zod");
 const common = require("./common");
 
+/**
+ * Zod validation schemas for leave request endpoints.
+ * @type {Object}
+ * @property {z.ZodSchema} applyLeave - Schema for submitting a new leave application.
+ * @property {z.ZodSchema} updateLeaveStatus - Schema for changing the status of a leave application.
+ * @property {z.ZodSchema} historyQuery - Schema for querying leave history records with pagination.
+ */
 const leaveSchemas = {
     applyLeave: z.object({
         type: common.leaveType,

@@ -1,6 +1,19 @@
+/**
+ * @file ownerSchemas.js
+ * @description Zod validation schemas for owner-specific actions (adding employees, searching users, updating company details).
+ */
+
 const { z } = require("zod");
 const common = require("./common");
 
+/**
+ * Zod validation schemas for administrative actions performed by the company owner.
+ * @type {Object}
+ * @property {z.ZodSchema} addUser - Schema for onboarding a new employee.
+ * @property {z.ZodSchema} searchUsersQuery - Schema for searching and filtering company employees.
+ * @property {z.ZodSchema} updateCompany - Schema for updating company core information and geofencing configurations.
+ * @property {z.ZodSchema} historyQuery - Schema for querying system histories (attendance, payroll, etc.).
+ */
 const ownerSchemas = {
   addUser: z.object({
     fullName: common.name,

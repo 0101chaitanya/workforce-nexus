@@ -1,6 +1,21 @@
+/**
+ * @file authSchemas.js
+ * @description Zod validation schemas for authentication forms (login, sign up, OTP, password recovery).
+ */
+
 import { z } from "zod";
 import { common } from "../../utils/validation";
 
+/**
+ * Validation schemas for authentication pages.
+ * @type {Object}
+ * @property {z.ZodSchema} sendOtp - Schema for sending verification OTP.
+ * @property {z.ZodSchema} verifyOtp - Schema for verifying OTP.
+ * @property {z.ZodSchema} register - Schema for user onboarding and password setup.
+ * @property {z.ZodSchema} login - Schema for user login credentials.
+ * @property {z.ZodSchema} forgotPasswordOtp - Schema for requesting recovery OTP.
+ * @property {z.ZodSchema} resetPassword - Schema for executing password reset.
+ */
 export const authSchemas = {
   sendOtp: z.object({
     email: common.email,

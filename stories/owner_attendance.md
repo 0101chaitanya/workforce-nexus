@@ -14,7 +14,7 @@ This document explains the end-to-end flow of the Owner Attendance Management sc
 1. **Accessing the View**: The Owner navigates to the **Attendance** tab. The UI retrieves cached logs from Redux if pagination and user filters match. Otherwise, it presents a loading indicator and retrieves paginated company-wide attendance files from the database.
 2. **Filtering by Employee (Autocomplete Lookup)**:
    - The Owner wants to inspect a specific employee's records. They type the name or ID in the **"Look Up Employee"** search box.
-   - A 300ms debounce timer runs on the frontend before firing an autocomplete API request (`GET /api/users/all?query=...`) to list matching profiles.
+   - A 300ms debounce timer runs on the frontend before firing an autocomplete API request (`GET /api/users/search-users-or-get-all?query=...`) to list matching profiles.
    - An autocomplete list drops down. The Owner clicks on the employee's name.
    - The UI updates the input to display the employee's identity/name, sets the active `targetUserId` filter, resets the pagination page to 1, and fetches the filtered attendance history.
 3. **Clearing Filter**: The Owner clicks the clear (**X**) icon in the search box. The input is wiped, `targetUserId` is set to null, and the list resets back to showing all company attendance records.
@@ -59,7 +59,7 @@ This document explains the end-to-end flow of the Owner Attendance Management sc
 ## 3. Backend Integration & Logic
 
 ### Endpoints:
-1. `GET /api/users/all?query=...` (Autocomplete user list helper)
+1. `GET /api/users/search-users-or-get-all?query=...` (Autocomplete user list helper)
 2. `GET /api/attendance/history` (Fetch paginated company-wide or user-specific logs)
 
 ### Controller Details:

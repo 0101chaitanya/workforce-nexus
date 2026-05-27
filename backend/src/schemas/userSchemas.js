@@ -1,5 +1,17 @@
+/**
+ * @file userSchemas.js
+ * @description Zod validation schemas for user profile updates, administrative employee edits, and password change operations.
+ */
+
 const { z } = require("zod");
 
+/**
+ * Zod validation schemas for user management endpoints.
+ * @type {Object}
+ * @property {z.ZodSchema} updateProfile - Schema for employees to update their own profile fields.
+ * @property {z.ZodSchema} updateUserByAdmin - Schema for company owners/admins to update employee administrative fields.
+ * @property {z.ZodSchema} changePassword - Schema for changing the active user password.
+ */
 const userSchemas = {
     updateProfile: z.object({
         fullName: z.string().min(2, "Full name must be at least 2 characters").max(100),

@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
 const logger = require("../utils/logger");
 
+/**
+ * Establishes a connection to the MongoDB database using the MONGODB_URI environment variable.
+ * Additionally, it drops the legacy unique `name_1` index if it exists in the companies collection.
+ * 
+ * @returns {Promise<mongoose.Connection>} Resolves with the mongoose connection object.
+ */
 const connectDB = async () => {
     try {
         const conn = await mongoose.connect(process.env.MONGODB_URI);

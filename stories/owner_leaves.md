@@ -18,7 +18,7 @@ This document explains the end-to-end flow of the Owner Leave Approval screen, w
    - **Rejected Requests**
 3. **Filtering by Employee**:
    - The Owner types an employee's name or ID into the lookup box.
-   - An autocomplete query hits `/api/users/all?query=...` with a 300ms debounce.
+   - An autocomplete query hits `/api/users/search-users-or-get-all?query=...` with a 300ms debounce.
    - Selecting a worker sets the active `targetUserId` filter, resets pagination to page 1, and fetches leave history for that employee only.
 4. **Processing a Request (Approve/Reject)**:
    - The Owner clicks the checkmark icon (**Approve**) or cross icon (**Reject**) on a pending leave entry.

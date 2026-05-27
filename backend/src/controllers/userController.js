@@ -372,7 +372,7 @@ exports.updateUserByAdmin = async (req, res) => {
 /**
  * Resolves detailed profile data for a specific employee.
  * Access control restricts employees to their own details; **Owners** can fetch anyone.
- * @route `GET /api/users/profile/:id`
+ * @route `GET /api/users/info/:id`
  * @param {Object} req
  * @param {Object} req.user - Active user context.
  * @param {Object} req.company - Associated company details.

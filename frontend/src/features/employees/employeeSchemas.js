@@ -1,6 +1,17 @@
+/**
+ * @file employeeSchemas.js
+ * @description Zod validation schemas for owner-controlled employee actions (adding or editing an employee).
+ */
+
 import { z } from "zod";
 import { common } from "../../utils/validation";
 
+/**
+ * Validation schemas for employee-related management tasks.
+ * @type {Object}
+ * @property {z.ZodSchema} addUser - Schema for onboarding a new employee.
+ * @property {z.ZodSchema} updateUserByAdmin - Schema for owner edits to employee profiles.
+ */
 export const employeeSchemas = {
   addUser: z.object({
     fullName: common.name,

@@ -1,3 +1,8 @@
+/**
+ * @file index.js
+ * @description Main entry point of the backend application. Initializes the Express server, Connects to MongoDB, Setup CORS, Morgan logging, cookie-parser middlewares and loads all api routers.
+ */
+
 const express = require('express');
 const app = express();
 

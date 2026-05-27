@@ -1,6 +1,14 @@
+/**
+ * @file common.js
+ * @description Common, reusable Zod schemas for request and query validation across the backend application.
+ */
+
 const { z } = require("zod");
 
-// Common reusable validators
+/**
+ * Reusable Zod validation schemas for standard fields like objectId, email, phone, salary, etc.
+ * @type {Object}
+ */
 const common = {
   // MongoDB ObjectId (24 hex chars)
   objectId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid ID format"),

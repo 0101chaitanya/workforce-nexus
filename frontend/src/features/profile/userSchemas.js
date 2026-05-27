@@ -1,6 +1,17 @@
+/**
+ * @file userSchemas.js
+ * @description Zod validation schemas for personal profile updates and password reset operations.
+ */
+
 import { z } from "zod";
 import { common } from "../../utils/validation";
 
+/**
+ * Validation schemas for profile-related forms.
+ * @type {Object}
+ * @property {z.ZodSchema} updateProfile - Schema for user profile data updates.
+ * @property {z.ZodSchema} changePassword - Schema for changing the authenticated user's password.
+ */
 export const userSchemas = {
   updateProfile: z.object({
     fullName: z.string().min(2, "Full name must be at least 2 characters").max(100),

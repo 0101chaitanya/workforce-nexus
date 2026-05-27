@@ -1,6 +1,16 @@
+/**
+ * @file organizationSchemas.js
+ * @description Zod validation schemas for organization setting forms.
+ */
+
 import { z } from "zod";
 import { common } from "../../utils/validation";
 
+/**
+ * Validation schemas for organization-related actions.
+ * @type {Object}
+ * @property {z.ZodSchema} updateCompany - Schema for updating company details and geofencing boundaries.
+ */
 export const organizationSchemas = {
   updateCompany: z.object({
     companyName: common.name,
