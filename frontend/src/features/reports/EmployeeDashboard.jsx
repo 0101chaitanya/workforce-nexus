@@ -57,8 +57,8 @@ export default function EmployeeDashboard() {
         const leavesData = leaveRes.data?.success ? leaveRes.data.data : [];
         const payrollData = payRes.data?.success ? payRes.data.data : [];
 
-        const totalHours = attendanceData.reduce((acc, curr) => acc + (curr.totalHours || 0), 0);
-        const avgHrs = attendanceData.length > 0 ? (totalHours / attendanceData.length).toFixed(1) : 0;
+        const totalMinutes = attendanceData.reduce((acc, curr) => acc + (curr.totalHours || 0), 0);
+        const avgHrs = attendanceData.length > 0 ? ((totalMinutes / 60) / attendanceData.length).toFixed(1) : 0;
 
         dispatch(setStats({
           attendanceCount: attendanceData.length,

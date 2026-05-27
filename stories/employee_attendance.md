@@ -79,9 +79,9 @@ This document explains the end-to-end flow of the Employee Attendance screen, wh
 - **Clock Out Calculations**:
   - Finds today's active shift matching `{ user: userId, date: { $gte: today } }`.
   - Records `checkOutTime = new Date()`.
-  - Calculates work duration: `totalHours = parseFloat(((checkOutTime - checkInTime) / (1000 * 60 * 60)).toFixed(2))`.
+  - Calculates work duration: `totalHours = Math.round(diffMs / (1000 * 60))` (minutes).
 - **Real-Time Geofence Auditing** (`verifyProximity`):
-  - Automatically queries the active shift. If coordinates fail browser updates or exceed office boundary limits, the backend automatically logs a clock-out timestamp, calculates hours worked, and appends `remarks: "Auto-clocked out: Left office boundary"`.
+  - Automatically queries the active shift. If coordinates fail browser updates or exceed office boundary limits, the backend automatically logs a clock-out timestamp and calculates minutes worked.
 
 ---
 

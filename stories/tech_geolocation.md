@@ -110,6 +110,6 @@ function getDistance(lat1, lon1, lat2, lon2) {
 To prevent employees from turning off location settings or leaving the office premises after clocking in, the frontend runs a background proximity checker that hits `/api/attendance/verify-proximity` every 3 minutes.
 
 - **Underlying Logic**:
-  - If coordinate fields are empty, undefined, or missing (e.g. employee denied/revoked browser permission midway), the backend **automatically clocks them out**, setting `checkOutTime = new Date()`, computing total hours, and recording `remarks: "Auto-clocked out: Geolocation permission denied or unavailable."`.
-  - If coordinates are resolved, the backend computes the distance. If $\text{distance} > \text{allowedRadius}$ (default 200m), it **automatically clocks them out** with `remarks: "Auto-clocked out: Left office boundary"`.
+  - If coordinate fields are empty, undefined, or missing (e.g. employee denied/revoked browser permission midway), the backend **automatically clocks them out**, setting `checkOutTime = new Date()` and computing total minutes.
+  - If coordinates are resolved, the backend computes the distance. If $\text{distance} > \text{allowedRadius}$ (default 200m), it **automatically clocks them out** based on boundaries.
   - This ensures that active sessions are verified in real time.

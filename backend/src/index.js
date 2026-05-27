@@ -27,6 +27,10 @@ const dashboardRoutes = require("./routes/dashboardRoutes");
 
 // Connect to database
 connectDB();
+
+// Initialize scheduled tasks
+require('./services/cronService');
+
 // Middleware
 app.use(morgan('dev', {
     stream: { write: (message) => logger.http(message.trim()) }

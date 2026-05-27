@@ -6,9 +6,8 @@ const mongoose = require("mongoose")
  * @property {Date} [checkOutTime] - Exact clock-out timestamp.
  * @property {mongoose.Types.ObjectId} company - Reference to the associated Company.
  * @property {Date} date - Calendar date of the attendance record (normalized).
- * @property {string} [remarks] - Check-in/out or auto-out description notes.
  * @property {string} status - Attendance state (present, absent, half-day, leave).
- * @property {number} [totalHours] - Total computed hours worked for the day.
+ * @property {number} [totalHours] - Total logged duration in minutes for the day.
  * @property {mongoose.Types.ObjectId} user - Reference to the corresponding User.
  */
 const attendanceSchema = new mongoose.Schema({
@@ -20,8 +19,6 @@ const attendanceSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId, ref: 'Company', required: true,
     }, date: {
         type: Date, required: true,
-    }, remarks: {
-        type: String,
     }, status: {
         type: String,
         enum: ['present', 'absent', 'half-day', 'leave'], default: 'absent',

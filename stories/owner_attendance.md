@@ -81,5 +81,5 @@ This document explains the end-to-end flow of the Owner Attendance Management sc
 
 ## 4. Database Collections Used
 
-- **`Attendance`**: Holds individual records containing the `user` reference, check-in and check-out timestamps, `totalHours` worked during the shift, day/date logs, status (e.g., `"present"`), and manual remarks (e.g., auto-checkout details).
+- **`Attendance`**: Holds individual records containing the `user` reference, check-in and check-out timestamps, `totalHours` worked during the shift (stored in minutes), day/date logs, and status (e.g., `"present"`, `"half-day"`, `"absent"`).
 - **`User`**: Linked collection used to resolve full names, roles, positions, and employee identity cards.

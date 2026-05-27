@@ -16,7 +16,14 @@ import {
   setEmployeeLimit,
   setEmployeePaginationInfo
 } from './attendanceSlice';
- 
+
+const formatHours = (storedMinutes) => {
+  if (storedMinutes === undefined || storedMinutes === null) return '--';
+  const h = Math.floor(storedMinutes / 60);
+  const m = Math.round(storedMinutes % 60);
+  return `${h}:${m.toString().padStart(2, '0')}`;
+};
+
 export default function EmployeeAttendance() {
   const dispatch = useDispatch();
   const {
@@ -180,7 +187,7 @@ export default function EmployeeAttendance() {
                     <CheckCircle size={28} />
                   </div>
                   <h4 className="text-base font-black text-slate-800">Shift Completed</h4>
-                  <p className="text-xs text-slate-500 font-medium">You have clocked out for today. Total hours logged: <span className="font-extrabold text-indigo-600">{todayRecord.totalHours || 0} hrs</span></p>
+                  <p className="text-xs text-slate-500 font-medium">You have clocked out for today. Total hours logged: <span className="font-extrabold text-indigo-600">{todayRecord.totalHours !== undefined ? formatHours(todayRecord.totalHours) : '0:00'} hrs</span></p>
                 </div>
               ) : (
                 <div className="text-center space-y-2">
@@ -304,15 +311,10 @@ export default function EmployeeAttendance() {
                     <td className="px-6 py-4">
                       <div>
                         {record.checkOutTime ? new Date(record.checkOutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}
-                        {record.remarks && (
-                          <div className="text-[10px] text-rose-500 font-semibold mt-1 leading-normal max-w-[180px]" title={record.remarks}>
-                            {record.remarks}
-                          </div>
-                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 font-bold text-slate-700">
-                      {record.totalHours !== undefined ? `${record.totalHours} hrs` : '--'}
+                      {record.totalHours !== undefined ? `${formatHours(record.totalHours)} hrs` : '--'}
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${record.status === 'present'

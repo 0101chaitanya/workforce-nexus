@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import authApi from '../../app/authApi';
 import { setAuthSuccess } from './authSlice';
-import { Mail, Lock, Briefcase } from 'lucide-react';
+import { Mail, Lock, Briefcase, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { validateForm } from '../../utils/validation';
 import { authSchemas } from './authSchemas';
@@ -15,6 +15,7 @@ const Login = () => {
   const [isForgotMode, setIsForgotMode] = useState(false);
   const [isOtpMode, setIsOtpMode] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Data inputs
   const [loginData, setLoginData] = useState({ identifier: '', password: '' });
@@ -169,20 +170,23 @@ const Login = () => {
                   </div>
                   <div className="relative mt-1.5">
                     <Lock className="absolute left-3.5 top-3.5 text-slate-400" size={18} />
-                    <input type="password" name="password" value={loginData.password} onChange={handleInputChange} required
-                      className="w-full pl-11 pr-4 py-3 bg-slate-50/50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all duration-200 text-sm font-medium text-slate-700" placeholder="••••••••" />
+                    <input type={showPassword ? "text" : "password"} name="password" value={loginData.password} onChange={handleInputChange} required
+                      className="w-full pl-11 pr-12 py-3 bg-slate-50/50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all duration-200 text-sm font-medium text-slate-700" placeholder="••••••••" />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-3.5 text-slate-400 hover:text-indigo-600 transition-colors">
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
                   </div>
                 </div>
 
-                <button type="submit" disabled={loading}
-                  className="w-full py-3.5 bg-indigo-600 text-white font-bold text-sm rounded-2xl shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition transform active:scale-98 disabled:bg-slate-300 disabled:shadow-none mt-2">
-                  {loading ? 'Authorizing Connection...' : 'Enter Workspace'}
+                <button type="submit" disabled={loading || !loginData.identifier || !loginData.password}
+                  className="w-full flex justify-center items-center gap-2 py-3.5 bg-indigo-600 text-white font-bold text-sm rounded-2xl shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition transform active:scale-98 disabled:bg-slate-300 disabled:shadow-none mt-2">
+                  {loading ? <><Loader2 size={18} className="animate-spin" /> Authorizing...</> : 'Enter Workspace'}
                 </button>
 
                 <p className="text-center text-sm text-slate-400 font-medium mt-6">
                   Need to register a firm?{' '}
-                  <Link to="/register" className="text-indigo-600 hover:text-indigo-700 underline font-bold ml-1">
-                    Create Workspace Architecture
+                  <Link to="/register" className="text-indigo-600 hover:text-indigo-700 font-bold ml-1">
+                    Register
                   </Link>
                 </p>
               </form>
@@ -207,8 +211,8 @@ const Login = () => {
                   </div>
 
                   <button type="submit" disabled={loading || !recoveryEmail}
-                    className="w-full py-3.5 bg-indigo-600 text-white font-bold text-sm rounded-2xl shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition transform active:scale-98 disabled:bg-slate-300 disabled:shadow-none mt-2">
-                    {loading ? 'Transmitting Token...' : 'Send Recovery Link'}
+                    className="w-full flex justify-center items-center gap-2 py-3.5 bg-indigo-600 text-white font-bold text-sm rounded-2xl shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition transform active:scale-98 disabled:bg-slate-300 disabled:shadow-none mt-2">
+                    {loading ? <><Loader2 size={18} className="animate-spin" /> Transmitting...</> : 'Send Recovery Link'}
                   </button>
 
                   <button type="button" onClick={() => { setIsForgotMode(false); setIsOtpMode(false); setRecoveryEmail(''); }}
@@ -230,14 +234,17 @@ const Login = () => {
                     <label className="text-xs font-bold uppercase tracking-wider text-slate-500">New Password</label>
                     <div className="relative mt-1.5">
                       <Lock className="absolute left-3.5 top-3.5 text-slate-400" size={18} />
-                      <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required
-                        className="w-full pl-11 pr-4 py-3 bg-slate-50/50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all duration-200 text-sm font-medium text-slate-700" placeholder="••••••••" />
+                      <input type={showPassword ? "text" : "password"} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required
+                        className="w-full pl-11 pr-12 py-3 bg-slate-50/50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all duration-200 text-sm font-medium text-slate-700" placeholder="••••••••" />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-3.5 text-slate-400 hover:text-indigo-600 transition-colors">
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
                     </div>
                   </div>
 
                   <button type="submit" disabled={loading || !otp || !newPassword}
-                    className="w-full py-3.5 bg-indigo-600 text-white font-bold text-sm rounded-2xl shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition transform active:scale-98 disabled:bg-slate-300 disabled:shadow-none mt-2">
-                    {loading ? 'Resetting Password...' : 'Reset Password'}
+                    className="w-full flex justify-center items-center gap-2 py-3.5 bg-indigo-600 text-white font-bold text-sm rounded-2xl shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition transform active:scale-98 disabled:bg-slate-300 disabled:shadow-none mt-2">
+                    {loading ? <><Loader2 size={18} className="animate-spin" /> Resetting...</> : 'Reset Password'}
                   </button>
 
                   <button type="button" onClick={() => setIsOtpMode(false)}

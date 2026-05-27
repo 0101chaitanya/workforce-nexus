@@ -51,8 +51,8 @@ This document explains the end-to-end flow of the Employee Dashboard, which aggr
     ]);
     ```
   - Parses outputs:
-    - **Total Hours**: `attendanceData.reduce((acc, curr) => acc + (curr.totalHours || 0), 0)`
-    - **Average Hours**: `(totalHours / attendanceData.length).toFixed(1)` (or `0` if empty)
+    - **Total Minutes**: `attendanceData.reduce((acc, curr) => acc + (curr.totalHours || 0), 0)`
+    - **Average Hours**: `((totalMinutes / 60) / attendanceData.length).toFixed(1)` (or `0` if empty)
     - **Leaves Applied**: `leavesData.length`
     - **Leaves Approved**: `leavesData.filter(l => l.status === 'approved').length`
     - **Payroll Count**: `payrollData.length`

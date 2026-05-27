@@ -302,7 +302,7 @@ const generateData = async () => {
             checkInTime.setHours(9, 0, 0, 0); // 9:00 AM
             checkOutTime = new Date(date);
             checkOutTime.setHours(13, 0, 0, 0); // 1:00 PM
-            totalHours = 4;
+            totalHours = 4 * 60;
           } else {
             status = 'present';
             // Normal present day: 8 hours +- random mins
@@ -315,7 +315,7 @@ const generateData = async () => {
             checkOutTime.setHours(17, Math.floor(Math.random() * 30), 0, 0);
 
             const diffMs = checkOutTime - checkInTime;
-            totalHours = parseFloat((diffMs / (1000 * 60 * 60)).toFixed(2));
+            totalHours = Math.round(diffMs / (1000 * 60));
           }
         }
 
@@ -326,8 +326,7 @@ const generateData = async () => {
           checkInTime,
           checkOutTime,
           status,
-          totalHours,
-          remarks: status === 'leave' ? 'On Approved Leave' : status === 'absent' ? 'Unexcused Absence' : 'Regular day'
+          totalHours
         });
         attendanceCount++;
       }

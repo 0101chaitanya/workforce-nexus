@@ -215,7 +215,7 @@ This document serves as an end-to-end technical reference answering core archite
 * **How do you track working hours?**
   Working hours are calculated during clock-out:
   $$\text{Hours} = \text{parseFloat}\left(\frac{\text{checkOutTime} - \text{checkInTime}}{1000 \times 60 \times 60}\right).\text{toFixed}(2)$$
-  The result is saved directly to the database in `totalHours` for payroll processing.
+  The result is saved directly to the database in `totalHours` (in minutes) for payroll processing.
 
 ### Deep Push
 

@@ -17,7 +17,14 @@ import {
   setOwnerShowDropdown,
   setOwnerSearchLoading
 } from './attendanceSlice';
- 
+
+const formatHours = (storedMinutes) => {
+  if (storedMinutes === undefined || storedMinutes === null) return '-';
+  const h = Math.floor(storedMinutes / 60);
+  const m = Math.round(storedMinutes % 60);
+  return `${h}:${m.toString().padStart(2, '0')}h`;
+};
+
 const OwnerAttendance = () => {
   const dispatch = useDispatch();
   const {
@@ -261,7 +268,7 @@ const OwnerAttendance = () => {
                       <td className="px-4 py-4 text-slate-700">{new Date(item.date).toLocaleDateString()}</td>
                       <td className="px-4 py-4 text-slate-700">{item.checkInTime ? new Date(item.checkInTime).toLocaleTimeString() : '-'}</td>
                       <td className="px-4 py-4 text-slate-700">{item.checkOutTime ? new Date(item.checkOutTime).toLocaleTimeString() : '-'}</td>
-                      <td className="px-4 py-4 text-slate-700">{item.totalHours ? `${item.totalHours}h` : '-'}</td>
+                      <td className="px-4 py-4 text-slate-700">{item.totalHours !== undefined ? formatHours(item.totalHours) : '-'}</td>
                       <td className="px-4 py-4 text-slate-700">{item.status || 'N/A'}</td>
                     </tr>
                   ))}

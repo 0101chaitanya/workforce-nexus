@@ -110,7 +110,7 @@ exports.clockIn = async (req, res) => {
 };
 
 /**
- * Clocks out an employee for the day and calculates total hours worked.
+ * If successful, marks the `checkOutTime`, computes `totalHours` in minutes, and resolves the day's attendance `status` to 'present', 'half-day', or 'absent'. worked.
  * @route `POST /api/attendance/clock-out`
  * @param {Object} req
  * @param {Object} req.user - Active user context.
@@ -148,9 +148,18 @@ exports.clockOut = async (req, res) => {
 
         attendance.checkOutTime = new Date();
 
-        // Calculate total hours
+        // Calculate total hours in minutes
         const diffMs = attendance.checkOutTime - attendance.checkInTime;
-        attendance.totalHours = parseFloat((diffMs / (1000 * 60 * 60)).toFixed(2));
+        const totalMins = Math.round(diffMs / (1000 * 60));
+        attendance.totalHours = totalMins;
+
+        if (totalMins >= 540) {
+            attendance.status = 'present';
+        } else if (totalMins >= 240) {
+            attendance.status = 'half-day';
+        } else {
+            attendance.status = 'absent';
+        }
 
         await attendance.save();
 
@@ -248,7 +257,7 @@ exports.getAttendanceHistory = async (req, res) => {
 
 /**
  * Validates the physical position of a clocked-in employee in real-time.
- * Automatically clocks out employee if they exit the boundary or refuse location access.
+ * * In the event the user is marked out of bounds or missing location, the system automatically writes a `checkOutTime`, calculates their final status based on `totalHours` in minutes, and considers them out for the rest of the day.
  * @route `POST /api/attendance/verify-proximity`
  * @param {Object} req
  * @param {Object} req.body
@@ -296,8 +305,16 @@ exports.verifyProximity = async (req, res) => {
         if (latitude === undefined || latitude === null || longitude === undefined || longitude === null) {
             attendance.checkOutTime = new Date();
             const diffMs = attendance.checkOutTime - attendance.checkInTime;
-            attendance.totalHours = parseFloat((diffMs / (1000 * 60 * 60)).toFixed(2));
-            attendance.remarks = "Auto-clocked out: Geolocation permission denied or unavailable.";
+            const totalMins = Math.round(diffMs / (1000 * 60));
+            attendance.totalHours = totalMins;
+
+            if (totalMins >= 540) {
+                attendance.status = 'present';
+            } else if (totalMins >= 240) {
+                attendance.status = 'half-day';
+            } else {
+                attendance.status = 'absent';
+            }
             await attendance.save();
 
             return res.status(200).json({
@@ -313,8 +330,16 @@ exports.verifyProximity = async (req, res) => {
         if (distance > radius) {
             attendance.checkOutTime = new Date();
             const diffMs = attendance.checkOutTime - attendance.checkInTime;
-            attendance.totalHours = parseFloat((diffMs / (1000 * 60 * 60)).toFixed(2));
-            attendance.remarks = `Auto-clocked out: Left office boundary (Distance: ${Math.round(distance)}m, allowed: ${radius}m).`;
+            const totalMins = Math.round(diffMs / (1000 * 60));
+            attendance.totalHours = totalMins;
+
+            if (totalMins >= 540) {
+                attendance.status = 'present';
+            } else if (totalMins >= 240) {
+                attendance.status = 'half-day';
+            } else {
+                attendance.status = 'absent';
+            }
             await attendance.save();
 
             return res.status(200).json({
