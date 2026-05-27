@@ -82,7 +82,7 @@ exports.getPayrollHistory = async (req, res) => {
 
 /**
  * Generates and streams a custom payslip **PDF** for a given payroll record.
- * @route `GET /api/payroll/slip/:id`
+ * @route `GET /api/payroll/:id/download`
  * @param {Object} req
  * @param {Object} req.params
  * @param {string} req.params.id - Payroll record ID.
@@ -418,7 +418,7 @@ exports.generateCompanyPayroll = async (req, res) => {
 
 /**
  * Generates and downloads tenure-based payroll overview history.
- * @route `GET /api/payroll/download-tenure`
+ * @route `GET /api/payroll/tenure/download`
  * @param {Object} req
  * @returns {Promise<void>} Streamed PDF document binary payload.
  */

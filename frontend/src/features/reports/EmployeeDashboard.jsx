@@ -1,10 +1,10 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
-import { setStats, setLoading, setError } from './dashboardSlice';
+import { setStats, setLoading } from './dashboardSlice';
 import { toast } from 'react-toastify';
 import {
-  BarChart3, Loader2, AlertCircle, Calendar, Briefcase, FileText, CheckCircle, Clock, PieChart, Users
+  BarChart3, Loader2, Calendar, FileText, CheckCircle, Clock, PieChart, Users, RefreshCcw
 } from 'lucide-react';
 
 export default function EmployeeDashboard() {
@@ -12,7 +12,7 @@ export default function EmployeeDashboard() {
   const { role } = useSelector((state) => state.auth);
   const isOwner = role?.toLowerCase() === 'owner';
 
-  const { stats: reduxStats, loading, error } = useSelector((state) => state.dashboard);
+  const { stats: reduxStats, loading, isCached } = useSelector((state) => state.dashboard);
   const stats = {
     totalEmployees: 0,
     todayAttendance: 0,
@@ -28,9 +28,11 @@ export default function EmployeeDashboard() {
     ...reduxStats
   };
 
-  const fetchStats = async () => {
+  const fetchStats = async (force = false) => {
+    if (!force && isCached) {
+      return;
+    }
     dispatch(setLoading(true));
-    dispatch(setError(null));
     try {
       if (isOwner) {
         const res = await api.get('/dashboard/stats');
@@ -66,8 +68,8 @@ export default function EmployeeDashboard() {
           payrollCount: payrollData.length
         }));
       }
-    } catch (err) {
-      dispatch(setError('Some report components could not be fully aggregated.'));
+    } catch {
+      toast.error('Some report components could not be fully aggregated.');
     } finally {
       dispatch(setLoading(false));
     }
@@ -76,13 +78,6 @@ export default function EmployeeDashboard() {
   useEffect(() => {
     fetchStats();
   }, []);
-
-  useEffect(() => {
-    if (error) {
-      toast.error(error);
-      dispatch(setError(null));
-    }
-  }, [error, dispatch]);
 
   if (loading) {
     return (
@@ -107,6 +102,14 @@ export default function EmployeeDashboard() {
             Analyze aggregated insights about your shifts, leaves, and compensation histories.
           </p>
         </div>
+        <button
+          onClick={() => fetchStats(true)}
+          disabled={loading}
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 font-bold text-xs rounded-xl transition active:scale-95 disabled:opacity-50"
+        >
+          <RefreshCcw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
       </div>
 
       {/* Metrics Grid */}

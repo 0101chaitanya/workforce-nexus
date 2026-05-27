@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { NavLink, useNavigate, useLocation, Outlet } from 'react-router-dom';
+import { useState, Suspense } from 'react';
+import { NavLink, useNavigate, Outlet } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../../features/auth/authSlice';
 import api from '../../app/axiosInterceptors';
 import {
   LayoutDashboard, Building2, Users, CalendarCheck,
-  FileSpreadsheet, CreditCard, BarChart3, UserCircle, LogOut, Menu, ChevronLeft
+  FileSpreadsheet, CreditCard, UserCircle, LogOut, Menu, ChevronLeft
 } from 'lucide-react';
 
 const MainLayout = () => {
@@ -13,11 +13,6 @@ const MainLayout = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const location = useLocation();
-
-  useEffect(() => {
-    dispatch({ type: 'common/clearStatusMessages' });
-  }, [location.pathname, dispatch]);
 
   // Extract authentication variables directly from Redux Store state
   const { user, role } = useSelector((state) => state.auth);
@@ -142,13 +137,13 @@ const MainLayout = () => {
 
         {/* Dynamic Outlet Target Container */}
         <main className="flex-1 p-6 md:p-8 max-w-400 w-full mx-auto">
-          <React.Suspense fallback={
+          <Suspense fallback={
             <div className="flex items-center justify-center min-h-[50vh]">
               <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
             </div>
           }>
             <Outlet />
-          </React.Suspense>
+          </Suspense>
         </main>
       </div>
     </div>

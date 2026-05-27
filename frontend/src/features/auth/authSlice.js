@@ -25,7 +25,6 @@ const initialState = {
   token: savedToken || null,
   role: parsedUser?.role || null,
   loading: false,
-  error: null,
 };
 
 /**
@@ -46,31 +45,20 @@ const authSlice = createSlice({
       state.user = user;
       state.token = accessToken;
       state.role = user?.role || null;
-      state.error = null;
 
       localStorage.setItem('token', accessToken);
       localStorage.setItem('user', JSON.stringify(user));
-    },
-    /** Records exception reports and sets loading to false. */
-    setAuthFailed: (state, action) => {
-      state.loading = false;
-      state.error = action.payload;
-    },
-    /** Resets the active error state. */
-    clearError: (state) => {
-      state.error = null;
     },
     /** Clears local cache tokens and logs user out. */
     logout: (state) => {
       state.user = null;
       state.token = null;
       state.role = null;
-      state.error = null;
       localStorage.removeItem('token');
       localStorage.removeItem('user');
     }
   }
 });
 
-export const { setLoading, setAuthSuccess, setAuthFailed, clearError, logout } = authSlice.actions;
+export const { setLoading, setAuthSuccess, logout } = authSlice.actions;
 export default authSlice.reducer;

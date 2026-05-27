@@ -4,22 +4,29 @@ import { createSlice } from '@reduxjs/toolkit';
  * @typedef {Object} EmployeesState
  * @property {Array} employees - Cached lists of **employee details**.
  * @property {boolean} loading - Main table retrieval **loading** indicator.
- * @property {string|null} error - Actions failure reason string.
- * @property {string|null} successMessage - Actions success confirmation string.
  * @property {string} searchQuery - Search query filters.
  * @property {Object|null} selectedUser - Target employee object for **edit/view modal** details.
  * @property {boolean} modalLoading - Loading indicator during modal actions.
- * @property {Object} validationErrors - Error lists mapped by input fields.
+ * @property {number} page - Current page for logs.
+ * @property {number} limit - Items per page.
+ * @property {Object} paginationInfo - Paging indicators.
  */
 const initialState = {
   employees: [],
   loading: true,
-  error: null,
-  successMessage: null,
   searchQuery: '',
   selectedUser: null,
   modalLoading: false,
-  validationErrors: {}
+  page: 1,
+  limit: 10,
+  paginationInfo: {
+    total: 0,
+    totalPages: 1,
+    hasNext: false,
+    hasPrev: false
+  },
+  isCached: false,
+  cachedParams: null
 };
 
 /**
@@ -32,18 +39,16 @@ const employeesSlice = createSlice({
     /** Caches the retrieved employee list array. */
     setEmployees: (state, action) => {
       state.employees = action.payload;
+      state.isCached = true;
+      state.cachedParams = {
+        page: state.page,
+        limit: state.limit,
+        searchQuery: state.searchQuery
+      };
     },
     /** Configures table loading state. */
     setLoading: (state, action) => {
       state.loading = action.payload;
-    },
-    /** Sets query/action failure error message. */
-    setError: (state, action) => {
-      state.error = action.payload;
-    },
-    /** Caches success alert strings. */
-    setSuccessMessage: (state, action) => {
-      state.successMessage = action.payload;
     },
     /** Updates search filter criteria. */
     setSearchQuery: (state, action) => {
@@ -57,9 +62,22 @@ const employeesSlice = createSlice({
     setModalLoading: (state, action) => {
       state.modalLoading = action.payload;
     },
-    /** Caches structured validation field errors. */
-    setValidationErrors: (state, action) => {
-      state.validationErrors = action.payload;
+    /** Updates employee directory page. */
+    setPage: (state, action) => {
+      state.page = action.payload;
+    },
+    /** Updates employee directory limit. */
+    setLimit: (state, action) => {
+      state.limit = action.payload;
+    },
+    /** Sets employee pagination counts. */
+    setPaginationInfo: (state, action) => {
+      state.paginationInfo = action.payload;
+    },
+    /** Invalidates employee cache. */
+    invalidateCache: (state) => {
+      state.isCached = false;
+      state.cachedParams = null;
     }
   }
 });
@@ -67,13 +85,13 @@ const employeesSlice = createSlice({
 export const {
   setEmployees,
   setLoading,
-  setError,
-  setSuccessMessage,
   setSearchQuery,
   setSelectedUser,
   setModalLoading,
-  setValidationErrors
+  setPage,
+  setLimit,
+  setPaginationInfo,
+  invalidateCache
 } = employeesSlice.actions;
 
 export default employeesSlice.reducer;
-

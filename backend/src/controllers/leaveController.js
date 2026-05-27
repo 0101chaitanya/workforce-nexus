@@ -20,15 +20,6 @@ exports.applyLeave = async (req, res) => {
         const userId = req.user._id;
         const companyId = req.company._id;
 
-        // Ensure start date is before or equal to end date
-        if (new Date(startDate) > new Date(endDate)) {
-            return res.status(400).json({
-                message: "Start date cannot be after end date",
-                success: false,
-                occurredAt: new Date().toISOString()
-            });
-        }
-
         const leave = new Leave({
             user: userId,
             company: companyId,

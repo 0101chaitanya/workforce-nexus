@@ -1,45 +1,52 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
-import { Building2, MapPin, Phone, Mail, ShieldCheck, Loader2, AlertCircle, UserCircle, Edit2, Save, X, Calendar, CreditCard, Navigation } from 'lucide-react';
+import { Building2, MapPin, Phone, Mail, ShieldCheck, Loader2, AlertCircle, UserCircle, Edit2, Save, X, Calendar, CreditCard, Navigation, RefreshCcw } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { validateForm } from '../../utils/validation';
+import { organizationSchemas } from './organizationSchemas';
+import { userSchemas } from '../profile/userSchemas';
 import {
     setCompany,
     setLoading,
-    setError,
-    setSuccessMessage,
     setCompanySaving,
     setOwnerProfile,
     setOwnerLoading,
-    setOwnerSaving,
-    setOwnerError,
-    setOwnerSuccessMessage
+    setOwnerSaving
 } from './organizationSlice';
-
+ 
 const OwnerOrganization = () => {
     const dispatch = useDispatch();
     const { 
         company, 
         loading, 
-        error, 
-        successMessage, 
         saving,
         ownerProfile,
         ownerLoading,
         ownerSaving,
-        ownerError,
-        ownerSuccessMessage
+        isCached,
+        ownerProfileIsCached
     } = useSelector((state) => state.organization);
-
+ 
     const [isEditing, setIsEditing] = useState(false);
     const [editForm, setEditForm] = useState({ companyName: '', address: '', phone: '', latitude: '', longitude: '', proximityRadius: '' });
-
+ 
     const [isEditingOwner, setIsEditingOwner] = useState(false);
     const [ownerForm, setOwnerForm] = useState({ fullName: '', phone: '', address: '', dateOfBirth: '', bankAccount: '' });
+ 
+    const fetchOwnerProfile = async (ownerId, force = false) => {
+        if (!force && ownerProfileIsCached && ownerProfile && ownerProfile._id === ownerId) {
+            setOwnerForm({
+                fullName: ownerProfile.fullName || '',
+                phone: ownerProfile.phone || '',
+                address: ownerProfile.address || '',
+                dateOfBirth: ownerProfile.dateOfBirth ? ownerProfile.dateOfBirth.split('T')[0] : '',
+                bankAccount: ownerProfile.bankAccount || ''
+            });
+            return;
+        }
 
-    const fetchOwnerProfile = async (ownerId) => {
         dispatch(setOwnerLoading(true));
-        dispatch(setOwnerError(null));
         try {
             const response = await api.get(`/users/info/${ownerId}`);
             if (response.data?.success) {
@@ -54,16 +61,29 @@ const OwnerOrganization = () => {
                 });
             }
         } catch (err) {
-            dispatch(setOwnerError(err.response?.data?.message || 'Failed to fetch owner profile details.'));
+            toast.error(err.response?.data?.message || 'Failed to fetch owner profile details.');
         } finally {
             dispatch(setOwnerLoading(false));
         }
     };
+ 
+    const fetchCompany = async (force = false) => {
+        if (!force && isCached && company) {
+            setEditForm({
+                companyName: company.companyName || '',
+                address: company.address || '',
+                phone: company.phone || '',
+                latitude: company.latitude !== undefined && company.latitude !== null ? company.latitude : '',
+                longitude: company.longitude !== undefined && company.longitude !== null ? company.longitude : '',
+                proximityRadius: company.proximityRadius !== undefined && company.proximityRadius !== null ? company.proximityRadius : '200'
+            });
+            if (company?.owner?._id) {
+                fetchOwnerProfile(company.owner._id, force);
+            }
+            return;
+        }
 
-    const fetchCompany = async () => {
         dispatch(setLoading(true));
-        dispatch(setError(null));
-
         try {
             const response = await api.get('/company/protected');
             const companyData = response.data.data;
@@ -76,21 +96,21 @@ const OwnerOrganization = () => {
                 longitude: companyData.longitude !== undefined && companyData.longitude !== null ? companyData.longitude : '',
                 proximityRadius: companyData.proximityRadius !== undefined && companyData.proximityRadius !== null ? companyData.proximityRadius : '200'
             });
-
+ 
             if (companyData?.owner?._id) {
-                fetchOwnerProfile(companyData.owner._id);
+                fetchOwnerProfile(companyData.owner._id, force);
             }
         } catch (err) {
-            dispatch(setError(err.response?.data?.message || 'Unable to fetch organization details.'));
+            toast.error(err.response?.data?.message || 'Unable to fetch organization details.');
         } finally {
             dispatch(setLoading(false));
         }
     };
-
+ 
     const handleEdit = () => {
         setIsEditing(true);
     };
-
+ 
     const handleCancel = () => {
         setIsEditing(false);
         setEditForm({
@@ -102,10 +122,10 @@ const OwnerOrganization = () => {
             proximityRadius: company.proximityRadius !== undefined && company.proximityRadius !== null ? company.proximityRadius : '200'
         });
     };
-
+ 
     const [gpsLoading, setGpsLoading] = useState(false);
     const [resolveLoading, setResolveLoading] = useState(false);
-
+ 
     const handleGetCurrentLocation = () => {
         if (!navigator.geolocation) {
             alert("Geolocation is not supported by your browser.");
@@ -118,14 +138,15 @@ const OwnerOrganization = () => {
                 const lon = position.coords.longitude;
                 const latStr = lat.toFixed(6);
                 const lonStr = lon.toFixed(6);
-
+ 
                 let addressResolved = '';
                 try {
                     const geoResponse = await fetch(
                         `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`,
                         {
                             headers: {
-                                "Accept-Language": "en"
+                                "Accept-Language": "en",
+                                "User-Agent": "EmployeeManagementSystem/1.0"
                             }
                         }
                     );
@@ -136,7 +157,7 @@ const OwnerOrganization = () => {
                 } catch (err) {
                     console.error("Reverse geocoding address resolution failed:", err);
                 }
-
+ 
                 setEditForm(prev => ({
                     ...prev,
                     latitude: latStr,
@@ -152,7 +173,7 @@ const OwnerOrganization = () => {
             { enableHighAccuracy: true }
         );
     };
-
+ 
     const handleResolveLocation = async () => {
         const lat = editForm.latitude;
         const lon = editForm.longitude;
@@ -166,7 +187,8 @@ const OwnerOrganization = () => {
                 `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`,
                 {
                     headers: {
-                        "Accept-Language": "en"
+                        "Accept-Language": "en",
+                        "User-Agent": "EmployeeManagementSystem/1.0"
                     }
                 }
             );
@@ -190,36 +212,29 @@ const OwnerOrganization = () => {
             setResolveLoading(false);
         }
     };
-
+ 
     const handleSave = async (e) => {
         e.preventDefault();
+        const validated = validateForm(organizationSchemas.updateCompany, editForm);
+        if (!validated) return;
+ 
         dispatch(setCompanySaving(true));
-        dispatch(setError(null));
-        dispatch(setSuccessMessage(null));
         try {
-            const payload = {
-                companyName: editForm.companyName,
-                address: editForm.address,
-                phone: editForm.phone,
-                latitude: editForm.latitude !== '' ? Number(editForm.latitude) : null,
-                longitude: editForm.longitude !== '' ? Number(editForm.longitude) : null,
-                proximityRadius: editForm.proximityRadius !== '' ? Number(editForm.proximityRadius) : 200
-            };
-            await api.put('/company/update', payload);
-            await fetchCompany();
+            await api.put('/company/update', validated);
+            await fetchCompany(true);
             setIsEditing(false);
-            dispatch(setSuccessMessage('Organization details updated successfully.'));
+            toast.success('Organization details updated successfully.');
         } catch (err) {
-            dispatch(setError(err.response?.data?.message || 'Failed to update organization details.'));
+            toast.error(err.response?.data?.message || 'Failed to update organization details.');
         } finally {
             dispatch(setCompanySaving(false));
         }
     };
-
+ 
     const handleEditOwner = () => {
         setIsEditingOwner(true);
     };
-
+ 
     const handleCancelOwner = () => {
         setIsEditingOwner(false);
         if (ownerProfile) {
@@ -232,65 +247,34 @@ const OwnerOrganization = () => {
             });
         }
     };
-
+ 
     const handleSaveOwner = async (e) => {
         e.preventDefault();
+        const validated = validateForm(userSchemas.updateProfile, {
+            ...ownerForm,
+            dateOfBirth: ownerForm.dateOfBirth ? new Date(ownerForm.dateOfBirth).toISOString() : ""
+        });
+        if (!validated) return;
+ 
         dispatch(setOwnerSaving(true));
-        dispatch(setOwnerError(null));
-        dispatch(setOwnerSuccessMessage(null));
         try {
-            const payload = {
-                fullName: ownerForm.fullName,
-                phone: ownerForm.phone || undefined,
-                address: ownerForm.address || undefined,
-                dateOfBirth: ownerForm.dateOfBirth ? new Date(ownerForm.dateOfBirth).toISOString() : undefined,
-                bankAccount: ownerForm.bankAccount || undefined
-            };
-            await api.put('/users/profile', payload);
+            await api.put('/users/profile', validated);
             if (company?.owner?._id) {
-                await fetchOwnerProfile(company.owner._id);
+                await fetchOwnerProfile(company.owner._id, true);
             }
             setIsEditingOwner(false);
-            dispatch(setOwnerSuccessMessage('Owner profile updated successfully.'));
+            toast.success('Owner profile updated successfully.');
         } catch (err) {
-            dispatch(setOwnerError(err.response?.data?.message || 'Failed to update owner profile details.'));
+            toast.error(err.response?.data?.message || 'Failed to update owner profile details.');
         } finally {
             dispatch(setOwnerSaving(false));
         }
     };
-
+ 
     useEffect(() => {
         fetchCompany();
     }, []);
-
-    useEffect(() => {
-        if (successMessage) {
-            toast.success(successMessage);
-            dispatch(setSuccessMessage(null));
-        }
-    }, [successMessage, dispatch]);
-
-    useEffect(() => {
-        if (ownerSuccessMessage) {
-            toast.success(ownerSuccessMessage);
-            dispatch(setOwnerSuccessMessage(null));
-        }
-    }, [ownerSuccessMessage, dispatch]);
-
-    useEffect(() => {
-        if (error) {
-            toast.error(error);
-            dispatch(setError(null));
-        }
-    }, [error, dispatch]);
-
-    useEffect(() => {
-        if (ownerError) {
-            toast.error(ownerError);
-            dispatch(setOwnerError(null));
-        }
-    }, [ownerError, dispatch]);
-
+ 
     if (loading) {
         return (
             <div className="bg-white rounded-3xl border border-slate-200 p-10 shadow-sm text-center">
@@ -299,19 +283,18 @@ const OwnerOrganization = () => {
             </div>
         );
     }
-
-    if (error) {
+ 
+    if (!company) {
         return (
             <div className="bg-rose-50 rounded-3xl border border-rose-100 p-8 text-rose-700 shadow-sm">
                 <div className="flex items-center gap-3 font-semibold">
                     <AlertCircle size={20} />
                     Organization data unavailable
                 </div>
-                <p className="mt-3 text-sm">{error}</p>
             </div>
         );
     }
-
+ 
     return (
         <div className="space-y-6">
             <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
@@ -322,9 +305,19 @@ const OwnerOrganization = () => {
                             This page displays protected company details for the owner. Use it as the home for business settings and company identity.
                         </p>
                     </div>
-                    <div className="rounded-3xl bg-indigo-50 p-4 text-indigo-700">
-                        <span className="text-sm font-semibold uppercase tracking-wide">Verified Owner Access</span>
-                        <p className="mt-2 text-sm text-slate-700">Only the owner can view this protected company record.</p>
+                    <div className="flex items-center gap-3 self-start md:self-auto shrink-0">
+                        <button
+                            onClick={() => fetchCompany(true)}
+                            disabled={loading || ownerLoading}
+                            className="p-3 text-slate-500 bg-slate-50 hover:bg-slate-100 hover:text-slate-800 rounded-2xl transition border border-slate-200/60 active:scale-95 disabled:opacity-50"
+                            title="Refresh Data"
+                        >
+                            <RefreshCcw className={`w-4 h-4 ${loading || ownerLoading ? 'animate-spin' : ''}`} />
+                        </button>
+                        <div className="rounded-3xl bg-indigo-50 p-4 text-indigo-700">
+                            <span className="text-sm font-semibold uppercase tracking-wide">Verified Owner Access</span>
+                            <p className="mt-2 text-sm text-slate-700">Only the owner can view this protected company record.</p>
+                        </div>
                     </div>
                 </div>
             </div>

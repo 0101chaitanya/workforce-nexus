@@ -1,42 +1,44 @@
-import React, { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
 import Pagination from '../../components/common/Pagination';
 import { toast } from 'react-toastify';
 import {
-  CalendarCheck, Clock, LogIn, LogOut, Loader2,
-  AlertCircle, History, Play, Square, CheckCircle, Coffee
+  CalendarCheck, Clock, Loader2,
+  History, Play, Square, CheckCircle, Coffee, RefreshCcw
 } from 'lucide-react';
 import {
   setEmployeeHistory,
   setEmployeeLoading,
   setEmployeeActionLoading,
-  setEmployeeError,
-  setEmployeeSuccessMessage,
   setEmployeeTodayRecord,
   setEmployeePage,
   setEmployeeLimit,
   setEmployeePaginationInfo
 } from './attendanceSlice';
-
+ 
 export default function EmployeeAttendance() {
   const dispatch = useDispatch();
-  const { user } = useSelector((state) => state.auth);
   const {
     history,
     loading,
     actionLoading,
-    error,
-    successMessage,
     todayRecord,
     page,
     limit,
-    paginationInfo
+    paginationInfo,
+    isCached,
+    cachedParams
   } = useSelector((state) => state.attendance.employee);
+ 
+  const fetchAttendance = useCallback(async (force = false) => {
+    if (!force && isCached && cachedParams &&
+        cachedParams.page === page &&
+        cachedParams.limit === limit) {
+      return;
+    }
 
-  const fetchAttendance = async () => {
     dispatch(setEmployeeLoading(true));
-    dispatch(setEmployeeError(null));
     try {
       const response = await api.get('/attendance/history', {
         params: { page, limit }
@@ -44,7 +46,7 @@ export default function EmployeeAttendance() {
       if (response.data?.success) {
         const data = response.data.data || [];
         dispatch(setEmployeeHistory(data));
-
+ 
         if (response.data.pagination) {
           dispatch(setEmployeePaginationInfo(response.data.pagination));
         } else {
@@ -55,7 +57,7 @@ export default function EmployeeAttendance() {
             hasPrev: false
           }));
         }
-
+ 
         // Only check today's record from page 1 data
         if (page === 1) {
           const todayStr = new Date().toDateString();
@@ -64,54 +66,38 @@ export default function EmployeeAttendance() {
         }
       }
     } catch (err) {
-      dispatch(setEmployeeError(err.response?.data?.message || 'Failed to load attendance history.'));
+      toast.error(err.response?.data?.message || 'Failed to load attendance history.');
     } finally {
       dispatch(setEmployeeLoading(false));
     }
-  };
-
+  }, [page, limit, dispatch, isCached, cachedParams]);
+ 
   useEffect(() => {
     fetchAttendance();
-  }, [page, limit]);
-
-  useEffect(() => {
-    if (error) {
-      toast.error(error);
-      dispatch(setEmployeeError(null));
-    }
-  }, [error, dispatch]);
-
-  useEffect(() => {
-    if (successMessage) {
-      toast.success(successMessage);
-      dispatch(setEmployeeSuccessMessage(null));
-    }
-  }, [successMessage, dispatch]);
-
+  }, [fetchAttendance]);
+ 
   const handleClockIn = async () => {
     dispatch(setEmployeeActionLoading(true));
-    dispatch(setEmployeeError(null));
-    dispatch(setEmployeeSuccessMessage(null));
-
+ 
     const performClockIn = async (coords = null) => {
       try {
         const payload = coords ? { latitude: coords.latitude, longitude: coords.longitude } : {};
         const response = await api.post('/attendance/clock-in', payload);
         if (response.data?.success) {
-          dispatch(setEmployeeSuccessMessage('Clocked in successfully! Have a great day at work.'));
+          toast.success('Clocked in successfully! Have a great day at work.');
           if (page === 1) {
-            await fetchAttendance();
+            await fetchAttendance(true);
           } else {
             dispatch(setEmployeePage(1));
           }
         }
       } catch (err) {
-        dispatch(setEmployeeError(err.response?.data?.message || 'Clock-in failed.'));
+        toast.error(err.response?.data?.message || 'Clock-in failed.');
       } finally {
         dispatch(setEmployeeActionLoading(false));
       }
     };
-
+ 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -120,7 +106,7 @@ export default function EmployeeAttendance() {
             longitude: position.coords.longitude
           });
         },
-        (error) => {
+        () => {
           // If browser location fails, still call performClockIn without coords.
           // The backend will check if proximity coordinates are configured, and if they are, it will fail gracefully and prompt the user.
           performClockIn(null);
@@ -131,28 +117,26 @@ export default function EmployeeAttendance() {
       performClockIn(null);
     }
   };
-
+ 
   const handleClockOut = async () => {
     dispatch(setEmployeeActionLoading(true));
-    dispatch(setEmployeeError(null));
-    dispatch(setEmployeeSuccessMessage(null));
     try {
       const response = await api.put('/attendance/clock-out');
       if (response.data?.success) {
-        dispatch(setEmployeeSuccessMessage('Clocked out successfully! Thank you for your work.'));
+        toast.success('Clocked out successfully! Thank you for your work.');
         if (page === 1) {
-          fetchAttendance();
+          fetchAttendance(true);
         } else {
           dispatch(setEmployeePage(1));
         }
       }
     } catch (err) {
-      dispatch(setEmployeeError(err.response?.data?.message || 'Clock-out failed.'));
+      toast.error(err.response?.data?.message || 'Clock-out failed.');
     } finally {
       dispatch(setEmployeeActionLoading(false));
     }
   };
-
+ 
   return (
     <div className="space-y-6">
       {/* Banner */}
@@ -166,6 +150,14 @@ export default function EmployeeAttendance() {
             Clock in/out to log your daily shifts and monitor compliance.
           </p>
         </div>
+        <button
+          onClick={() => fetchAttendance(true)}
+          disabled={loading}
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 font-bold text-xs rounded-xl transition active:scale-95 disabled:opacity-50"
+        >
+          <RefreshCcw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
       </div>
 
       {/* Clock Controls Grid */}
@@ -283,8 +275,6 @@ export default function EmployeeAttendance() {
             <Loader2 className="animate-spin text-indigo-600" size={24} />
             <span className="text-slate-400 text-xs font-bold">Syncing history...</span>
           </div>
-        ) : error ? (
-          <div className="p-6 text-center text-xs font-bold text-rose-500">{error}</div>
         ) : history.length === 0 ? (
           <div className="p-12 text-center space-y-2">
             <p className="text-sm font-bold text-slate-800">No History Records</p>

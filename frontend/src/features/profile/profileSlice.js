@@ -14,8 +14,7 @@ const initialState = {
   loading: true,
   saveLoading: false,
   passwordLoading: false,
-  error: null,
-  successMessage: null
+  isCached: false
 };
 
 /**
@@ -28,6 +27,7 @@ const profileSlice = createSlice({
     /** Caches the user profile object. */
     setProfile: (state, action) => {
       state.profile = action.payload;
+      state.isCached = true;
     },
     /** Sets loader for user profile data fetches. */
     setLoading: (state, action) => {
@@ -41,13 +41,9 @@ const profileSlice = createSlice({
     setPasswordLoading: (state, action) => {
       state.passwordLoading = action.payload;
     },
-    /** Caches action failure error messages. */
-    setError: (state, action) => {
-      state.error = action.payload;
-    },
-    /** Sets alert validation notifications. */
-    setSuccessMessage: (state, action) => {
-      state.successMessage = action.payload;
+    /** Invalidates profile cache. */
+    invalidateCache: (state) => {
+      state.isCached = false;
     }
   }
 });
@@ -57,9 +53,7 @@ export const {
   setLoading,
   setSaveLoading,
   setPasswordLoading,
-  setError,
-  setSuccessMessage
+  invalidateCache
 } = profileSlice.actions;
 
 export default profileSlice.reducer;
-

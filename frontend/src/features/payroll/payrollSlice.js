@@ -40,7 +40,6 @@ const initialState = {
     loading: true,
     downloadingId: null,
     tenureDownloading: false,
-    error: null,
     page: 1,
     limit: 10,
     paginationInfo: {
@@ -48,7 +47,9 @@ const initialState = {
       totalPages: 1,
       hasNext: false,
       hasPrev: false
-    }
+    },
+    isCached: false,
+    cachedParams: null
   },
   owner: {
     payrolls: [],
@@ -58,8 +59,6 @@ const initialState = {
     downloadLoading: '',
     tenureDownloading: false,
     rowTenureDownloading: '',
-    error: null,
-    message: null,
     page: 1,
     limit: 10,
     paginationInfo: {
@@ -72,7 +71,9 @@ const initialState = {
     searchResults: [],
     selectedUserObj: null,
     showDropdown: false,
-    searchLoading: false
+    searchLoading: false,
+    isCached: false,
+    cachedParams: null
   }
 };
 
@@ -87,6 +88,11 @@ const payrollSlice = createSlice({
     /** Caches employee personal payroll list. */
     setEmployeePayrolls: (state, action) => {
       state.employee.payrolls = action.payload;
+      state.employee.isCached = true;
+      state.employee.cachedParams = {
+        page: state.employee.page,
+        limit: state.employee.limit
+      };
     },
     /** Sets logs loading state. */
     setEmployeeLoading: (state, action) => {
@@ -100,10 +106,6 @@ const payrollSlice = createSlice({
     setEmployeeTenureDownloading: (state, action) => {
       state.employee.tenureDownloading = action.payload;
     },
-    /** Caches employee actions error messages. */
-    setEmployeeError: (state, action) => {
-      state.employee.error = action.payload;
-    },
     /** Updates employee pagination page. */
     setEmployeePage: (state, action) => {
       state.employee.page = action.payload;
@@ -116,11 +118,22 @@ const payrollSlice = createSlice({
     setEmployeePaginationInfo: (state, action) => {
       state.employee.paginationInfo = action.payload;
     },
+    /** Invalidates employee payroll cache. */
+    invalidateEmployeeCache: (state) => {
+      state.employee.isCached = false;
+      state.employee.cachedParams = null;
+    },
 
     // Owner actions
     /** Caches company payroll history. */
     setOwnerPayrolls: (state, action) => {
       state.owner.payrolls = action.payload;
+      state.owner.isCached = true;
+      state.owner.cachedParams = {
+        page: state.owner.page,
+        limit: state.owner.limit,
+        targetUserId: state.owner.targetUserId
+      };
     },
     /** Updates targeted employee identifier filter. */
     setOwnerTargetUserId: (state, action) => {
@@ -142,17 +155,9 @@ const payrollSlice = createSlice({
     setOwnerTenureDownloading: (state, action) => {
       state.owner.tenureDownloading = action.payload;
     },
-    /** Sets target employee ID undergoing tenure overview download. */
+    /** Sets targeted employee ID undergoing tenure overview download. */
     setOwnerRowTenureDownloading: (state, action) => {
       state.owner.rowTenureDownloading = action.payload;
-    },
-    /** Caches owner actions error messages. */
-    setOwnerError: (state, action) => {
-      state.owner.error = action.payload;
-    },
-    /** Sets general informational messaging. */
-    setOwnerMessage: (state, action) => {
-      state.owner.message = action.payload;
     },
     /** Updates owner logs pagination page index. */
     setOwnerPage: (state, action) => {
@@ -185,6 +190,11 @@ const payrollSlice = createSlice({
     /** Toggles search loading state. */
     setOwnerSearchLoading: (state, action) => {
       state.owner.searchLoading = action.payload;
+    },
+    /** Invalidates owner payroll cache. */
+    invalidateOwnerCache: (state) => {
+      state.owner.isCached = false;
+      state.owner.cachedParams = null;
     }
   }
 });
@@ -194,10 +204,10 @@ export const {
   setEmployeeLoading,
   setEmployeeDownloadingId,
   setEmployeeTenureDownloading,
-  setEmployeeError,
   setEmployeePage,
   setEmployeeLimit,
   setEmployeePaginationInfo,
+  invalidateEmployeeCache,
   setOwnerPayrolls,
   setOwnerTargetUserId,
   setOwnerLoading,
@@ -205,8 +215,6 @@ export const {
   setOwnerDownloadLoading,
   setOwnerTenureDownloading,
   setOwnerRowTenureDownloading,
-  setOwnerError,
-  setOwnerMessage,
   setOwnerPage,
   setOwnerLimit,
   setOwnerPaginationInfo,
@@ -214,8 +222,8 @@ export const {
   setOwnerSearchResults,
   setOwnerSelectedUserObj,
   setOwnerShowDropdown,
-  setOwnerSearchLoading
+  setOwnerSearchLoading,
+  invalidateOwnerCache
 } = payrollSlice.actions;
 
 export default payrollSlice.reducer;
-

@@ -3,15 +3,15 @@ import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
 import Pagination from '../../components/common/Pagination';
 import { toast } from 'react-toastify';
+import { validateForm } from '../../utils/validation';
+import { leaveSchemas } from './leaveSchemas';
 import {
-  FileSpreadsheet, Send, History, Loader2, AlertCircle, Plus, Calendar, Type, FileText, CheckCircle, Clock, XCircle
+  FileSpreadsheet, Send, History, Loader2, AlertCircle, Plus, Calendar, Type, FileText, CheckCircle, Clock, XCircle, RefreshCcw
 } from 'lucide-react';
 import {
   setEmployeeLeaves,
   setEmployeeLoading,
   setEmployeeSubmitLoading,
-  setEmployeeError,
-  setEmployeeSuccessMessage,
   setEmployeePage,
   setEmployeeLimit,
   setEmployeePaginationInfo,
@@ -24,12 +24,12 @@ export default function EmployeeLeaves() {
     leaves,
     loading,
     submitLoading,
-    error,
-    successMessage,
     page,
     limit,
     paginationInfo,
-    leaveStats
+    leaveStats,
+    isCached,
+    cachedParams
   } = useSelector((state) => state.leaves.employee);
 
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
@@ -40,9 +40,14 @@ export default function EmployeeLeaves() {
     reason: ''
   });
 
-  const fetchLeaves = async () => {
+  const fetchLeaves = async (force = false) => {
+    if (!force && isCached && cachedParams &&
+        cachedParams.page === page &&
+        cachedParams.limit === limit) {
+      return;
+    }
+
     dispatch(setEmployeeLoading(true));
-    dispatch(setEmployeeError(null));
     try {
       const response = await api.get('/leaves/history', {
         params: { page, limit }
@@ -71,7 +76,7 @@ export default function EmployeeLeaves() {
         }
       }
     } catch (err) {
-      dispatch(setEmployeeError(err.response?.data?.message || 'Failed to load leave history.'));
+      toast.error(err.response?.data?.message || 'Failed to load leave history.');
     } finally {
       dispatch(setEmployeeLoading(false));
     }
@@ -81,46 +86,18 @@ export default function EmployeeLeaves() {
     fetchLeaves();
   }, [page, limit]);
 
-  useEffect(() => {
-    if (error) {
-      toast.error(error);
-      dispatch(setEmployeeError(null));
-    }
-  }, [error, dispatch]);
-
-  useEffect(() => {
-    if (successMessage) {
-      toast.success(successMessage);
-      dispatch(setEmployeeSuccessMessage(null));
-    }
-  }, [successMessage, dispatch]);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    dispatch(setEmployeeError(null));
-    dispatch(setEmployeeSuccessMessage(null));
 
-    if (new Date(form.startDate) > new Date(form.endDate)) {
-      dispatch(setEmployeeError('Start date cannot be after end date.'));
-      return;
-    }
-
-    if (form.reason.trim().length < 5) {
-      dispatch(setEmployeeError('Reason must be at least 5 characters long.'));
-      return;
-    }
+    const validated = validateForm(leaveSchemas.applyLeave, form);
+    if (!validated) return;
 
     dispatch(setEmployeeSubmitLoading(true));
     try {
-      const response = await api.post('/leaves/apply', {
-        type: form.type,
-        startDate: new Date(form.startDate).toISOString(),
-        endDate: new Date(form.endDate).toISOString(),
-        reason: form.reason.trim()
-      });
+      const response = await api.post('/leaves/apply', validated);
 
       if (response.data?.success) {
-        dispatch(setEmployeeSuccessMessage('Leave application submitted successfully!'));
+        toast.success('Leave application submitted successfully!');
         setForm({
           type: 'sick',
           startDate: '',
@@ -129,13 +106,13 @@ export default function EmployeeLeaves() {
         });
         setIsApplyModalOpen(false);
         if (page === 1) {
-          fetchLeaves();
+          fetchLeaves(true);
         } else {
           dispatch(setEmployeePage(1));
         }
       }
     } catch (err) {
-      dispatch(setEmployeeError(err.response?.data?.message || 'Failed to apply for leave.'));
+      toast.error(err.response?.data?.message || 'Failed to apply for leave.');
     } finally {
       dispatch(setEmployeeSubmitLoading(false));
     }
@@ -155,13 +132,23 @@ export default function EmployeeLeaves() {
             Apply for leave of absence and track the approval status of your submissions.
           </p>
         </div>
-        <button
-          onClick={() => setIsApplyModalOpen(true)}
-          className="flex items-center justify-center gap-2 px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm shadow-md hover:shadow-indigo-200 transition transform active:scale-98 shrink-0"
-        >
-          <Plus size={18} />
-          Apply for Leave
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => fetchLeaves(true)}
+            disabled={loading}
+            className="p-2.5 text-slate-500 bg-slate-50 hover:bg-slate-100 hover:text-slate-800 rounded-xl transition border border-slate-200/60 active:scale-95 disabled:opacity-50"
+            title="Refresh Data"
+          >
+            <RefreshCcw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+          <button
+            onClick={() => setIsApplyModalOpen(true)}
+            className="flex items-center justify-center gap-2 px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm shadow-md hover:shadow-indigo-200 transition transform active:scale-98 shrink-0"
+          >
+            <Plus size={18} />
+            Apply for Leave
+          </button>
+        </div>
       </div>
 
       {/* Leave Summary Widgets */}
@@ -215,8 +202,6 @@ export default function EmployeeLeaves() {
             <Loader2 className="animate-spin text-indigo-600" size={24} />
             <span className="text-slate-400 text-xs font-bold">Syncing history...</span>
           </div>
-        ) : error ? (
-          <div className="p-6 text-center text-xs font-bold text-rose-500">{error}</div>
         ) : leaves.length === 0 ? (
           <div className="p-12 text-center space-y-2">
             <p className="text-sm font-bold text-slate-800">No Leave History</p>

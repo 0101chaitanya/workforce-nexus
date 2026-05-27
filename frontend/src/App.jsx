@@ -1,7 +1,7 @@
 import React, { lazy, Suspense, useEffect } from 'react';
-import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useNavigate, useLocation } from 'react-router-dom';
 import { setNavigate } from './app/navigation.js';
-import { ToastContainer } from 'react-toastify';
+import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 // Core Auth & Layout (Statically loaded for immediate initial render optimization)
@@ -30,18 +30,25 @@ const LoadingSpinner = () => (
   </div>
 );
 
-function NavigationSetter() {
+function RouteEffects() {
   const navigate = useNavigate();
+  const location = useLocation();
+  
   useEffect(() => {
     setNavigate(navigate);
   }, [navigate]);
+
+  useEffect(() => {
+    toast.dismiss();
+  }, [location]);
+
   return null;
 }
 
 export default function App() {
   return (
     <BrowserRouter>
-      <NavigationSetter />
+      <RouteEffects />
       <ToastContainer autoClose={7000} theme="colored" position="top-right" />
       <Routes>
         {/* Core Auth & Landing Access Points */}

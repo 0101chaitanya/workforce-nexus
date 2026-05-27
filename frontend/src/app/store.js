@@ -1,3 +1,8 @@
+/**
+ * @file store.js
+ * @description Redux store configuration combining all slice reducers.
+ */
+
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import authReducer, { logout } from '../features/auth/authSlice';
 import attendanceReducer from '../features/attendance/attendanceSlice';
@@ -19,6 +24,14 @@ const appReducer = combineReducers({
   dashboard: dashboardReducer,
 });
 
+/**
+ * Root reducer wrapper that intercepts state changes.
+ * On user logout, it resets the global state (except for some structural auth properties) to clean up cached user data.
+ * 
+ * @param {Object} state - Current Redux state.
+ * @param {Object} action - Dispatched action.
+ * @returns {Object} New Redux state.
+ */
 const rootReducer = (state, action) => {
   let nextState = state;
   if (action.type === logout.type) {
@@ -28,41 +41,8 @@ const rootReducer = (state, action) => {
         token: null,
         role: null,
         loading: false,
-        error: null,
       },
     };
-  } else if (action.type === 'common/clearStatusMessages') {
-    if (nextState) {
-      nextState = {
-        ...nextState,
-        auth: nextState.auth ? { ...nextState.auth, error: null } : nextState.auth,
-        attendance: nextState.attendance ? {
-          ...nextState.attendance,
-          employee: nextState.attendance.employee ? { ...nextState.attendance.employee, successMessage: null, error: null } : nextState.attendance.employee,
-          owner: nextState.attendance.owner ? { ...nextState.attendance.owner, error: null } : nextState.attendance.owner,
-        } : nextState.attendance,
-        employees: nextState.employees ? { ...nextState.employees, successMessage: null, error: null } : nextState.employees,
-        leaves: nextState.leaves ? {
-          ...nextState.leaves,
-          employee: nextState.leaves.employee ? { ...nextState.leaves.employee, successMessage: null, error: null } : nextState.leaves.employee,
-          owner: nextState.leaves.owner ? { ...nextState.leaves.owner, error: null } : nextState.leaves.owner,
-        } : nextState.leaves,
-        payroll: nextState.payroll ? {
-          ...nextState.payroll,
-          employee: nextState.payroll.employee ? { ...nextState.payroll.employee, error: null } : nextState.payroll.employee,
-          owner: nextState.payroll.owner ? { ...nextState.payroll.owner, error: null, message: null } : nextState.payroll.owner,
-        } : nextState.payroll,
-        organization: nextState.organization ? {
-          ...nextState.organization,
-          successMessage: null,
-          error: null,
-          ownerSuccessMessage: null,
-          ownerError: null,
-        } : nextState.organization,
-        profile: nextState.profile ? { ...nextState.profile, successMessage: null, error: null } : nextState.profile,
-        dashboard: nextState.dashboard ? { ...nextState.dashboard, error: null } : nextState.dashboard,
-      };
-    }
   }
   return appReducer(nextState, action);
 };

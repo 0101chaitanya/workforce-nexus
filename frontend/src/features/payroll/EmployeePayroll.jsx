@@ -4,14 +4,13 @@ import api from '../../app/axiosInterceptors';
 import Pagination from '../../components/common/Pagination';
 import { toast } from 'react-toastify';
 import {
-  CreditCard, Download, Loader2, AlertCircle, FileText, Calendar, DollarSign
+  CreditCard, Download, Loader2, FileText, Calendar, RefreshCcw
 } from 'lucide-react';
 import {
   setEmployeePayrolls,
   setEmployeeLoading,
   setEmployeeDownloadingId,
   setEmployeeTenureDownloading,
-  setEmployeeError,
   setEmployeePage,
   setEmployeeLimit,
   setEmployeePaginationInfo
@@ -24,15 +23,21 @@ export default function EmployeePayroll() {
     loading,
     downloadingId,
     tenureDownloading,
-    error,
     page,
     limit,
-    paginationInfo
+    paginationInfo,
+    isCached,
+    cachedParams
   } = useSelector((state) => state.payroll.employee);
 
-  const fetchPayroll = async () => {
+  const fetchPayroll = async (force = false) => {
+    if (!force && isCached && cachedParams &&
+        cachedParams.page === page &&
+        cachedParams.limit === limit) {
+      return;
+    }
+
     dispatch(setEmployeeLoading(true));
-    dispatch(setEmployeeError(null));
     try {
       const response = await api.get('/payroll/history', {
         params: { page, limit }
@@ -51,7 +56,7 @@ export default function EmployeePayroll() {
         }
       }
     } catch (err) {
-      dispatch(setEmployeeError(err.response?.data?.message || 'Failed to load payroll records.'));
+      toast.error(err.response?.data?.message || 'Failed to load payroll records.');
     } finally {
       dispatch(setEmployeeLoading(false));
     }
@@ -61,16 +66,8 @@ export default function EmployeePayroll() {
     fetchPayroll();
   }, [page, limit]);
 
-  useEffect(() => {
-    if (error) {
-      toast.error(error);
-      dispatch(setEmployeeError(null));
-    }
-  }, [error, dispatch]);
-
   const handleDownload = async (payrollId, filename) => {
     dispatch(setEmployeeDownloadingId(payrollId));
-    dispatch(setEmployeeError(null));
     try {
       const response = await api.get(`/payroll/${payrollId}/download`, {
         responseType: 'blob'
@@ -86,7 +83,7 @@ export default function EmployeePayroll() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      dispatch(setEmployeeError('Failed to download payslip. Please try again.'));
+      toast.error('Failed to download payslip. Please try again.');
     } finally {
       dispatch(setEmployeeDownloadingId(null));
     }
@@ -94,7 +91,6 @@ export default function EmployeePayroll() {
 
   const handleDownloadTenure = async () => {
     dispatch(setEmployeeTenureDownloading(true));
-    dispatch(setEmployeeError(null));
     try {
       const response = await api.get('/payroll/tenure/download', {
         responseType: 'blob'
@@ -109,7 +105,7 @@ export default function EmployeePayroll() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      dispatch(setEmployeeError('Failed to download consolidated payslip. Please try again.'));
+      toast.error('Failed to download consolidated payslip. Please try again.');
     } finally {
       dispatch(setEmployeeTenureDownloading(false));
     }
@@ -136,18 +132,28 @@ export default function EmployeePayroll() {
             Track your monthly earnings, tax deductions, and download computer-generated payslips.
           </p>
         </div>
-        <button
-          onClick={handleDownloadTenure}
-          disabled={tenureDownloading || payrolls.length === 0}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs transition disabled:opacity-50"
-        >
-          {tenureDownloading ? (
-            <Loader2 className="animate-spin" size={12} />
-          ) : (
-            <Download size={12} />
-          )}
-          Download Tenure Payslip
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => fetchPayroll(true)}
+            disabled={loading}
+            className="p-2.5 text-slate-500 bg-slate-50 hover:bg-slate-100 hover:text-slate-800 rounded-xl transition border border-slate-200/60 active:scale-95 disabled:opacity-50"
+            title="Refresh Data"
+          >
+            <RefreshCcw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+          <button
+            onClick={handleDownloadTenure}
+            disabled={tenureDownloading || payrolls.length === 0}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs transition disabled:opacity-50 shrink-0"
+          >
+            {tenureDownloading ? (
+              <Loader2 className="animate-spin" size={12} />
+            ) : (
+              <Download size={12} />
+            )}
+            Download Consolidated Payslip
+          </button>
+        </div>
       </div>
 
       {/* Main Payslip History Log */}

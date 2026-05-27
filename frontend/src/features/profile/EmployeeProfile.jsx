@@ -3,24 +3,26 @@ import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
 import { setAuthSuccess } from '../auth/authSlice';
 import { toast } from 'react-toastify';
+import { validateForm } from '../../utils/validation';
+import { userSchemas } from './userSchemas';
 import {
-  setProfile, setLoading, setSaveLoading, setPasswordLoading, setError, setSuccessMessage
+  setProfile, setLoading, setSaveLoading, setPasswordLoading
 } from './profileSlice';
 import {
   User, Mail, Briefcase, Building2, Calendar, Phone, CreditCard,
-  MapPin, Loader2, Save, Key, UserCheck, AlertCircle,
-  Edit2, X
+  MapPin, Loader2, Save, Key, UserCheck,
+  Edit2, X, RefreshCcw
 } from 'lucide-react';
-
+ 
 export default function EmployeeProfile() {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
-
+ 
   // Selector
-  const { profile, loading, saveLoading, passwordLoading, error, successMessage } = useSelector((state) => state.profile);
-
+  const { profile, loading, saveLoading, passwordLoading, isCached } = useSelector((state) => state.profile);
+ 
   const [isEditing, setIsEditing] = useState(false);
-
+ 
   // Forms
   const [profileForm, setProfileForm] = useState({
     fullName: '',
@@ -29,17 +31,27 @@ export default function EmployeeProfile() {
     dateOfBirth: '',
     bankAccount: ''
   });
-
+ 
   const [passwordForm, setPasswordForm] = useState({
     oldPassword: '',
     newPassword: '',
     confirmPassword: ''
   });
-
+ 
   // Fetch full details
-  const fetchProfileDetails = useCallback(async (silent = false) => {
+  const fetchProfileDetails = useCallback(async (silent = false, force = false) => {
+    if (!force && isCached && profile) {
+      setProfileForm({
+        fullName: profile.fullName || '',
+        phone: profile.phone || '',
+        address: profile.address || '',
+        dateOfBirth: profile.dateOfBirth ? profile.dateOfBirth.split('T')[0] : '',
+        bankAccount: profile.bankAccount || ''
+      });
+      return;
+    }
+
     if (!silent) dispatch(setLoading(true));
-    dispatch(setError(null));
     try {
       const response = await api.get(`/users/info/${user._id}`);
       if (response.data?.success) {
@@ -54,36 +66,22 @@ export default function EmployeeProfile() {
         });
       }
     } catch (err) {
-      dispatch(setError(err.response?.data?.message || 'Failed to fetch profile info.'));
+      toast.error(err.response?.data?.message || 'Failed to fetch profile info.');
     } finally {
       if (!silent) dispatch(setLoading(false));
     }
-  }, [user, dispatch]);
-
+  }, [user, dispatch, isCached, profile]);
+ 
   useEffect(() => {
     if (user?._id) {
       fetchProfileDetails();
     }
   }, [user?._id, fetchProfileDetails]);
-
-  useEffect(() => {
-    if (successMessage) {
-      toast.success(successMessage);
-      dispatch(setSuccessMessage(null));
-    }
-  }, [successMessage, dispatch]);
-
-  useEffect(() => {
-    if (error) {
-      toast.error(error);
-      dispatch(setError(null));
-    }
-  }, [error, dispatch]);
-
+ 
   const handleEdit = () => {
     setIsEditing(true);
   };
-
+ 
   const handleCancel = () => {
     setIsEditing(false);
     if (profile) {
@@ -96,65 +94,50 @@ export default function EmployeeProfile() {
       });
     }
   };
-
-  // Submit Profile update
+ 
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
+    const validated = validateForm(userSchemas.updateProfile, {
+      ...profileForm,
+      dateOfBirth: profileForm.dateOfBirth ? new Date(profileForm.dateOfBirth).toISOString() : ""
+    });
+    if (!validated) return;
+ 
     dispatch(setSaveLoading(true));
-    dispatch(setError(null));
-    dispatch(setSuccessMessage(null));
     try {
-      const payload = {
-        fullName: profileForm.fullName || undefined,
-        phone: profileForm.phone || undefined,
-        address: profileForm.address || undefined,
-        dateOfBirth: profileForm.dateOfBirth ? new Date(profileForm.dateOfBirth).toISOString() : undefined,
-        bankAccount: profileForm.bankAccount || undefined
-      };
-
-      const response = await api.put('/users/profile', payload);
+      const response = await api.put('/users/profile', validated);
       if (response.data?.success) {
-        dispatch(setSuccessMessage('Profile details updated successfully!'));
-
+        toast.success('Profile details updated successfully!');
+ 
         // Sync Redux state with updated user
         const updatedUser = { ...user, ...response.data.data };
         dispatch(setAuthSuccess({ user: updatedUser, accessToken: localStorage.getItem('token') }));
-
-        await fetchProfileDetails(true);
+ 
+        await fetchProfileDetails(true, true);
         setIsEditing(false);
       }
     } catch (err) {
-      dispatch(setError(err.response?.data?.message || 'Failed to save profile changes.'));
+      toast.error(err.response?.data?.message || 'Failed to save profile changes.');
     } finally {
       dispatch(setSaveLoading(false));
     }
   };
-
+ 
   // Submit Password update
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
-    dispatch(setError(null));
-    dispatch(setSuccessMessage(null));
-
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      dispatch(setError("New password and confirmation password do not match."));
-      return;
-    }
-
-    if (passwordForm.newPassword.length < 6) {
-      dispatch(setError("New password must be at least 6 characters."));
-      return;
-    }
-
+    const validated = validateForm(userSchemas.changePassword, passwordForm);
+    if (!validated) return;
+ 
     dispatch(setPasswordLoading(true));
     try {
       const response = await api.put('/users/change-password', {
-        oldPassword: passwordForm.oldPassword,
-        newPassword: passwordForm.newPassword
+        oldPassword: validated.oldPassword,
+        newPassword: validated.newPassword
       });
-
+ 
       if (response.data?.success) {
-        dispatch(setSuccessMessage('Password changed successfully!'));
+        toast.success('Password changed successfully!');
         setPasswordForm({
           oldPassword: '',
           newPassword: '',
@@ -162,12 +145,12 @@ export default function EmployeeProfile() {
         });
       }
     } catch (err) {
-      dispatch(setError(err.response?.data?.message || 'Failed to change password.'));
+      toast.error(err.response?.data?.message || 'Failed to change password.');
     } finally {
       dispatch(setPasswordLoading(false));
     }
   };
-
+ 
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center p-20 space-y-3 bg-white rounded-2xl border">
@@ -176,12 +159,12 @@ export default function EmployeeProfile() {
       </div>
     );
   }
-
+ 
   const initials = profile?.fullName ? profile.fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : '?';
-
+ 
   return (
     <div className="space-y-6">
-
+ 
       {/* Banner card */}
       <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -193,6 +176,14 @@ export default function EmployeeProfile() {
             Manage your personal verification details, residential contact, banking accounts, and password credentials.
           </p>
         </div>
+        <button
+          onClick={() => fetchProfileDetails(false, true)}
+          disabled={loading}
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 font-bold text-xs rounded-xl transition active:scale-95 disabled:opacity-50 shrink-0"
+        >
+          <RefreshCcw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

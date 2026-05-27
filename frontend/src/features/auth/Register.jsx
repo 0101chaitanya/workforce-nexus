@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
-import axiosInterceptors from '../../app/axiosInterceptors';
-import { setLoading, setAuthFailed, clearError } from './authSlice';
+import authApi from '../../app/authApi';
+import { setLoading } from './authSlice';
 import { ShieldCheck, Mail, Lock, Building, User, CheckCircle, Briefcase } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { validateForm } from '../../utils/validation';
+import { authSchemas } from './authSchemas';
 
 const Register = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { loading, error } = useSelector((state) => state.auth);
+    const { loading } = useSelector((state) => state.auth);
 
     const [formData, setFormData] = useState({
         companyName: '',
@@ -22,107 +24,69 @@ const Register = () => {
 
     const [isOtpSent, setIsOtpSent] = useState(false);
     const [isEmailVerified, setIsEmailVerified] = useState(false);
-    const [otpLoading, setOtpLoading] = useState(false); 
-    const [passwordError, setPasswordError] = useState('');
-    const [successMessage, setSuccessMessage] = useState('');
-
-    useEffect(() => {
-        dispatch(clearError());
-    }, [dispatch]);
-
-    useEffect(() => {
-        if (error) {
-            toast.error(error);
-            dispatch(clearError());
-        }
-    }, [error, dispatch]);
-
-    useEffect(() => {
-        if (successMessage) {
-            toast.success(successMessage);
-            setSuccessMessage('');
-        }
-    }, [successMessage]);
+    const [otpLoading, setOtpLoading] = useState(false);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
     const handleSendOtp = async () => {
-        if (!formData.email) {
-            dispatch(setAuthFailed("Please enter email first"));
-            return;
-        }
+        const validated = validateForm(authSchemas.sendOtp, {
+            email: formData.email,
+            companyName: formData.companyName
+        });
+        if (!validated) return;
+
         setOtpLoading(true);
-        dispatch(clearError());
-        setSuccessMessage('');
         try {
-            await axiosInterceptors.post('/auth/send-otp', {
-                email: formData.email,
-                companyName: formData.companyName
-            });
+            await authApi.post('/auth/send-otp', validated);
             setIsOtpSent(true);
-            setSuccessMessage("OTP verification code transmitted successfully!");
+            toast.success("OTP verification code transmitted successfully!");
         } catch (err) {
-            dispatch(setAuthFailed(err.response?.data?.message || "Failed to send OTP code."));
+            toast.error(err.response?.data?.message || "Failed to send OTP code.");
         } finally {
             setOtpLoading(false);
         }
     };
 
     const handleVerifyOtp = async () => {
-        if (!formData.otp) {
-            dispatch(setAuthFailed("Please enter the verification code"));
-            return;
-        }
+        const validated = validateForm(authSchemas.verifyOtp, {
+            email: formData.email,
+            otp: formData.otp
+        });
+        if (!validated) return;
+
         setOtpLoading(true);
-        dispatch(clearError());
-        setSuccessMessage('');
         try {
-            await axiosInterceptors.post('/auth/verify-otp', {
-                email: formData.email,
-                otp: Number(formData.otp)
-            });
+            await authApi.post('/auth/verify-otp', validated);
             setIsEmailVerified(true);
-            setSuccessMessage("Email verification confirmed!");
+            toast.success("Email verification confirmed!");
         } catch (err) {
-            dispatch(setAuthFailed(err.response?.data?.message || "Invalid validation code."));
+            toast.error(err.response?.data?.message || "Invalid validation code.");
         } finally {
             setOtpLoading(false);
         }
     };
-
-    useEffect(() => {
-        if (formData.confirmPassword && formData.password !== formData.confirmPassword) {
-            setPasswordError('Passwords do not match');
-        } else {
-            setPasswordError('');
-        }
-    }, [formData.password, formData.confirmPassword]);
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!isEmailVerified) {
-            dispatch(setAuthFailed("Please complete verification steps first."));
+            toast.error("Please complete verification steps first.");
             return;
         }
-        if (passwordError) return;
+
+        const validated = validateForm(authSchemas.register, formData);
+        if (!validated) return;
 
         dispatch(setLoading(true));
-        dispatch(clearError());
-        setSuccessMessage('');
         try {
-            await axiosInterceptors.post('/auth/register', {
-                fullName: formData.fullName,
-                email: formData.email,
-                password: formData.password
-            });
-            setSuccessMessage("Company created successfully! Redirecting to login view...");
+            await authApi.post('/auth/register', validated);
+            toast.success("Company created successfully! Redirecting to login view...");
             setTimeout(() => {
                 navigate('/login');
             }, 2000);
         } catch (err) {
-            dispatch(setAuthFailed(err.response?.data?.message || "Registration sequence failed."));
+            toast.error(err.response?.data?.message || "Registration sequence failed.");
+            dispatch(setLoading(false));
         }
     };
 
@@ -192,7 +156,7 @@ const Register = () => {
                                     <input type="email" name="email" onChange={handleChange} required disabled={isEmailVerified}
                                         className="w-full pl-11 pr-4 py-3 bg-slate-50/50 border border-slate-200/80 rounded-2xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all duration-200 text-sm font-medium text-slate-700" placeholder="alex@company.com" />
                                 </div>
-                                <button type="button" onClick={handleSendOtp} disabled={otpLoading || isEmailVerified || !formData.email}
+                                <button type="button" onClick={handleSendOtp} disabled={otpLoading || isEmailVerified}
                                     className="px-5 bg-indigo-50 text-indigo-600 rounded-2xl font-bold text-xs hover:bg-indigo-100 disabled:bg-slate-100 disabled:text-slate-400 border border-indigo-100/50 shadow-sm transition-colors duration-200 min-w-[100px]">
                                     {isOtpSent ? 'Resend' : 'Send OTP'}
                                 </button>
@@ -240,11 +204,9 @@ const Register = () => {
                                 </div>
                             </div>
                         </div>
-                        {passwordError && <p className="text-rose-500 text-xs font-bold tracking-wide mt-1">{passwordError}</p>}
-
-                        <button type="submit" disabled={loading || !isEmailVerified || !!passwordError}
+                        <button type="submit" disabled={loading || !isEmailVerified}
                             className={`w-full py-3.5 rounded-2xl font-bold text-sm text-white shadow-xl transition-all duration-200 transform active:scale-98 mt-4 ${
-                                (loading || !isEmailVerified || !!passwordError) ? 'bg-slate-300 text-slate-500 shadow-none cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100'
+                                (loading || !isEmailVerified) ? 'bg-slate-300 text-slate-500 shadow-none cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100'
                             }`}>
                             {loading ? 'Deploying Platform Components...' : 'Complete Platform Setup'}
                         </button>
