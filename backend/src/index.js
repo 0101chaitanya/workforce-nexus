@@ -26,8 +26,8 @@ const companyRoutes = require("./routes/companyRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const cronRoutes = require("./routes/cronRoutes");
 
-// Connect to database
-connectDB();
+// In serverless, we don't connect globally at the top level because we need to await it
+// per request to prevent Mongoose buffering timeouts.
 
 // Initialize scheduled tasks (Removed for Serverless deployment - now handled via /api/cron endpoints)
 // require('./services/cronService');
@@ -42,6 +42,17 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Ensure Database is connected before handling any requests (Serverless Pattern)
+app.use(async (req, res, next) => {
+    try {
+        await connectDB();
+        next();
+    } catch (error) {
+        logger.error(`Failed to connect to database: ${error.message}`);
+        res.status(500).json({ success: false, message: 'Database connection failed' });
+    }
+});
 
 
 app.use(cookieParser());
@@ -59,6 +70,13 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/cron", cronRoutes);
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    logger.info(`Server running on http://localhost:${PORT}`);
-});
+
+// Only start the server if not running in a serverless environment (like Vercel)
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        logger.info(`Server running on http://localhost:${PORT}`);
+    });
+}
+
+// Export the Express API for Vercel Serverless Functions
+module.exports = app;
