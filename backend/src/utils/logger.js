@@ -28,28 +28,28 @@ const logger = winston.createLogger({
         logFormat
     ),
     transports: [
-        // 1. Write all logs with level 'error' and below to 'error.log'
-        new winston.transports.File({ 
-            filename: path.join('logs', 'error.log'), 
-            level: 'error' 
-        }),
-        // 2. Write all logs with level 'info' and below to 'combined.log'
-        new winston.transports.File({ 
-            filename: path.join('logs', 'combined.log') 
-        }),
+        // In serverless environments like Vercel, the file system is read-only (except /tmp).
+        // File transports will crash the app in production, so we only enable them in development.
+        ...(process.env.NODE_ENV !== 'production' ? [
+            new winston.transports.File({ 
+                filename: path.join('logs', 'error.log'), 
+                level: 'error' 
+            }),
+            new winston.transports.File({ 
+                filename: path.join('logs', 'combined.log') 
+            })
+        ] : []),
+
+        // Always log to the console. In Vercel, this automatically routes logs to the Vercel Dashboard.
+        new winston.transports.Console({
+            format: combine(
+                ...(process.env.NODE_ENV !== 'production' ? [colorize()] : []), // Colorize only in dev
+                timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+                logFormat
+            ),
+        })
     ],
 });
-
-// If we're not in production, also log to the console with colors
-if (process.env.NODE_ENV !== 'production') {
-    logger.add(new winston.transports.Console({
-        format: combine(
-            colorize(),
-            timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-            logFormat
-        ),
-    }));
-}
 
 module.exports = logger;
 
