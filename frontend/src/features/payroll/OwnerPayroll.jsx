@@ -72,7 +72,7 @@ const OwnerPayroll = () => {
           hasPrev: false
         }));
       }
-    } catch (err) { // eslint-disable-line no-unused-vars {
+    } catch (err) { // eslint-disable-line no-unused-vars
       toast.error(err.response?.data?.message || 'Unable to fetch payroll history.');
     } finally {
       dispatch(setOwnerLoading(false));
@@ -108,7 +108,7 @@ const OwnerPayroll = () => {
         });
         dispatch(setOwnerSearchResults(response.data.data || []));
         dispatch(setOwnerShowDropdown(true));
-      } catch (err) { // eslint-disable-line no-unused-vars {
+      } catch (err) { // eslint-disable-line no-unused-vars
         console.error(err);
       } finally {
         dispatch(setOwnerSearchLoading(false));
@@ -160,7 +160,7 @@ const OwnerPayroll = () => {
       } else {
         dispatch(setOwnerPage(1));
       }
-    } catch () {
+    } catch (err) {
       toast.error(err.response?.data?.message || 'Payroll generation failed.');
     } finally {
       dispatch(setOwnerGenerating(false));
@@ -181,7 +181,7 @@ const OwnerPayroll = () => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-    } catch () {
+    } catch (err) {
       toast.error(err.response?.data?.message || 'Could not download payslip.');
     } finally {
       dispatch(setOwnerDownloadLoading(''));
@@ -205,7 +205,7 @@ const OwnerPayroll = () => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-    } catch () {
+    } catch (err) { // eslint-disable-line no-unused-vars
       toast.error('Could not download consolidated payslip.');
     } finally {
       dispatch(setOwnerTenureDownloading(false));
@@ -229,7 +229,7 @@ const OwnerPayroll = () => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-    } catch () {
+    } catch (err) { // eslint-disable-line no-unused-vars
       toast.error('Could not download consolidated payslip.');
     } finally {
       dispatch(setOwnerRowTenureDownloading(''));

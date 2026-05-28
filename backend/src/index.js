@@ -13,7 +13,7 @@ const connectDB = require("./config/db");
 const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
 const logger = require('./utils/logger');
-const path = require('path');
+
 dotenv.config();
 
 // Load routes

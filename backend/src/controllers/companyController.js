@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+
 const Company = require("../models/Company");
 const { catchAsync } = require("../middleware/authMiddleware");
 

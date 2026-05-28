@@ -1,6 +1,6 @@
 const Attendance = require("../models/Attendance");
 const Company = require("../models/Company");
-const mongoose = require("mongoose");
+
 const logger = require("../utils/logger");
 
 /**
