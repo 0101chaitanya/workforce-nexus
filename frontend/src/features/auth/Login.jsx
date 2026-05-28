@@ -212,7 +212,7 @@ const Login = () => {
 
                   <button type="submit" disabled={loading || !recoveryEmail}
                     className="w-full flex justify-center items-center gap-2 py-3.5 bg-indigo-600 text-white font-bold text-sm rounded-2xl shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition transform active:scale-98 disabled:bg-slate-300 disabled:shadow-none mt-2">
-                    {loading ? <><Loader2 size={18} className="animate-spin" /> Transmitting...</> : 'Send Recovery Link'}
+                    {loading ? <><Loader2 size={18} className="animate-spin" /> Transmitting...</> : 'Send Recovery Otp'}
                   </button>
 
                   <button type="button" onClick={() => { setIsForgotMode(false); setIsOtpMode(false); setRecoveryEmail(''); }}
