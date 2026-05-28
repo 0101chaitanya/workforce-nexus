@@ -104,7 +104,7 @@ const OwnerPayroll = () => {
       dispatch(setOwnerSearchLoading(true));
       try {
         const response = await api.get('/users/search-users-or-get-all', {
-          params: { query: searchQuery, includeInactive: 'true' }
+          params: { query: searchQuery, statusFilter: 'both' }
         });
         dispatch(setOwnerSearchResults(response.data.data || []));
         dispatch(setOwnerShowDropdown(true));
