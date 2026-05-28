@@ -3,10 +3,16 @@
 A comprehensive, full-stack web application designed for business owners to manage their organization's employees, attendance, leaves, and payroll processing. Employees get a dedicated dashboard to punch in/out, view their payslips, and apply for leaves.
 
 ## Table of Contents
+- [Live Demo](#live-demo)
 - [Features](#features)
 - [Architecture](#architecture)
 - [Environment Variables](#environment-variables)
 - [Deployment](#deployment)
+
+## Live Demo
+
+- **Frontend Application**: [https://employee-management-system-ne1z.vercel.app/login](https://employee-management-system-ne1z.vercel.app/login)
+- **Backend API**: [https://employee-management-system-five-gules.vercel.app](https://employee-management-system-five-gules.vercel.app/)
 
 ## Features
 
