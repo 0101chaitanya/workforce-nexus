@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Search, UserPlus, Edit2, Shield, Loader2, Phone, MapPin, Briefcase, RefreshCcw } from 'lucide-react';
+import { Search, UserPlus, Edit2, Shield, Loader2, Phone, Briefcase, RefreshCcw, Trash2 } from 'lucide-react';
 import api from '../../app/axiosInterceptors';
 import { toast } from 'react-toastify';
 import {
@@ -34,6 +34,7 @@ export default function OwnerEmployees() {
  
   // Local state for search input (to debounce and avoid query page-reset issues)
   const [localSearch, setLocalSearch] = useState(searchQuery);
+  const [statusFilter, setStatusFilter] = useState('active');
  
   // Modals (local UI states)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -43,11 +44,12 @@ export default function OwnerEmployees() {
   const [addForm, setAddForm] = useState({ fullName: '', email: '', salary: '', branch: '', position: '' });
   const [editForm, setEditForm] = useState({ fullName: '', salary: '', branch: '', position: '', phone: '', address: '' });
  
-  const fetchEmployees = useCallback(async (queryVal, pageVal, limitVal, force = false) => {
+  const fetchEmployees = useCallback(async (queryVal, pageVal, limitVal, statusFilterVal, force = false) => {
     if (!force && isCached && cachedParams &&
         cachedParams.page === pageVal &&
         cachedParams.limit === limitVal &&
-        cachedParams.searchQuery === queryVal) {
+        cachedParams.searchQuery === queryVal &&
+        cachedParams.statusFilter === statusFilterVal) {
       return;
     }
 
@@ -57,8 +59,11 @@ export default function OwnerEmployees() {
       if (queryVal && queryVal.trim() !== "") {
         params.query = queryVal;
       }
+      if (statusFilterVal) {
+        params.statusFilter = statusFilterVal;
+      }
       const res = await api.get('/users/search-users-or-get-all', { params });
-      dispatch(setEmployees(res.data?.data || []));
+      dispatch(setEmployees({ employees: res.data?.data || [], statusFilter: statusFilterVal }));
       if (res.data?.pagination) {
         dispatch(setPaginationInfo(res.data.pagination));
       } else {
@@ -88,10 +93,10 @@ export default function OwnerEmployees() {
     return () => clearTimeout(debounceTimer);
   }, [localSearch, dispatch]);
  
-  // Main fetch hook: runs instantly whenever searchQuery, page, or limit changes
+  // Main fetch hook: runs instantly whenever searchQuery, page, limit, or statusFilter changes
   useEffect(() => {
-    fetchEmployees(searchQuery, page, limit);
-  }, [searchQuery, page, limit, fetchEmployees]);
+    fetchEmployees(searchQuery, page, limit, statusFilter);
+  }, [searchQuery, page, limit, statusFilter, fetchEmployees]);
  
   const handleAddSubmit = async (e) => {
     e.preventDefault();
@@ -104,7 +109,7 @@ export default function OwnerEmployees() {
       toast.success('Employee added successfully. An email with temporary password has been sent.');
       setIsAddModalOpen(false);
       setAddForm({ fullName: '', email: '', salary: '', branch: '', position: '' });
-      fetchEmployees(searchQuery, page, limit, true);
+      fetchEmployees(searchQuery, page, limit, statusFilter, true);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to add employee');
     } finally {
@@ -136,14 +141,29 @@ export default function OwnerEmployees() {
       await api.put(`/users/admin-update/${selectedUser._id}`, payload);
       toast.success('Employee updated successfully.');
       setIsEditModalOpen(false);
-      fetchEmployees(searchQuery, page, limit, true);
+      fetchEmployees(searchQuery, page, limit, statusFilter, true);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to update employee');
     } finally {
       dispatch(setModalLoading(false));
     }
   };
- 
+  
+  const handleDeleteClick = async (user) => {
+    if (window.confirm(`Are you sure you want to delete ${user.fullName}? This action cannot be undone.`)) {
+      dispatch(setLoading(true));
+      try {
+        await api.delete(`/users/delete/${user._id}`);
+        toast.success('Employee deleted successfully.');
+        fetchEmployees(searchQuery, page, limit, statusFilter, true);
+      } catch (err) {
+        toast.error(err.response?.data?.message || 'Failed to delete employee');
+      } finally {
+        dispatch(setLoading(false));
+      }
+    }
+  };
+
   if (loading && employees.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-20 space-y-3 bg-white rounded-2xl border">
@@ -166,7 +186,7 @@ export default function OwnerEmployees() {
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={() => fetchEmployees(searchQuery, page, limit, true)}
+            onClick={() => fetchEmployees(searchQuery, page, limit, statusFilter, true)}
             disabled={loading}
             className="p-2.5 text-slate-500 bg-slate-50 hover:bg-slate-100 hover:text-slate-800 rounded-xl transition border border-slate-200/60 active:scale-95 disabled:opacity-50"
             title="Refresh Data"
@@ -180,63 +200,118 @@ export default function OwnerEmployees() {
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-4 top-3 text-slate-400" size={20} />
-        <input
-          type="text"
-          placeholder="Search by name, email or ID (min. 2 characters)..."
-          value={localSearch}
-          onChange={(e) => setLocalSearch(e.target.value)}
-          className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200/80 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-sm font-medium text-slate-700"
-        />
+      {/* Search Bar & Toggle */}
+      <div className="flex flex-col sm:flex-row gap-4 items-center">
+        <div className="relative flex-1 w-full">
+          <Search className="absolute left-4 top-3 text-slate-400" size={20} />
+          <input
+            type="text"
+            placeholder="Search by name, email or ID (min. 2 characters)..."
+            value={localSearch}
+            onChange={(e) => setLocalSearch(e.target.value)}
+            className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200/80 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-sm font-medium text-slate-700"
+          />
+        </div>
+        <div className="flex items-center gap-2 shrink-0 bg-white px-4 py-3 border border-slate-200/80 rounded-xl relative">
+          <select
+            id="statusFilter"
+            value={statusFilter}
+            onChange={(e) => { setStatusFilter(e.target.value); dispatch(setPage(1)); }}
+            className="appearance-none bg-transparent w-full outline-none text-sm font-bold text-slate-600 cursor-pointer pr-6"
+          >
+            <option value="active">Active Only</option>
+            <option value="inactive">Inactive Only</option>
+            <option value="both">Both</option>
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center px-0 text-slate-400">
+            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+          </div>
+        </div>
       </div>
 
-      {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {employees.map(emp => (
-          <div key={emp._id} className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs flex flex-col justify-between">
-            <div>
-              <div className="flex justify-between items-start">
-                <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black text-xl shrink-0">
-                  {emp.fullName?.charAt(0).toUpperCase()}
-                </div>
-                <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg border ${emp.role === 'owner' ? 'bg-amber-50 text-amber-700 border-amber-200/50' : 'bg-slate-50 text-slate-600 border-slate-200/50'}`}>
-                  {emp.role}
-                </span>
-              </div>
-              <h3 className="mt-4 text-lg font-black text-slate-800">{emp.fullName}</h3>
-              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                <p className="text-xs font-medium text-slate-400">{emp.email}</p>
-                {emp.identity && (
-                  <span className="px-1.5 py-0.5 text-[9px] bg-slate-100 text-slate-500 rounded font-mono font-bold tracking-wider shrink-0 border border-slate-200/40">
-                    {emp.identity}
-                  </span>
-                )}
-              </div>
-
-              <div className="mt-4 space-y-2 text-xs font-semibold text-slate-600">
-                <div className="flex items-center gap-2">
-                  <Briefcase size={14} className="text-slate-400" />
-                  {emp.position || 'N/A'} - {emp.branch || 'HQ'}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Phone size={14} className="text-slate-400" />
-                  {emp.phone || 'Not provided'}
-                </div>
-              </div>
-            </div>
-
-            <button onClick={() => handleEditClick(emp)} className="mt-6 w-full flex items-center justify-center gap-2 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl transition border border-slate-200/50">
-              <Edit2 size={14} /> Edit Info
-            </button>
-          </div>
-        ))}
-        {employees.length === 0 && !loading && (
-          <div className="col-span-full py-12 text-center text-slate-500 font-medium text-sm">
-            No employees found matching the current search.
-          </div>
-        )}
+      {/* Table */}
+      <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Employee</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Role</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Position</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Contact</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {employees.map(emp => (
+                <tr key={emp._id} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-black text-sm shrink-0">
+                        {emp.fullName?.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="text-sm font-bold text-slate-800">{emp.fullName}</div>
+                        <div className="text-xs text-slate-500 font-medium">{emp.identity || 'No ID'}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg border ${emp.role === 'owner' ? 'bg-amber-50 text-amber-700 border-amber-200/50' : 'bg-slate-50 text-slate-600 border-slate-200/50'}`}>
+                      {emp.role}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {emp.isActive === false ? (
+                      <span className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg border bg-red-50 text-red-600 border-red-200/50">
+                        Inactive
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg border bg-emerald-50 text-emerald-600 border-emerald-200/50">
+                        Active
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-2 text-slate-600">
+                      <Briefcase size={14} className="text-slate-400" />
+                      <span className="text-sm font-semibold truncate">{emp.position || 'N/A'} - {emp.branch || 'HQ'}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2 text-slate-600">
+                        <span className="text-xs font-medium text-slate-500">{emp.email}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-slate-600">
+                        <Phone size={12} className="text-slate-400" />
+                        <span className="text-xs font-medium text-slate-500">{emp.phone || 'Not provided'}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div className="flex items-center justify-end gap-2">
+                      <button onClick={() => handleEditClick(emp)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="Edit Info">
+                        <Edit2 size={16} />
+                      </button>
+                      <button onClick={() => handleDeleteClick(emp)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete Employee">
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {employees.length === 0 && !loading && (
+                <tr>
+                  <td colSpan="6" className="px-6 py-12 text-center text-slate-500 font-medium text-sm">
+                    No employees found matching the current search.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <Pagination

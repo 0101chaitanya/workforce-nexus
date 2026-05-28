@@ -21,13 +21,13 @@
     "mongoose": "^8.9.5",
     "morgan": "^1.10.1",
     "multer": "2.1.1",
-    "node-cron": "^4.2.1",
-    "nodemailer": "^8.0.7",
     "pdfkit": "^0.18.0",
+    "resend": "^6.12.4",
     "winston": "^3.19.0",
     "zod": "^4.1.13"
   },
   "devDependencies": {
+    "glob": "^13.0.6",
     "nodemon": "^3.1.9"
   }
 }

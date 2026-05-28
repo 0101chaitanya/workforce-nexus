@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
 import { Building2, MapPin, Phone, Mail, ShieldCheck, Loader2, AlertCircle, UserCircle, Edit2, Save, X, Calendar, CreditCard, Navigation, RefreshCcw } from 'lucide-react';
@@ -273,7 +273,8 @@ const OwnerOrganization = () => {
  
     useEffect(() => {
         fetchCompany();
-    }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
  
     if (loading) {
         return (

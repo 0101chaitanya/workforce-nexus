@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
 import Pagination from '../../components/common/Pagination';
@@ -72,7 +72,7 @@ const OwnerPayroll = () => {
           hasPrev: false
         }));
       }
-    } catch (err) {
+    } catch (err) { // eslint-disable-line no-unused-vars {
       toast.error(err.response?.data?.message || 'Unable to fetch payroll history.');
     } finally {
       dispatch(setOwnerLoading(false));
@@ -104,11 +104,11 @@ const OwnerPayroll = () => {
       dispatch(setOwnerSearchLoading(true));
       try {
         const response = await api.get('/users/search-users-or-get-all', {
-          params: { query: searchQuery }
+          params: { query: searchQuery, includeInactive: 'true' }
         });
         dispatch(setOwnerSearchResults(response.data.data || []));
         dispatch(setOwnerShowDropdown(true));
-      } catch (err) {
+      } catch (err) { // eslint-disable-line no-unused-vars {
         console.error(err);
       } finally {
         dispatch(setOwnerSearchLoading(false));
@@ -160,7 +160,7 @@ const OwnerPayroll = () => {
       } else {
         dispatch(setOwnerPage(1));
       }
-    } catch (err) {
+    } catch () {
       toast.error(err.response?.data?.message || 'Payroll generation failed.');
     } finally {
       dispatch(setOwnerGenerating(false));
@@ -181,7 +181,7 @@ const OwnerPayroll = () => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-    } catch (err) {
+    } catch () {
       toast.error(err.response?.data?.message || 'Could not download payslip.');
     } finally {
       dispatch(setOwnerDownloadLoading(''));
@@ -205,7 +205,7 @@ const OwnerPayroll = () => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-    } catch (err) {
+    } catch () {
       toast.error('Could not download consolidated payslip.');
     } finally {
       dispatch(setOwnerTenureDownloading(false));
@@ -229,7 +229,7 @@ const OwnerPayroll = () => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-    } catch (err) {
+    } catch () {
       toast.error('Could not download consolidated payslip.');
     } finally {
       dispatch(setOwnerRowTenureDownloading(''));

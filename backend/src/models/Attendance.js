@@ -29,7 +29,11 @@ const attendanceSchema = new mongoose.Schema({
     },
 }, {
     timestamps: true
-})
+});
+
+// Index for optimizing queries filtering by user and date
+attendanceSchema.index({ user: 1, date: 1 });
+attendanceSchema.index({ company: 1, date: 1 });
 const Attendance = mongoose.model("Attendance", attendanceSchema)
 
 module.exports = Attendance

@@ -86,6 +86,8 @@ const payrollSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
+payrollSchema.index({ company: 1, year: 1, month: 1 });
+payrollSchema.index({ user: 1, year: 1, month: 1 });
 const Payroll = mongoose.model("Payroll", payrollSchema);
 
 module.exports = Payroll;

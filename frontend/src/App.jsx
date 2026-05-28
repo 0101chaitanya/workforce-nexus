@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useNavigate, useLocation } from 'react-router-dom';
 import { setNavigate } from './app/navigation.js';
 import { ToastContainer, toast } from 'react-toastify';

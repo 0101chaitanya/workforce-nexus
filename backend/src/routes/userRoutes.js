@@ -25,4 +25,7 @@ router.get("/info/:id", userController.getUserById);
 // Owner updates specific user
 router.put("/admin-update/:id", isAuthorized(), validate(userSchemas.updateUserByAdmin), userController.updateUserByAdmin);
 
+// Owner deletes specific user
+router.delete("/delete/:id", isAuthorized(), userController.deleteUser);
+
 module.exports = router;

@@ -1,17 +1,27 @@
-const cron = require('node-cron');
 const User = require('../models/User');
 const Attendance = require('../models/Attendance');
 const Leave = require('../models/Leave');
 const logger = require('../utils/logger');
 
-// Schedule job to run at 11:55 PM every day
-cron.schedule('55 23 * * *', async () => {
-    logger.info('Running end-of-day attendance status calculation job...');
+/**
+ * Executes the end-of-day attendance calculation.
+ * Designed to be triggered by an external Serverless Cron service (e.g. Vercel Cron, Cron-job.org).
+ * @route `POST /api/cron/daily-attendance`
+ */
+exports.dailyAttendanceCron = async (req, res) => {
+    // Optional: Add a simple secret check to prevent unauthorized execution
+    const authHeader = req.headers['authorization'];
+    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+        logger.warn("Unauthorized attempt to run cron job.");
+        return res.status(401).json({ message: "Unauthorized", success: false });
+    }
+
+    logger.info('Running end-of-day attendance status calculation via Serverless Endpoint...');
     try {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        const users = await User.find({ role: 'employee' });
+        const users = await User.find({ role: 'employee', isActive: { $ne: false } });
 
         for (const user of users) {
             // 1. Check if user has an approved leave for today
@@ -69,7 +79,9 @@ cron.schedule('55 23 * * *', async () => {
             }
         }
         logger.info('End-of-day attendance job completed successfully.');
+        return res.status(200).json({ message: "Cron job executed successfully", success: true });
     } catch (error) {
-        logger.error(`Error in end-of-day cron job: ${error.message}`, { stack: error.stack });
+        logger.error(`Error in end-of-day cron API: ${error.message}`, { stack: error.stack });
+        return res.status(500).json({ message: "Cron job failed", success: false, error: error.message });
     }
-});
+};

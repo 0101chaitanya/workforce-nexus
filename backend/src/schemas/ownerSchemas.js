@@ -26,7 +26,8 @@ const ownerSchemas = {
   searchUsersQuery: z.object({
     query: z.string().trim().min(2).max(100).optional().or(z.literal("")),
     page: z.coerce.number().int().positive().optional(),
-    limit: z.coerce.number().int().positive().max(1000).optional()
+    limit: z.coerce.number().int().positive().max(1000).optional(),
+    statusFilter: z.enum(["active", "inactive", "both"]).optional()
   }),
 
   updateCompany: z.object({

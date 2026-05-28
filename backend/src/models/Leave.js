@@ -38,4 +38,7 @@ const leaveSchema = new mongoose.Schema({
     remarks: { type: String } // For owners to add a note when approving/rejecting
 }, { timestamps: true });
 
+// Index for optimizing queries filtering by user and status
+leaveSchema.index({ user: 1, status: 1 });
+
 module.exports = mongoose.model("Leave", leaveSchema);

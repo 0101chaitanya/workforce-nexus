@@ -17,7 +17,7 @@ exports.getDashboardStats = async (req, res) => {
         const companyId = req.company._id;
 
         // 1. Total Employees
-        const totalEmployees = await User.countDocuments({ company: companyId, role: 'employee' });
+        const totalEmployees = await User.countDocuments({ company: companyId, role: 'employee', isActive: { $ne: false } });
 
         // Setup date bounds for today's metrics
         const today = new Date();

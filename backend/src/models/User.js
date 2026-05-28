@@ -24,6 +24,7 @@ const bcrypt = require('bcrypt');
  * @property {string} role - System permission role (employee or owner).
  * @property {number} [salary] - Annual salary package.
  * @property {string} [identity] - Unique corporate ID (EMP-XXXXXX).
+ * @property {boolean} isActive - Denotes if the user is currently an active employee.
  */
 const userSchema = new mongoose.Schema({
     accessToken: {
@@ -73,7 +74,11 @@ const userSchema = new mongoose.Schema({
     identity: {
         type: String,
         unique: true,
-        sparse: true,
+        sparse: true
+    },
+    isActive: {
+        type: Boolean,
+        default: true
     },
 }, { timestamps: true });
 
@@ -127,6 +132,7 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
     return bcrypt.compare(candidatePassword, this.password);
 };
 
+userSchema.index({ company: 1, role: 1, isActive: 1 });
 const User = mongoose.model('User', userSchema);
 
 module.exports = User;

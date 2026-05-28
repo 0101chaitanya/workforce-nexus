@@ -26,7 +26,12 @@ const initialState = {
     hasPrev: false
   },
   isCached: false,
-  cachedParams: null
+  cachedParams: {
+    page: 1,
+    limit: 10,
+    searchQuery: "",
+    statusFilter: "active"
+  }
 };
 
 /**
@@ -38,12 +43,14 @@ const employeesSlice = createSlice({
   reducers: {
     /** Caches the retrieved employee list array. */
     setEmployees: (state, action) => {
-      state.employees = action.payload;
+      state.employees = action.payload.employees;
       state.isCached = true;
+      state.loading = false;
       state.cachedParams = {
         page: state.page,
         limit: state.limit,
-        searchQuery: state.searchQuery
+        searchQuery: state.searchQuery,
+        statusFilter: action.payload.statusFilter
       };
     },
     /** Configures table loading state. */

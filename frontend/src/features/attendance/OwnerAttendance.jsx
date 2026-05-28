@@ -103,7 +103,7 @@ const OwnerAttendance = () => {
       dispatch(setOwnerSearchLoading(true));
       try {
         const response = await api.get('/users/search-users-or-get-all', {
-          params: { query: searchQuery }
+          params: { query: searchQuery, includeInactive: 'true' }
         });
         dispatch(setOwnerSearchResults(response.data.data || []));
         dispatch(setOwnerShowDropdown(true));

@@ -216,7 +216,8 @@ exports.getAttendanceHistory = async (req, res) => {
                 .populate('user', 'fullName email position identity')
                 .sort({ date: -1 })
                 .skip(skip)
-                .limit(limitNum);
+                .limit(limitNum)
+                .lean();
 
             const totalPages = Math.ceil(total / limitNum);
 

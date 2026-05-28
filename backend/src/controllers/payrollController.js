@@ -109,7 +109,7 @@ exports.downloadPayslip = async (req, res) => {
         const doc = new PDFDocument({ margin: 50, size: 'A4' });
 
         const filename = `Payslip_${payroll.user.fullName.replace(/\s+/g, '_')}_${payroll.month}_${payroll.year}.pdf`;
-        
+
         res.setHeader("Content-Type", "application/pdf");
         res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
 
@@ -125,19 +125,19 @@ exports.downloadPayslip = async (req, res) => {
         doc.fontSize(14).font('Helvetica-Bold').text('Employee Details');
         doc.moveTo(50, doc.y).lineTo(550, doc.y).strokeColor('black').stroke(); // Horizontal line
         doc.moveDown(0.5);
-        
+
         doc.fontSize(11).font('Helvetica');
         const detailsY = doc.y;
         // Column 1
         doc.text(`Name: ${payroll.user.fullName}`, 50, detailsY);
         doc.text(`Employee ID: ${payroll.user.identity || 'N/A'}`, 50, detailsY + 16);
         doc.text(`Position: ${payroll.user.position || 'N/A'}`, 50, detailsY + 32);
-        
+
         // Column 2
         doc.text(`Email: ${payroll.user.email}`, 300, detailsY);
         doc.text(`Branch: ${payroll.user.branch || 'N/A'}`, 300, detailsY + 16);
         doc.text(`Paid Date: ${payroll.paidDate ? new Date(payroll.paidDate).toLocaleDateString() : 'N/A'}`, 300, detailsY + 32);
-        
+
         doc.y = detailsY + 55;
         doc.moveDown(1.5);
 
@@ -152,7 +152,7 @@ exports.downloadPayslip = async (req, res) => {
         doc.fontSize(12).font('Helvetica-Bold');
         doc.text('Earnings', 50, tableStartY);
         doc.text('Amount', 200, tableStartY, { width: 80, align: 'right' });
-        
+
         doc.text('Deductions', 310, tableStartY);
         doc.text('Amount', 460, tableStartY, { width: 80, align: 'right' });
 
@@ -167,9 +167,9 @@ exports.downloadPayslip = async (req, res) => {
         const unpaidLeaveDeductions = payroll.unpaidLeaveDeductions || 0;
         const grossPay = payroll.grossPay || (payroll.basicPay + hra + conveyance + medical + bonus);
         const totalDeductions = (payroll.taxes || 0) + unpaidLeaveDeductions;
-        
+
         doc.fontSize(10).font('Helvetica');
-        
+
         const row1Y = doc.y + 8;
         doc.text('Basic Pay:', 50, row1Y);
         doc.text(`Rs. ${payroll.basicPay.toFixed(2)}`, 200, row1Y, { width: 80, align: 'right' });
@@ -201,7 +201,7 @@ exports.downloadPayslip = async (req, res) => {
         doc.fontSize(11).font('Helvetica-Bold');
         doc.text('Gross Earnings:', 50, totalsContentY);
         doc.text(`Rs. ${grossPay.toFixed(2)}`, 200, totalsContentY, { width: 80, align: 'right' });
-        
+
         doc.text('Total Deductions:', 310, totalsContentY);
         doc.text(`Rs. ${totalDeductions.toFixed(2)}`, 460, totalsContentY, { width: 80, align: 'right' });
 
@@ -293,7 +293,7 @@ exports.generateCompanyPayroll = async (req, res) => {
         }
 
         // Fetch all employees for the company (excluding owners)
-        const users = await User.find({ company: companyId, role: 'employee' });
+        const users = await User.find({ company: companyId, role: 'employee', isActive: { $ne: false } });
 
         if (!users || users.length === 0) {
             return res.status(404).json({

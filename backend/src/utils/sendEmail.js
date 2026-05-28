@@ -1,21 +1,11 @@
-const nodemailer = require("nodemailer")
-require("dotenv").config()
+const { Resend } = require("resend");
+require("dotenv").config();
 
 /**
- * Nodemailer Transporter instance configured for SMTP email transfers via Gmail.
- * Reads authentication details from `process.env.EMAIL` and `process.env.PASSWORD`.
- * @type {nodemailer.Transporter}
+ * Resend email client instance.
+ * Reads authentication details from `process.env.RESEND_API_KEY`.
+ * @type {Resend}
  */
-const transporter = nodemailer.createTransport({
-    service: "gmail",
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: false,
-    auth: {
-        user: process.env.EMAIL,
-        pass: process.env.PASSWORD
-    }
-})
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-module.exports = transporter
-
+module.exports = resend;

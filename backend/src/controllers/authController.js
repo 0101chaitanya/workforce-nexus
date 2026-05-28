@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const transporter = require("../utils/sendEmail.js");
+const resend = require("../utils/sendEmail.js");
 const Company = require("../models/Company");
 const User = require("../models/User");
 const { generateAccessToken, generateRefreshToken } = require('../utils/generateTokens');
@@ -24,8 +24,8 @@ const sanitizeCompany = (company) => ({
 });
 
 const sendOtpEmail = async (email, otp) => {
-    await transporter.sendMail({
-        from: process.env.EMAIL,
+    await resend.emails.send({
+        from: process.env.RESEND_FROM_EMAIL || process.env.EMAIL || "onboarding@resend.dev",
         to: email,
         subject: "OTP Verification Email",
         html: `<div
@@ -285,8 +285,8 @@ exports.register = catchAsync(async (req, res) => {
 
     await Promise.all([user.save(), company ? company.save() : Promise.resolve()]);
 
-    await transporter.sendMail({
-        from: process.env.EMAIL,
+    await resend.emails.send({
+        from: process.env.RESEND_FROM_EMAIL || process.env.EMAIL || "onboarding@resend.dev",
         to: email,
         subject: "Registration Successful",
         html: `<div style="margin:0; padding:40px 15px; background:#eef2ff; font-family:Arial, Helvetica, sans-serif;">
@@ -384,6 +384,14 @@ exports.login = catchAsync(async (req, res) => {
     });
 
     // Combine checks to obfuscate failure reason for security
+    if (user && user.isActive === false) {
+        return res.status(403).json({
+            message: "Account deactivated. Please contact your administrator.",
+            success: false,
+            occurredAt: new Date().toISOString()
+        });
+    }
+
     if (!user || !(await user.comparePassword(password))) {
         return res.status(401).json({ message: "Invalid email or password", success: false, occurredAt: new Date().toISOString() });
     }
@@ -396,9 +404,8 @@ exports.login = catchAsync(async (req, res) => {
 
     res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
-        sameSite: "lax",
         secure: process.env.NODE_ENV === "production",
-        path: "/",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
         maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -424,7 +431,11 @@ exports.regenerateAccessToken = catchAsync(async (req, res) => {
     try {
         decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN);
     } catch (err) {
-        res.clearCookie("refreshToken");
+        res.clearCookie("refreshToken", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax"
+        });
         return res.status(401).json({ message: "Invalid or expired token", success: false, occurredAt: new Date().toISOString() });
     }
 
@@ -435,7 +446,11 @@ exports.regenerateAccessToken = catchAsync(async (req, res) => {
     const company = await Company.findById(decoded.company._id).populate("owner", "fullName email");
 
     if (!user || !company || user.refreshToken !== refreshToken) {
-        res.clearCookie("refreshToken");
+        res.clearCookie("refreshToken", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax"
+        });
         return res.status(401).json({ message: "Invalid or revoked refresh token", success: false, occurredAt: new Date().toISOString() });
     }
 
@@ -459,7 +474,11 @@ exports.logout = catchAsync(async (req, res) => {
         }
     }
 
-    res.clearCookie("refreshToken");
+    res.clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax"
+    });
     return res.status(200).json({ message: "User logged out successfully", success: true });
 });
 
@@ -498,8 +517,8 @@ exports.forgotPasswordOtp = catchAsync(async (req, res) => {
 
     await user.save();
 
-    await transporter.sendMail({
-        from: process.env.EMAIL,
+    await resend.emails.send({
+        from: process.env.RESEND_FROM_EMAIL || process.env.EMAIL || "onboarding@resend.dev",
         to: user.email,
         subject: "Password Reset OTP",
         html: `<h2>Your OTP for password reset is ${otp}</h2>

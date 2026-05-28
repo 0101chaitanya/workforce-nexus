@@ -7,7 +7,7 @@ let parsedUser = null;
 if (savedUser) {
   try {
     parsedUser = JSON.parse(savedUser);
-  } catch (e) {
+  } catch (err) { // eslint-disable-line no-unused-vars {
     localStorage.removeItem('user');
   }
 }

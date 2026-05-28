@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
 import Pagination from '../../components/common/Pagination';
@@ -55,7 +55,7 @@ export default function EmployeePayroll() {
           }));
         }
       }
-    } catch (err) {
+    } catch (err) { // eslint-disable-line no-unused-vars {
       toast.error(err.response?.data?.message || 'Failed to load payroll records.');
     } finally {
       dispatch(setEmployeeLoading(false));
@@ -82,7 +82,7 @@ export default function EmployeePayroll() {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-    } catch (err) {
+    } catch (err) { // eslint-disable-line no-unused-vars {
       toast.error('Failed to download payslip. Please try again.');
     } finally {
       dispatch(setEmployeeDownloadingId(null));
@@ -104,7 +104,7 @@ export default function EmployeePayroll() {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-    } catch (err) {
+    } catch () {
       toast.error('Failed to download consolidated payslip. Please try again.');
     } finally {
       dispatch(setEmployeeTenureDownloading(false));

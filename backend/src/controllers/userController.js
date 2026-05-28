@@ -1,7 +1,7 @@
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const { generateSecurePassword } = require("../utils/passwordGenerator");
-const transporter = require("../utils/sendEmail");
+const resend = require("../utils/sendEmail");
 const logger = require("../utils/logger");
 
 /**
@@ -52,8 +52,8 @@ exports.addUser = async (req, res) => {
         await newUser.save();
 
         // Send email to the new user
-        await transporter.sendMail({
-            from: process.env.EMAIL,
+        await resend.emails.send({
+            from: process.env.RESEND_FROM_EMAIL || process.env.EMAIL || "onboarding@resend.dev",
             to: email,
             subject: "Welcome to the Company - Your Account Details",
             html: `
@@ -63,6 +63,7 @@ exports.addUser = async (req, res) => {
                 <ul>
                     <li><strong>Email:</strong> ${email}</li>
                     <li><strong>Password:</strong> ${generatedPassword}</li>
+                    <li><strong>Identity Code:</strong> ${newUser.identity}</li>
                 </ul>
                 <p><strong>Other Details:</strong></p>
                 <ul>
@@ -81,7 +82,8 @@ exports.addUser = async (req, res) => {
             message: "User added successfully",
             success: true,
             data: newUser,
-            generatedPassword // Sending the generated password for the owner to share with the user
+            generatedPassword, // Sending the generated password for the owner to share with the user
+            identity: newUser.identity
         });
 
     } catch (err) {
@@ -154,14 +156,25 @@ exports.changePassword = async (req, res) => {
  * @param {string} [req.query.query] - Case-insensitive filter term.
  * @param {number} [req.query.page] - Target page index.
  * @param {number} [req.query.limit] - Size of pagination page.
+ * @param {string} [req.query.statusFilter] - Filters active/inactive ('active', 'inactive', 'both').
  * @returns {Promise<Object>} JSON response containing paginated list.
  */
 exports.searchUsers = async (req, res) => {
     try {
-        const { query, page, limit } = req.query;
+        const { query, page, limit, statusFilter } = req.query;
         const companyId = req.company._id;
 
-        let searchQuery = { company: companyId };
+        const searchQuery = { company: companyId, role: "employee" };
+        
+        // Handle status filter (default: "active")
+        if (statusFilter === 'inactive') {
+            searchQuery.isActive = false;
+        } else if (statusFilter === 'both') {
+            // no isActive filter needed
+        } else {
+            // default to active only
+            searchQuery.isActive = { $ne: false };
+        }
 
         if (query && query.trim() !== "") {
             searchQuery.$or = [
@@ -182,9 +195,10 @@ exports.searchUsers = async (req, res) => {
             const total = await User.countDocuments(searchQuery);
             const users = await User.find(searchQuery)
                 .select("-password -refreshToken -otp -otpExpiry")
-                .sort({ fullName: 1 })
+                .sort({ isActive: -1, fullName: 1 })
                 .skip(skip)
-                .limit(limitNum);
+                .limit(limitNum)
+                .lean();
 
             const totalPages = Math.ceil(total / limitNum);
 
@@ -205,7 +219,8 @@ exports.searchUsers = async (req, res) => {
             // Fetch all users without pagination
             const users = await User.find(searchQuery)
                 .select("-password -refreshToken -otp -otpExpiry")
-                .sort({ fullName: 1 });
+                .sort({ isActive: -1, fullName: 1 })
+                .lean();
 
             return res.status(200).json({
                 message: "Users fetched successfully",
@@ -235,9 +250,10 @@ exports.getAllCompanyUsers = async (req, res) => {
     try {
         const companyId = req.company._id;
 
-        const users = await User.find({ company: companyId, role: { $ne: "owner" } })
+        const users = await User.find({ company: companyId, role: { $ne: "owner" }, isActive: { $ne: false } })
             .select("-password -refreshToken -otp -otpExpiry")
-            .sort({ fullName: 1 });
+            .sort({ fullName: 1 })
+            .lean();
 
         return res.status(200).json({
             message: "Company users fetched successfully",
@@ -417,6 +433,56 @@ exports.getUserById = async (req, res) => {
             message: "Internal server error",
             success: false,
             occurredAt: new Date().toISOString()
+        });
+    }
+};
+
+/**
+ * Deletes an employee from the company.
+ * Owners cannot delete themselves.
+ * @route `DELETE /api/users/delete/:id`
+ */
+exports.deleteUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const companyId = req.company._id;
+
+        // Ensure owners don't delete themselves
+        if (id === req.user._id.toString()) {
+            return res.status(400).json({
+                message: "You cannot delete your own account.",
+                success: false
+            });
+        }
+
+        const user = await User.findOne({ _id: id, company: companyId });
+        if (!user) {
+            return res.status(404).json({
+                message: "Employee not found",
+                success: false
+            });
+        }
+
+        if (user.role === 'owner') {
+            return res.status(400).json({
+                message: "Cannot delete another owner account.",
+                success: false
+            });
+        }
+
+        user.isActive = false;
+        await user.save();
+
+        return res.status(200).json({
+            message: "Employee deleted successfully",
+            success: true
+        });
+
+    } catch (err) {
+        logger.error(`Error in deleteUser: ${err.message || err}`, { stack: err.stack });
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false
         });
     }
 };

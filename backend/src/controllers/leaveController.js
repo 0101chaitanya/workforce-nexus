@@ -95,7 +95,8 @@ exports.getLeaveHistory = async (req, res) => {
                 .populate('user', 'fullName email position identity')
                 .sort({ createdAt: -1 })
                 .skip(skip)
-                .limit(limitNum);
+                .limit(limitNum)
+                .lean();
 
             const totalPages = Math.ceil(total / limitNum);
 
@@ -116,7 +117,8 @@ exports.getLeaveHistory = async (req, res) => {
         } else {
             const leaves = await Leave.find(query)
                 .populate('user', 'fullName email position identity')
-                .sort({ createdAt: -1 }); // Most recent first
+                .sort({ createdAt: -1 })
+                .lean();
 
             return res.status(200).json({
                 message: "Leave history fetched successfully",

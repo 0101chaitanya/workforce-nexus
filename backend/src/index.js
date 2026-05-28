@@ -24,12 +24,13 @@ const userRoutes = require("./routes/userRoutes");
 const leaveRoutes = require("./routes/leaveRoutes");
 const companyRoutes = require("./routes/companyRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
+const cronRoutes = require("./routes/cronRoutes");
 
 // Connect to database
 connectDB();
 
-// Initialize scheduled tasks
-require('./services/cronService');
+// Initialize scheduled tasks (Removed for Serverless deployment - now handled via /api/cron endpoints)
+// require('./services/cronService');
 
 // Middleware
 app.use(morgan('dev', {
@@ -55,7 +56,9 @@ app.use("/api/users", userRoutes);
 app.use("/api/company", companyRoutes);
 app.use("/api/leaves", leaveRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/cron", cronRoutes);
 
-app.listen(process.env.PORT, () => {
-    logger.info(`Server running on http://localhost:${process.env.PORT}`);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    logger.info(`Server running on http://localhost:${PORT}`);
 });

@@ -4,7 +4,9 @@ This document outlines the architecture and business logic for background schedu
 
 ## 1. Overview
 
-The system uses `node-cron` to automatically reconcile attendance records at the end of each day (11:55 PM). Because an employee's presence, absence, or half-day status is dependent on the total minutes they clocked in for the day, a scheduled task is critical to ensure that employees who forgot to clock out or those who didn't show up at all are properly accounted for in payroll and dashboard metrics.
+The system uses an external Serverless Cron service to automatically reconcile attendance records at the end of each day (11:55 PM). Because an employee's presence, absence, or half-day status is dependent on the total minutes they clocked in for the day, a scheduled task is critical to ensure that employees who forgot to clock out or those who didn't show up at all are properly accounted for in payroll and dashboard metrics.
+
+*Note: The system previously relied on `node-cron`, but was migrated to a Serverless Endpoint architecture to support zero-downtime and cost-efficient cloud deployments (e.g. Vercel, Render Free Tier).*
 
 ## 2. Business Logic & Thresholds
 
@@ -17,9 +19,9 @@ The status classifications are strictly computed as:
 - **`absent`**: Total minutes $< 240$.
 - **`leave`**: The employee has an approved leave overriding the day.
 
-## 3. The `cronService.js` Job
+## 3. The `cronController.js` Job
 
-The scheduled task (`backend/src/services/cronService.js`) initializes at server startup and runs automatically at `55 23 * * *` (11:55 PM daily).
+The scheduled task is exposed as a REST API endpoint at `POST /api/cron/daily-attendance` (handled by `backend/src/controllers/cronController.js`). It is expected to be triggered externally at `55 23 * * *` (11:55 PM daily).
 
 ### Step-by-Step Execution:
 1. **Find All Employees**: The script fetches all users in the system with the `employee` role.
@@ -43,4 +45,4 @@ While the cron job is the safety net, the system also calculates these statuses 
 
 ## 5. Extensibility
 
-Because the logic relies on minute integer thresholds (`540` and `240`), adjusting company policies (e.g. changing a full shift to 8 hours) simply requires updating these threshold constants in the cron service and the controller.
+Because the logic relies on minute integer thresholds (`540` and `240`), adjusting company policies (e.g. changing a full shift to 8 hours) simply requires updating these threshold constants in the cron controller and the attendance controller.
