@@ -110,16 +110,20 @@ exports.clockIn = async (req, res) => {
 };
 
 /**
- * If successful, marks the `checkOutTime`, computes `totalHours` in minutes, and resolves the day's attendance `status` to 'present', 'half-day', or 'absent'. worked.
- * @route `POST /api/attendance/clock-out`
+ * Validates geolocation (if required by company), marks the `checkOutTime`, computes `totalHours` in minutes, and resolves the day's attendance `status` to 'present', 'half-day', or 'absent'.
+ * @route `PUT /api/attendance/clock-out`
  * @param {Object} req
  * @param {Object} req.user - Active user context.
+ * @param {Object} req.body
+ * @param {number} [req.body.latitude] - The latitude of the user (from browser geolocation).
+ * @param {number} [req.body.longitude] - The longitude of the user (from browser geolocation).
  * @returns {Promise<Object>} JSON response confirming clock-out.
  */
 exports.clockOut = async (req, res) => {
     try {
         const userId = req.user._id;
         const companyId = req.company._id;
+        const { latitude, longitude } = req.body;
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -144,6 +148,30 @@ exports.clockOut = async (req, res) => {
                 success: false,
                 occurredAt: new Date().toISOString()
             });
+        }
+
+        // Fetch company settings to get office coordinates
+        const companyObj = await Company.findById(companyId);
+
+        if (companyObj && companyObj.latitude !== undefined && companyObj.latitude !== null && companyObj.longitude !== undefined && companyObj.longitude !== null) {
+            if (latitude === undefined || latitude === null || longitude === undefined || longitude === null) {
+                return res.status(400).json({
+                    message: "Location access is required to clock-out for this company.",
+                    success: false,
+                    occurredAt: new Date().toISOString()
+                });
+            }
+
+            const distance = getDistance(latitude, longitude, companyObj.latitude, companyObj.longitude);
+            const radius = companyObj.proximityRadius || 200;
+
+            if (distance > radius) {
+                return res.status(400).json({
+                    message: `Cannot clock-out: You are not within the office boundary (Distance: ${Math.round(distance)}m, allowed: ${radius}m).`,
+                    success: false,
+                    occurredAt: new Date().toISOString()
+                });
+            }
         }
 
         attendance.checkOutTime = new Date();

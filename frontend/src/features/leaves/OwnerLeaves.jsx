@@ -311,7 +311,7 @@ const OwnerLeaves = () => {
                     </td>
                     <td className="px-4 py-4 text-slate-700 capitalize">{leave.type}</td>
                     <td className="px-4 py-4 text-slate-700">{new Date(leave.startDate).toLocaleDateString() || '--'} – {new Date(leave.endDate).toLocaleDateString() || '--'}</td>
-                    <td className="px-4 py-4 text-slate-500 font-medium max-w-[200px] truncate" title={leave.reason}>
+                    <td className="px-4 py-4 text-slate-500 font-medium" title={leave.reason}>
                       {leave.reason || '-'}
                     </td>
                     <td className="px-4 py-4 text-slate-700">

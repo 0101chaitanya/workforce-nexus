@@ -11,7 +11,7 @@ import leavesReducer from '../features/leaves/leavesSlice';
 import payrollReducer from '../features/payroll/payrollSlice';
 import organizationReducer from '../features/organization/organizationSlice';
 import profileReducer from '../features/profile/profileSlice';
-import dashboardReducer from '../features/reports/dashboardSlice';
+import dashboardReducer from '../features/dashboard/dashboardSlice';
 
 const appReducer = combineReducers({
   auth: authReducer,

@@ -127,20 +127,41 @@ export default function EmployeeAttendance() {
  
   const handleClockOut = async () => {
     dispatch(setEmployeeActionLoading(true));
-    try {
-      const response = await api.put('/attendance/clock-out');
-      if (response.data?.success) {
-        toast.success('Clocked out successfully! Thank you for your work.');
-        if (page === 1) {
-          fetchAttendance(true);
-        } else {
-          dispatch(setEmployeePage(1));
+
+    const performClockOut = async (coords = null) => {
+      try {
+        const payload = coords ? { latitude: coords.latitude, longitude: coords.longitude } : {};
+        const response = await api.put('/attendance/clock-out', payload);
+        if (response.data?.success) {
+          toast.success('Clocked out successfully! Thank you for your work.');
+          if (page === 1) {
+            fetchAttendance(true);
+          } else {
+            dispatch(setEmployeePage(1));
+          }
         }
+      } catch (err) {
+        toast.error(err.response?.data?.message || 'Clock-out failed.');
+      } finally {
+        dispatch(setEmployeeActionLoading(false));
       }
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Clock-out failed.');
-    } finally {
-      dispatch(setEmployeeActionLoading(false));
+    };
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          performClockOut({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          });
+        },
+        () => {
+          performClockOut(null);
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    } else {
+      performClockOut(null);
     }
   };
  

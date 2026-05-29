@@ -16,7 +16,7 @@ sequenceDiagram
     UI->>Browser: Request Location (getCurrentPosition)
     alt Location Granted
         Browser-->>UI: Coordinates: { latitude, longitude }
-        UI->>Controller: POST /api/attendance/clock-in { latitude, longitude }
+        UI->>Controller: POST /api/attendance/clock-in OR PUT /api/attendance/clock-out { latitude, longitude }
         Controller->>DB: Fetch Company Office GPS & Radius
         DB-->>Controller: Office Coordinates & Allowed Radius
         Controller->>Controller: Compute Distance via Haversine Formula

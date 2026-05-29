@@ -16,11 +16,39 @@ A comprehensive, full-stack web application designed for business owners to mana
 
 ## Features
 
-- **Role-Based Dashboards**: Distinct interfaces and capabilities for `owner` and `employee` roles.
-- **Attendance Tracking**: Real-time clock-in/out with automated daily reconciliation.
-- **Leave Management**: Employees apply for leaves; owners review, approve, or reject.
-- **Payroll Generation**: Automated generation of comprehensive PDF payslips.
-- **Serverless Ready**: The system runs cron jobs via external triggers (e.g. Vercel Cron) allowing the backend to scale to zero.
+### 🔐 Authentication & Authorization
+- **Role-Based Access Control**: Distinct capabilities and dashboards for `owner` and `employee` roles.
+- **Secure Authentication**: JWT-based access and refresh token rotation with HTTP-only cookies.
+- **Email Verification & OTP**: Secure login and password recovery flows using Resend SDK.
+
+### 🏢 Organization & Employee Management
+- **Company Setup**: Owners can configure organization details, settings, and work hours.
+- **Employee Onboarding**: Owners can invite/create new employees with assigned roles and departments.
+- **Profile Management**: Users can manage their personal information and view their employment details.
+- **Dashboard Analytics**: Quick statistical overviews for owners (total employees, active leaves, today's attendance) and personalized summaries for employees.
+
+### ⏰ Attendance Tracking
+- **Real-Time Clock In/Out**: Employees can record their daily attendance directly from their dashboard.
+- **Automated Daily Reconciliation**: Background cron jobs automatically mark un-clocked employees as absent.
+- **Attendance History**: Detailed logs of daily working hours, late arrivals, and early departures.
+
+### 🏖️ Leave Management
+- **Leave Applications**: Employees can request leaves with specific dates and reasons.
+- **Approval Workflow**: Owners can review, approve, or reject leave requests.
+- **Leave Balances**: Tracking of taken vs. available leaves based on company policies.
+
+### 💸 Payroll Processing
+- **Salary Configuration**: Set base salaries, allowances, and deductions per employee.
+- **Automated Payslip Generation**: Compile monthly attendance, leaves, and salary data into comprehensive records.
+- **PDF Export**: Generate formatted PDF payslips that employees can download.
+
+### 📊 Reporting
+- **Comprehensive Reports**: Insights into attendance trends, leave patterns, and payroll expenditures.
+- **Data Export**: Ability to generate and export structured data summaries.
+
+### ☁️ Infrastructure
+- **Serverless Ready**: Optimized for serverless deployments (e.g., Vercel) with stateless endpoints.
+- **Scheduled Cron Jobs**: Secure, external-trigger ready cron endpoints for automated system tasks.
 
 ## Architecture
 

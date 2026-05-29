@@ -14,7 +14,8 @@ import ProtectedRoute from './app/routes/ProtectedRoute.jsx';
 const EmployeeAttendance = lazy(() => import('./features/attendance/EmployeeAttendance.jsx'));
 const EmployeeLeaves = lazy(() => import('./features/leaves/EmployeeLeaves.jsx'));
 const EmployeePayroll = lazy(() => import('./features/payroll/EmployeePayroll.jsx'));
-const EmployeeDashboard = lazy(() => import('./features/reports/EmployeeDashboard.jsx'));
+const EmployeeDashboard = lazy(() => import('./features/dashboard/EmployeeDashboard.jsx'));
+const OwnerDashboard = lazy(() => import('./features/dashboard/OwnerDashboard.jsx'));
 const EmployeeProfile = lazy(() => import('./features/profile/EmployeeProfile.jsx'));
 const OwnerEmployees = lazy(() => import('./features/employees/OwnerEmployees.jsx'));
 const OwnerAttendance = lazy(() => import('./features/attendance/OwnerAttendance.jsx'));
@@ -71,7 +72,7 @@ export default function App() {
               index
               element={
                 <Suspense fallback={<LoadingSpinner />}>
-                  <EmployeeDashboard />
+                  <OwnerDashboard />
                 </Suspense>
               }
             />

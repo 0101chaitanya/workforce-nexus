@@ -22,10 +22,11 @@ This document explains the end-to-end flow of the Employee Attendance screen, wh
    - If coordinates are resolved, they are submitted to `/api/attendance/clock-in`.
    - The backend retrieves company office coordinates and calculates the distance. If the worker is outside the company's allowed perimeter boundary (e.g. 200m), check-in is rejected with an error toast showing the distance. If within the boundary, check-in succeeds.
    - If the browser location is denied/disabled, the check-in is immediately blocked if company coordinates are active.
-4. **Checking Out**:
-   - The Employee clicks **"Clock Out"** which hits `PUT /api/attendance/clock-out`.
-   - The backend logs the timestamp, calculates work duration, and changes the UI state to "Shift Completed".
-
+4. **Checking Out (Geofenced Validation)**:
+   - The Employee clicks **"Clock Out"**. The browser requests HTML5 GPS coordinates (`navigator.geolocation.getCurrentPosition`), identical to the check-in process.
+   - The coordinates are submitted to `PUT /api/attendance/clock-out`.
+   - The backend validates the distance against the company perimeter. If the worker is outside the boundary, check-out is rejected.
+   - If within the boundary (or if proximity checks are disabled), the backend logs the timestamp, calculates work duration, and changes the UI state to "Shift Completed".
 ---
 
 ## 2. Frontend Design & State Flow
@@ -59,7 +60,7 @@ This document explains the end-to-end flow of the Employee Attendance screen, wh
 
 ### Endpoints:
 1. `POST /api/attendance/clock-in` (Clock-in with location coordinates check)
-2. `PUT /api/attendance/clock-out` (Clock-out and calculate shift hours)
+2. `PUT /api/attendance/clock-out` (Clock-out with location coordinates check, calculates shift hours)
 3. `POST /api/attendance/verify-proximity` (Background validation endpoint)
 
 ### Controller Details:
