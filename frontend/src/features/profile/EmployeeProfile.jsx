@@ -11,7 +11,7 @@ import {
 import {
   User, Mail, Briefcase, Building2, Calendar, Phone, CreditCard,
   MapPin, Loader2, Save, Key, UserCheck,
-  Edit2, X, RefreshCcw
+  Edit2, X, RefreshCcw, Eye, EyeOff
 } from 'lucide-react';
  
 export default function EmployeeProfile() {
@@ -37,6 +37,16 @@ export default function EmployeeProfile() {
     newPassword: '',
     confirmPassword: ''
   });
+ 
+  const [showPassword, setShowPassword] = useState({
+    old: false,
+    new: false,
+    confirm: false
+  });
+  
+  const togglePasswordVisibility = (field) => {
+    setShowPassword(prev => ({ ...prev, [field]: !prev[field] }));
+  };
  
   // Fetch full details
   const fetchProfileDetails = useCallback(async (silent = false, force = false) => {
@@ -393,38 +403,53 @@ export default function EmployeeProfile() {
             <form onSubmit={handlePasswordSubmit} className="space-y-4">
               <div>
                 <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Current Password *</label>
-                <input
-                  type="password"
-                  required
-                  placeholder="Enter current password"
-                  value={passwordForm.oldPassword}
-                  onChange={(e) => setPasswordForm({ ...passwordForm, oldPassword: e.target.value })}
-                  className="w-full mt-1.5 px-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-medium text-slate-700 transition"
-                />
+                <div className="relative mt-1.5">
+                  <input
+                    type={showPassword.old ? "text" : "password"}
+                    required
+                    placeholder="Enter current password"
+                    value={passwordForm.oldPassword}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, oldPassword: e.target.value })}
+                    className="w-full px-4 py-2.5 pr-12 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-medium text-slate-700 transition"
+                  />
+                  <button type="button" onClick={() => togglePasswordVisibility('old')} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none">
+                    {showPassword.old ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-bold uppercase tracking-wider text-slate-500">New Password *</label>
-                  <input
-                    type="password"
-                    required
-                    value={passwordForm.newPassword}
-                    onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                    className="w-full mt-1.5 px-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-medium text-slate-700 transition"
-                  />
+                  <div className="relative mt-1.5">
+                    <input
+                      type={showPassword.new ? "text" : "password"}
+                      required
+                      value={passwordForm.newPassword}
+                      onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                      className="w-full px-4 py-2.5 pr-12 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-medium text-slate-700 transition"
+                    />
+                    <button type="button" onClick={() => togglePasswordVisibility('new')} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none">
+                      {showPassword.new ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
 
                 <div>
                   <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Confirm New Password *</label>
-                  <input
-                    type="password"
-                    required
-                    placeholder="Retype new password"
-                    value={passwordForm.confirmPassword}
-                    onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                    className="w-full mt-1.5 px-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-medium text-slate-700 transition"
-                  />
+                  <div className="relative mt-1.5">
+                    <input
+                      type={showPassword.confirm ? "text" : "password"}
+                      required
+                      placeholder="Retype new password"
+                      value={passwordForm.confirmPassword}
+                      onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                      className="w-full px-4 py-2.5 pr-12 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-medium text-slate-700 transition"
+                    />
+                    <button type="button" onClick={() => togglePasswordVisibility('confirm')} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none">
+                      {showPassword.confirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
               </div>
 
