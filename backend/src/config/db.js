@@ -26,15 +26,6 @@ const connectDB = async () => {
 
         cached.promise = mongoose.connect(process.env.MONGODB_URI, opts).then((mongoose) => {
             logger.info('MongoDB connected successfully');
-            
-            // Drop legacy unique name_1 index if it exists (async, no need to wait for startup)
-            mongoose.connection.db.collection('companies').dropIndex('name_1')
-                .then(() => logger.info('Dropped legacy name_1 index from companies collection'))
-                .catch((indexError) => {
-                    if (indexError.code !== 27 && indexError.codeName !== 'IndexNotFound') {
-                        logger.warn(`Could not drop legacy name_1 index: ${indexError.message}`);
-                    }
-                });
 
             return mongoose;
         }).catch((error) => {

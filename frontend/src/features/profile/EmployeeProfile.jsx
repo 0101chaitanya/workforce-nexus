@@ -341,6 +341,7 @@ export default function EmployeeProfile() {
                     <input
                       type="text"
                       required
+                      placeholder="Enter your full name"
                       value={profileForm.fullName}
                       onChange={(e) => setProfileForm({ ...profileForm, fullName: e.target.value })}
                       className="w-full mt-1.5 px-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-medium text-slate-700 transition"
@@ -351,6 +352,7 @@ export default function EmployeeProfile() {
                     <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Contact Number</label>
                     <input
                       type="text"
+                      placeholder="e.g. +1234567890"
                       value={profileForm.phone}
                       onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
                       className="w-full mt-1.5 px-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-medium text-slate-700 transition"
@@ -373,6 +375,7 @@ export default function EmployeeProfile() {
                     <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Bank Account Details</label>
                     <input
                       type="text"
+                      placeholder="Enter bank account details"
                       value={profileForm.bankAccount}
                       onChange={(e) => setProfileForm({ ...profileForm, bankAccount: e.target.value })}
                       className="w-full mt-1.5 px-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-medium text-slate-700 transition"
@@ -384,6 +387,7 @@ export default function EmployeeProfile() {
                   <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Residential Address</label>
                   <textarea
                     rows="2"
+                    placeholder="Enter your residential address"
                     value={profileForm.address}
                     onChange={(e) => setProfileForm({ ...profileForm, address: e.target.value })}
                     className="w-full mt-1.5 px-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-medium text-slate-700 transition resize-none"
@@ -425,6 +429,7 @@ export default function EmployeeProfile() {
                     <input
                       type={showPassword.new ? "text" : "password"}
                       required
+                      placeholder="Enter new password"
                       value={passwordForm.newPassword}
                       onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
                       className="w-full px-4 py-2.5 pr-12 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-medium text-slate-700 transition"
