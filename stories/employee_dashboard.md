@@ -29,12 +29,11 @@ This document explains the end-to-end flow of the Employee Dashboard, which aggr
 ## 2. Frontend Design & State Flow
 
 ### View Component:
-- **File**: `frontend/src/features/reports/EmployeeDashboard.jsx`
-- **Conditional Rendering**: Checks `role?.toLowerCase() !== 'owner'` to load the employee layout containing shift and leave compliance details.
+- **File**: `frontend/src/features/dashboard/EmployeeDashboard.jsx`
 
 ### Redux State Integration:
-- **Slice**: `frontend/src/features/reports/dashboardSlice.js`
-- **State Properties**:
+- **Slice**: `frontend/src/features/dashboard/dashboardSlice.js`
+- **State Properties**: (under `state.dashboard.employee`)
   - `stats`: The data object containing current figures.
   - `loading`: Flag indicating if a network request is ongoing.
   - `isCached`: Flag indicating if stats are cached in the store.
@@ -56,7 +55,7 @@ This document explains the end-to-end flow of the Employee Dashboard, which aggr
     - **Leaves Applied**: `leavesData.length`
     - **Leaves Approved**: `leavesData.filter(l => l.status === 'approved').length`
     - **Payroll Count**: `payrollData.length`
-  - Dispatches `setStats()` to store calculations and set `isCached = true`.
+  - Dispatches `setEmployeeStats()` to store calculations and set `isCached = true`.
 
 ---
 

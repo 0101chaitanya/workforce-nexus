@@ -25,19 +25,18 @@ This document explains the end-to-end flow of the Owner Dashboard, which provide
 ## 2. Frontend Design & State Flow
 
 ### View Component:
-- **File**: `frontend/src/features/reports/EmployeeDashboard.jsx`
-- **Conditional Rendering**: Checks `role?.toLowerCase() === 'owner'` to render the administrative metrics layout instead of the employee-specific history layout.
+- **File**: `frontend/src/features/dashboard/OwnerDashboard.jsx`
 
 ### Redux State Integration:
-- **Slice**: `frontend/src/features/reports/dashboardSlice.js`
-- **Selects**:
+- **Slice**: `frontend/src/features/dashboard/dashboardSlice.js`
+- **Selects**: (from `state.dashboard.owner`)
   - `stats`: The data object containing current figures.
   - `loading`: Flag indicating if a network request is ongoing.
   - `isCached`: Flag indicating if stats are cached in the store.
 - **Reducers**:
-  - `setStats(payload)`: Saves the analytics data and sets `isCached` to `true`.
-  - `setLoading(boolean)`: Controls the loading spinner.
-  - `invalidateCache()`: Resets `isCached` to `false` (e.g. on logout).
+  - `setOwnerStats(payload)`: Saves the analytics data and sets `isCached` to `true`.
+  - `setOwnerLoading(boolean)`: Controls the loading spinner.
+  - `invalidateOwnerCache()`: Resets `isCached` to `false` (e.g. on logout).
 
 ### Caching Check:
 - Inside `fetchStats(force)`:
