@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
  * Robust error toast handler that parses backend error responses.
  * If errors are returned in an array (under data.errors or data.message),
  * it displays a separate toast notification for each error.
+ * Includes specific handling for HTTP 429 (Too Many Requests) to display a consolidated warning.
  * 
  * @param {any} err - The error object (Axios error, standard Error, or string).
  * @param {string} fallback - The fallback message if no specific error message is found.
@@ -17,6 +18,16 @@ export const toastError = (err, fallback = 'An error occurred') => {
   // 1. If err is directly a string
   if (typeof err === 'string') {
     toast.error(err);
+    return;
+  }
+
+  // 1.5 Special handling for Rate Limiting (429 Too Many Requests)
+  if (err?.response?.status === 429) {
+    const rateLimitMsg = err?.response?.data?.message || 'You are making too many requests. Please slow down and try again later.';
+    toast.warning(`🚦 ${rateLimitMsg}`, {
+      autoClose: 5000,
+      toastId: 'rate-limit-toast' // Prevents duplicate toasts if multiple requests fail at once
+    });
     return;
   }
 

@@ -1,6 +1,7 @@
 const express = require("express");
 const { protect } = require("../middleware/authMiddleware");
 const { validate } = require("../middleware/validationMiddleware");
+const { authLimiter } = require("../middleware/rateLimiter");
 const authSchemas = require("../schemas/authSchemas");
 const {
   sendOtp,
@@ -17,12 +18,12 @@ const {
 const router = express.Router();
 
 // --- Authentication ---
-router.post("/login", validate(authSchemas.login), login);
+router.post("/login", authLimiter, validate(authSchemas.login), login);
 router.post("/logout", logout);
 router.post("/register", validate(authSchemas.register), register);
 
 // --- OTP & Verification ---
-router.post("/send-otp", validate(authSchemas.sendOtp), sendOtp);
+router.post("/send-otp", authLimiter, validate(authSchemas.sendOtp), sendOtp);
 router.post("/verify-otp", validate(authSchemas.verifyOtp), verifyOtp);
 
 // --- Token Management ---
@@ -32,7 +33,7 @@ router.post("/regenerate-access-token", regenerateAccessToken);
 router.get("/me", protect, testGet);
 
 // Forgot Password Flow
-router.post("/forgot-password-otp", validate(authSchemas.forgotPasswordOtp), forgotPasswordOtp);
-router.post("/reset-password", validate(authSchemas.resetPassword), resetPassword);
+router.post("/forgot-password-otp", authLimiter, validate(authSchemas.forgotPasswordOtp), forgotPasswordOtp);
+router.post("/reset-password", authLimiter, validate(authSchemas.resetPassword), resetPassword);
 
 module.exports = router;

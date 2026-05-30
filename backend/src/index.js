@@ -13,6 +13,7 @@ const connectDB = require("./config/db");
 const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
 const logger = require('./utils/logger');
+const { globalLimiter } = require('./middleware/rateLimiter');
 
 dotenv.config();
 
@@ -31,6 +32,9 @@ const cronRoutes = require("./routes/cronRoutes");
 
 // Initialize scheduled tasks (Removed for Serverless deployment - now handled via /api/cron endpoints)
 // require('./services/cronService');
+
+// Trust proxy for Vercel/Render reverse proxy
+app.set('trust proxy', 1);
 
 // Middleware
 app.use(morgan('dev', {
@@ -58,6 +62,9 @@ app.use(async (req, res, next) => {
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Apply global rate limiter to all API requests
+app.use("/api/", globalLimiter);
 
 
 app.use("/api/auth", authRoutes);
