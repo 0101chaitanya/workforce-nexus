@@ -1,19 +1,78 @@
 import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import api from '../../app/axiosInterceptors';
-import { Building2, MapPin, Phone, Mail, ShieldCheck, Loader2, AlertCircle, UserCircle, Edit2, Save, X, Calendar, CreditCard, Navigation, RefreshCcw } from 'lucide-react';
+import axios from 'axios';
+import { Building2, MapPin, Phone, Mail, ShieldCheck, Loader2, AlertCircle, UserCircle, Edit2, Save, X, Calendar, CreditCard, Navigation, RefreshCcw, Search } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { validateForm } from '../../utils/validation';
 import { organizationSchemas } from './organizationSchemas';
 import { userSchemas } from '../profile/userSchemas';
-import {
-    setCompany,
-    setLoading,
-    setCompanySaving,
-    setOwnerProfile,
-    setOwnerLoading,
-    setOwnerSaving
-} from './organizationSlice';
+import { setCompany, setLoading, setCompanySaving, setOwnerProfile, setOwnerLoading, setOwnerSaving } from './organizationSlice';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+const customMarkerIcon = new L.divIcon({
+    className: 'bg-transparent',
+    html: `
+      <div class="relative flex items-center justify-center w-8 h-8 -mt-4 -ml-4">
+        <div class="absolute w-8 h-8 bg-indigo-600 rounded-full animate-ping opacity-75"></div>
+        <div class="relative flex items-center justify-center w-6 h-6 bg-indigo-600 border-2 border-white rounded-full shadow-lg">
+          <div class="w-2 h-2 bg-white rounded-full"></div>
+        </div>
+      </div>
+    `,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16]
+});
+
+L.Marker.prototype.options.icon = customMarkerIcon;
+
+const LocationMarker = ({ setEditForm, position }) => {
+    useMapEvents({
+        async click(e) {
+            const { lat, lng } = e.latlng;
+            const latStr = lat.toFixed(6);
+            const lonStr = lng.toFixed(6);
+            
+            setEditForm(prev => ({
+                ...prev,
+                latitude: latStr,
+                longitude: lonStr
+            }));
+
+            try {
+                const geoResponse = await axios.get(
+                    `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
+                    { headers: { "Accept-Language": "en", "User-Agent": "EmployeeManagementSystem/1.0" } }
+                );
+                if (geoResponse.status === 200) {
+                    const geoData = geoResponse.data;
+                    if (geoData.display_name) {
+                        setEditForm(prev => ({ ...prev, address: geoData.display_name }));
+                    }
+                }
+            } catch (err) {
+                console.error("Reverse geocoding failed on map click:", err);
+            }
+        },
+    });
+
+    return position === null ? null : (
+        <Marker position={position}></Marker>
+    );
+};
+
+const MapUpdater = ({ position }) => {
+    const map = useMap();
+    useEffect(() => {
+        if (position) {
+            map.flyTo(position, 15);
+        }
+    }, [position, map]);
+    return null;
+};
+
  
 const OwnerOrganization = () => {
     const dispatch = useDispatch();
@@ -113,6 +172,7 @@ const OwnerOrganization = () => {
  
     const handleCancel = () => {
         setIsEditing(false);
+        setSearchQuery('');
         setEditForm({
             companyName: company.companyName || '',
             address: company.address || '',
@@ -124,7 +184,8 @@ const OwnerOrganization = () => {
     };
  
     const [gpsLoading, setGpsLoading] = useState(false);
-    const [resolveLoading, setResolveLoading] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchLoading, setSearchLoading] = useState(false);
  
     const handleGetCurrentLocation = () => {
         if (!navigator.geolocation) {
@@ -141,7 +202,7 @@ const OwnerOrganization = () => {
  
                 let addressResolved = '';
                 try {
-                    const geoResponse = await fetch(
+                    const geoResponse = await axios.get(
                         `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`,
                         {
                             headers: {
@@ -150,8 +211,8 @@ const OwnerOrganization = () => {
                             }
                         }
                     );
-                    if (geoResponse.ok) {
-                        const geoData = await geoResponse.json();
+                    if (geoResponse.status === 200) {
+                        const geoData = geoResponse.data;
                         addressResolved = geoData.display_name || '';
                     }
                 } catch (err) {
@@ -174,42 +235,37 @@ const OwnerOrganization = () => {
         );
     };
  
-    const handleResolveLocation = async () => {
-        const lat = editForm.latitude;
-        const lon = editForm.longitude;
-        if (lat === '' || lon === '' || lat === null || lon === null || lat === undefined || lon === undefined) {
-            alert("Please enter both Office Latitude and Office Longitude to resolve the address.");
-            return;
-        }
-        setResolveLoading(true);
+    const handleSearchLocation = async () => {
+        if (!searchQuery.trim()) return;
+        setSearchLoading(true);
         try {
-            const geoResponse = await fetch(
-                `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`,
-                {
-                    headers: {
-                        "Accept-Language": "en",
-                        "User-Agent": "EmployeeManagementSystem/1.0"
-                    }
-                }
+            const geoResponse = await axios.get(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}`,
+                { headers: { "Accept-Language": "en", "User-Agent": "EmployeeManagementSystem/1.0" } }
             );
-            if (geoResponse.ok) {
-                const geoData = await geoResponse.json();
-                if (geoData.display_name) {
+            if (geoResponse.status === 200) {
+                const geoData = geoResponse.data;
+                if (geoData && geoData.length > 0) {
+                    const firstResult = geoData[0];
+                    const latStr = parseFloat(firstResult.lat).toFixed(6);
+                    const lonStr = parseFloat(firstResult.lon).toFixed(6);
                     setEditForm(prev => ({
                         ...prev,
-                        address: geoData.display_name
+                        latitude: latStr,
+                        longitude: lonStr,
+                        address: firstResult.display_name
                     }));
                 } else {
-                    alert("Could not resolve address for the given coordinates.");
+                    toast.error("Location not found.");
                 }
             } else {
-                alert("Failed to resolve address. Geocoding service error.");
+                toast.error("Geocoding service error.");
             }
         } catch (err) {
-            console.error("Reverse geocoding address resolution failed:", err);
-            alert("An error occurred while resolving the address.");
+            console.error("Search failed:", err);
+            toast.error("Search failed.");
         } finally {
-            setResolveLoading(false);
+            setSearchLoading(false);
         }
     };
  
@@ -223,6 +279,7 @@ const OwnerOrganization = () => {
             await api.put('/company/update', validated);
             await fetchCompany(true);
             setIsEditing(false);
+            setSearchQuery('');
             toast.success('Organization details updated successfully.');
         } catch (err) {
             toast.error(err.response?.data?.message || 'Failed to update organization details.');
@@ -371,55 +428,64 @@ const OwnerOrganization = () => {
                                         rows={3}
                                     />
                                 </div>
-                                <div className="flex flex-col sm:flex-row gap-4 items-end">
-                                    <div className="flex-grow w-full">
-                                        <label className="text-xs font-bold text-slate-500 uppercase">Office Latitude</label>
-                                        <input
-                                            type="number"
-                                            step="0.000001"
-                                            value={editForm.latitude}
-                                            onChange={(e) => setEditForm({ ...editForm, latitude: e.target.value })}
-                                            className="w-full mt-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"
-                                            placeholder="e.g. 37.7749"
-                                        />
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 uppercase flex justify-between items-center mb-1">
+                                        <span>Click Map to Set Location</span>
+                                        <button
+                                            type="button"
+                                            onClick={handleGetCurrentLocation}
+                                            disabled={gpsLoading}
+                                            className="text-indigo-600 hover:underline flex items-center gap-1"
+                                        >
+                                            {gpsLoading ? <Loader2 size={12} className="animate-spin" /> : <MapPin size={12} />}
+                                            Use GPS
+                                        </button>
+                                    </label>
+
+                                    <div className="flex gap-2 mb-3">
+                                        <div className="relative flex-grow">
+                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                                <Search size={16} />
+                                            </div>
+                                            <input
+                                                type="text"
+                                                placeholder="Search for a city, address, or landmark..."
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleSearchLocation())}
+                                                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                                            />
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={handleSearchLocation}
+                                            disabled={searchLoading}
+                                            className="px-4 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-700 transition flex items-center gap-2 whitespace-nowrap disabled:bg-indigo-400"
+                                        >
+                                            {searchLoading ? <Loader2 size={14} className="animate-spin" /> : 'Search'}
+                                        </button>
                                     </div>
-                                    <div className="flex-grow w-full">
-                                        <label className="text-xs font-bold text-slate-500 uppercase">Office Longitude</label>
-                                        <input
-                                            type="number"
-                                            step="0.000001"
-                                            value={editForm.longitude}
-                                            onChange={(e) => setEditForm({ ...editForm, longitude: e.target.value })}
-                                            className="w-full mt-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"
-                                            placeholder="e.g. -122.4194"
-                                        />
+
+                                    <div className="h-64 w-full rounded-xl overflow-hidden border border-slate-200 relative z-0">
+                                        <MapContainer 
+                                            center={editForm.latitude && editForm.longitude ? [parseFloat(editForm.latitude), parseFloat(editForm.longitude)] : [37.7749, -122.4194]} 
+                                            zoom={editForm.latitude && editForm.longitude ? 15 : 2} 
+                                            scrollWheelZoom={true} 
+                                            style={{ height: '100%', width: '100%', zIndex: 0 }}
+                                        >
+                                            <TileLayer
+                                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                            />
+                                            <LocationMarker 
+                                                setEditForm={setEditForm} 
+                                                position={editForm.latitude && editForm.longitude ? [parseFloat(editForm.latitude), parseFloat(editForm.longitude)] : null} 
+                                            />
+                                            <MapUpdater position={editForm.latitude && editForm.longitude ? [parseFloat(editForm.latitude), parseFloat(editForm.longitude)] : null} />
+                                        </MapContainer>
                                     </div>
-                                    <button
-                                        type="button"
-                                        onClick={handleResolveLocation}
-                                        disabled={resolveLoading}
-                                        className="w-full sm:w-auto h-11 px-4 bg-slate-50 text-slate-700 font-bold text-xs rounded-xl hover:bg-slate-100 transition border border-slate-200 flex items-center justify-center gap-2 whitespace-nowrap"
-                                    >
-                                        {resolveLoading ? <Loader2 size={14} className="animate-spin" /> : <Navigation size={14} />}
-                                        Resolve
-                                    </button>
                                 </div>
 
-                                <div className="relative flex py-2 items-center">
-                                    <div className="flex-grow border-t border-slate-200"></div>
-                                    <span className="flex-shrink mx-4 text-slate-400 text-xs font-bold tracking-wider uppercase">OR</span>
-                                    <div className="flex-grow border-t border-slate-200"></div>
-                                </div>
-
-                                <button
-                                    type="button"
-                                    onClick={handleGetCurrentLocation}
-                                    disabled={gpsLoading}
-                                    className="w-full h-11 px-4 bg-indigo-50 text-indigo-600 font-bold text-xs rounded-xl hover:bg-indigo-100/80 transition border border-indigo-100/50 flex items-center justify-center gap-2"
-                                >
-                                    {gpsLoading ? <Loader2 size={14} className="animate-spin" /> : <MapPin size={14} />}
-                                    Set my location as company location
-                                </button>
 
                                 <div>
                                     <label className="text-xs font-bold text-slate-500 uppercase">Proximity Radius (meters)</label>
