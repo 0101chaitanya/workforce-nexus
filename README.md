@@ -1,4 +1,4 @@
-# Employee Management System
+# Workforce Nexus(An EMS implementation)
 
 A comprehensive, full-stack web application designed for business owners to manage their organization's employees, attendance, leaves, and payroll processing. Employees get a dedicated dashboard to punch in/out, view their payslips, and apply for leaves.
 
