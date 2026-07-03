@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import authApi from '../../app/authApi';
 import { setAuthSuccess } from './authSlice';
-import { Mail, Lock, Briefcase, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Mail, Lock, Briefcase, Eye, EyeOff, Loader2, ShieldCheck, User } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { validateForm } from '../../utils/validation';
 import { authSchemas } from './authSchemas';
@@ -145,6 +145,52 @@ const Login = () => {
               <div className="mb-6">
                 <h2 className="text-3xl font-black text-slate-800 tracking-tight">Workspace Login</h2>
                 <p className="text-slate-400 mt-1.5 font-medium text-sm">Provide your user credentials to access your session</p>
+              </div>
+
+              {/* Quick Credentials Panel */}
+              <div className="mb-6 p-4 bg-slate-50 border border-slate-200/60 rounded-2xl">
+                <div className="flex items-center justify-between mb-2.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Quick Access Accounts</span>
+                  <span className="text-[10px] font-medium text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100/50">Demo Modes</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLoginData({ identifier: '0101chaitanya@gmail.com', password: '12345678' });
+                      toast.info("Admin credentials auto-filled!");
+                    }}
+                    className="flex flex-col items-center justify-center p-2.5 rounded-xl border border-indigo-100 bg-white hover:bg-indigo-50/50 text-indigo-700 hover:border-indigo-200 shadow-xs hover:shadow-sm transition-all duration-200 text-center cursor-pointer group"
+                  >
+                    <ShieldCheck size={16} className="mb-1 text-indigo-500 group-hover:scale-110 transition-transform" />
+                    <span className="text-[11px] font-bold">Admin/Owner</span>
+                    <span className="text-[9px] text-slate-400 mt-0.5 truncate max-w-full">Chaitanya</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLoginData({ identifier: 'tejsork@gmail.com', password: '12345678' });
+                      toast.info("Employee 1 credentials auto-filled!");
+                    }}
+                    className="flex flex-col items-center justify-center p-2.5 rounded-xl border border-emerald-100 bg-white hover:bg-emerald-50/50 text-emerald-700 hover:border-emerald-200 shadow-xs hover:shadow-sm transition-all duration-200 text-center cursor-pointer group"
+                  >
+                    <User size={16} className="mb-1 text-emerald-500 group-hover:scale-110 transition-transform" />
+                    <span className="text-[11px] font-bold">Employee 1</span>
+                    <span className="text-[9px] text-slate-400 mt-0.5 truncate max-w-full">Sai Teja</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLoginData({ identifier: 'bluedeep950@gmail.com', password: '12345678' });
+                      toast.info("Employee 2 credentials auto-filled!");
+                    }}
+                    className="flex flex-col items-center justify-center p-2.5 rounded-xl border border-purple-100 bg-white hover:bg-purple-50/50 text-purple-700 hover:border-purple-200 shadow-xs hover:shadow-sm transition-all duration-200 text-center cursor-pointer group"
+                  >
+                    <User size={16} className="mb-1 text-purple-500 group-hover:scale-110 transition-transform" />
+                    <span className="text-[11px] font-bold">Employee 2</span>
+                    <span className="text-[9px] text-slate-400 mt-0.5 truncate max-w-full">Phani Deep</span>
+                  </button>
+                </div>
               </div>
 
               <form onSubmit={handleAuthSubmit} className="space-y-4">

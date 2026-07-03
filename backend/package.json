@@ -35,5 +35,9 @@
     "eslint-plugin-node": "^11.1.0",
     "glob": "^13.0.6",
     "nodemon": "^3.1.9"
+  },
+  "allowScripts": {
+    "bcrypt@6.0.0": true,
+    "fsevents@2.3.3": true
   }
 }
