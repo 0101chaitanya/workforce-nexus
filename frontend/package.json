@@ -22,7 +22,7 @@
     "react-router-dom": "^7.14.2",
     "react-toastify": "^11.1.0",
     "tailwindcss": "^4.2.4",
-    "zod": "^4.4.3"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
